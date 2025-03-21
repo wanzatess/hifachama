@@ -3,6 +3,7 @@ Django settings for CHAMA project.
 """
 
 from pathlib import Path
+import json
 import os
 from decouple import config
 import firebase_admin
@@ -33,9 +34,14 @@ INSTALLED_APPS = [
 ]
 
 # Firebase configuration
-FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, "HIFACHAMA", "firebase_config.json")
-cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
-firebase_admin.initialize_app(cred)
+firebase_env = os.getenv("FIREBASE_CREDENTIALS")
+
+if firebase_env:
+    cred = credentials.Certificate(json.loads(firebase_env))
+elif os.path.exists("HIFACHAMA/firebase_config.json"):
+    cred = credentials.Certificate("HIFACHAMA/firebase_config.json")
+else:
+    raise ValueError("Firebase credentials not found")
 
 # Firebase push notifications
 FCM_DJANGO_SETTINGS = {
