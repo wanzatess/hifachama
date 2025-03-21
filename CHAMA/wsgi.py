@@ -8,9 +8,14 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
 """
 
 import os
+import sys
 
-from django.core.wsgi import get_wsgi_application
+# Ensure the correct path is included
+sys.path.append('/opt/render/project/src/CHAMA')
 
+# Explicitly set Django settings
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'CHAMA.settings')
 
+from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
+
