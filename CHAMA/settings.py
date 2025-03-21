@@ -12,6 +12,7 @@ from firebase_admin import credentials, messaging
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # Security settings
 SECRET_KEY = 'django-insecure-xk7cuuvt+l6n8*1l1rq6qztlj*mte(%syfs79_jx@^ws3zt&%n'
 DEBUG = False
@@ -122,6 +123,7 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
