@@ -1,1 +1,3 @@
-web: gunicorn HIFACHAMA.wsgi:application --log-file -
+web: gunicorn CHAMA.wsgi:application --log-file -
+
+
