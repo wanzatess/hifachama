@@ -35,10 +35,11 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
 ]
 
-FIREBASE_CREDENTIALS = os.path.join(BASE_DIR, "firebase_credentials.json")
-
-if not os.path.exists(FIREBASE_CREDENTIALS):
+firebase_credentials = os.getenv("FIREBASE_CREDENTIALS")
+if not firebase_credentials:
     raise ValueError("Firebase credentials not found")
+
+firebase_config = json.loads(firebase_credentials)
 
 # Firebase push notifications
 FCM_DJANGO_SETTINGS = {
