@@ -35,14 +35,9 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
 ]
 
-# Firebase configuration
-firebase_env = os.getenv("FIREBASE_CREDENTIALS")
+FIREBASE_CREDENTIALS = os.path.join(BASE_DIR, "firebase_credentials.json")
 
-if firebase_env:
-    cred = credentials.Certificate(json.loads(firebase_env))
-elif os.path.exists("HIFACHAMA/firebase_config.json"):
-    cred = credentials.Certificate("HIFACHAMA/firebase_config.json")
-else:
+if not os.path.exists(FIREBASE_CREDENTIALS):
     raise ValueError("Firebase credentials not found")
 
 # Firebase push notifications
