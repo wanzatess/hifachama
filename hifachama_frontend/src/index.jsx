@@ -3,12 +3,14 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
+import AppRoutes from "./routes";
+import "./styles.css"; // ✅ Ensure it's inside src/
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter> {/* ✅ Router wraps everything just once */}
       <AuthProvider>
-        <App />
+       <AppRoutes />
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

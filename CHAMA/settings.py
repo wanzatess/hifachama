@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_otp',
     'fcm_django',
+    'whitenoise.runserver_nostatic',
 ]
 
 # Firebase configuration
@@ -70,6 +71,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 # URL configuration
@@ -150,6 +152,7 @@ MPESA_CALLBACK_URL = config('MPESA_CALLBACK_URL')
 
 # Custom user model
 AUTH_USER_MODEL = 'HIFACHAMA.CustomUser'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 

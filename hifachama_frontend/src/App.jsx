@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
+import Home from "./pages/HomePage"; // ✅ Import Home component
 import Dashboard from "./pages/dashboard";  
 import Loans from "./pages/loans";
 import Contributions from "./pages/contributions";
@@ -20,18 +21,16 @@ const PrivateRoute = ({ element }) => {
 function App() {
   return (
     <div className="flex h-screen bg-primary text-white">
-      <Sidebar /> {/* ✅ Sidebar is outside Routes */}
+      <Sidebar /> {/* ✅ Sidebar remains for logged-in users */}
       <div className="flex-1 p-6 bg-gray-100 text-gray-900">
         <Routes>
-          {/* Public Routes */}
+          {/* ✅ Public Routes */}
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* ✅ Add "/dashboard" route */}
+          {/* ✅ Private Routes */}
           <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
-
-          {/* Private Routes */}
-          <Route path="/" element={<PrivateRoute element={<Dashboard />} />} />
           <Route path="/chamas" element={<PrivateRoute element={<ChamaList />} />} />
           <Route path="/loans" element={<PrivateRoute element={<Loans />} />} />
           <Route path="/contributions" element={<PrivateRoute element={<Contributions />} />} />
@@ -44,6 +43,7 @@ function App() {
 }
 
 export default App;
+
 
 
 
