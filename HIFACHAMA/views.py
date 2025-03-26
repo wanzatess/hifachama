@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from rest_framework.permissions import AllowAny
 from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth import login, authenticate, get_user_model
@@ -93,7 +94,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 def home(request):
-    return HttpResponse("Welcome to the CHAMA homepage!")
+    return render(request, 'homepage.html')
 
 def authenticate_user(identifier, password):
     try:
@@ -321,6 +322,7 @@ def mpesa_c2b_confirmation(request):
 
     return JsonResponse({"error": "Invalid request"}, status=400)
 @api_view(['GET'])
+ 
 def transaction_history(request):
     """API to fetch all transactions"""
     transactions = Transaction.objects.all().order_by('-date')  # Get transactions sorted by date
@@ -454,3 +456,7 @@ class RegisterView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def homepage_view(request):
+    return render(request, 'homepage.html')

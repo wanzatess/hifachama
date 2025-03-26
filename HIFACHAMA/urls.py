@@ -1,10 +1,12 @@
-from django.urls import path
-from .views import home, test_email, UserLoginView, verify_otp, mpesa_callback, mpesa_c2b_confirmation, transaction_history, RegisterView
+from django.urls import path, include
+from .views import home, test_email, UserLoginView, verify_otp, mpesa_callback, mpesa_c2b_confirmation, transaction_history, RegisterView, homepage_view
 from .reports import generate_pdf_report, generate_excel_report
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [
     path('', home, name='home'),
+    path("", homepage_view, name="homepage"),
+    path('api/auth/', include('authentication.urls')),
     path('api/register/', RegisterView.as_view(), name='register'),
     path('api/login/', UserLoginView.as_view(), name='login'),
     path('test-email/', test_email, name='test_email'),

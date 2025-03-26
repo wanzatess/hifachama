@@ -8,6 +8,13 @@ import os
 from decouple import config
 import firebase_admin
 from firebase_admin import credentials, messaging
+import dj_database_url
+from datetime import timedelta
+from dotenv import load_dotenv
+load_dotenv()
+# Debugging
+print("DEBUG (settings.py) - SUPABASE_URL:", os.getenv("SUPABASE_URL"))
+print("DEBUG (settings.py) - SUPABASE_ANON_KEY:", "Loaded" if os.getenv("SUPABASE_ANON_KEY") else "None")
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security settings
 SECRET_KEY = 'django-insecure-xk7cuuvt+l6n8*1l1rq6qztlj*mte(%syfs79_jx@^ws3zt&%n'
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 # Installed apps
@@ -27,19 +34,20 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'HIFACHAMA',
     'django_extensions',
     'rest_framework.authtoken',
     'django_otp',
     'fcm_django',
     'whitenoise.runserver_nostatic',
+    'authentication',
+    "corsheaders",
 ]
+FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, "firebase_credentials.json")
 
-firebase_credentials = os.getenv("FIREBASE_CREDENTIALS")
-if not firebase_credentials:
+if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
     raise ValueError("Firebase credentials not found")
-
-firebase_config = json.loads(firebase_credentials)
 
 # Firebase push notifications
 FCM_DJANGO_SETTINGS = {
@@ -52,12 +60,19 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
 }
-
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # Token valid for 1 day
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Refresh token valid for 7 days
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),  # Clients should send 'Authorization: Bearer <token>'
+}
 # Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -68,6 +83,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 
 # URL configuration
@@ -77,7 +94,7 @@ ROOT_URLCONF = 'CHAMA.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [os.path.join(BASE_DIR, 'HIFACHAMA', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -96,14 +113,15 @@ WSGI_APPLICATION = 'CHAMA.wsgi.application'
 # Database configuration
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'hifachama',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres.rhzjaepghimzvdjyokcw',
+        'PASSWORD': '771982150507bafetm',
+        'HOST': 'aws-0-eu-central-1.pooler.supabase.com',
+        'PORT': '5432',  
     }
 }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -122,6 +140,10 @@ USE_TZ = True
 # Static files
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    BASE_DIR / "src",  # Ensure this points to where your static files are located
+]
+
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -150,5 +172,12 @@ MPESA_CALLBACK_URL = config('MPESA_CALLBACK_URL')
 AUTH_USER_MODEL = 'HIFACHAMA.CustomUser'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://rhzjaepghimzvdjyokcw.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoemphZXBnaGltenZkanlva2N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4MjIxMDcsImV4cCI6MjA1ODM5ODEwN30.-N53uixRsUrfwzq7rcmwtpZf4YxhaR327Ift3Ymu_Z4")
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "https://hifachama-frontend.onrender.com",  # React frontend URL
+]
+CORS_ALLOW_CREDENTIALS = True
 
 
