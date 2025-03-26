@@ -10,11 +10,13 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ChamaSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=True)
+    chama_type = serializers.ChoiceField(choices=Chama.CHAMA_TYPES)  # Add this line
 
     class Meta:
         model = Chama
-        fields = ['id', 'name', 'description', 'admin', 'created_at', 'updated_at']
-        read_only_fields = ['admin'] 
+        fields = ['id', 'name', 'description', 'chama_type', 'admin', 'created_at', 'updated_at']
+        read_only_fields = ['admin']
+
 
 class ChamaMemberSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

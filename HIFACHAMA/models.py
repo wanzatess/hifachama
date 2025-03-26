@@ -7,14 +7,22 @@ import pyotp
 from django.core.validators import MinValueValidator, RegexValidator
 
 class Chama(models.Model):
+    CHAMA_TYPES = [
+        ('merry_go_round', 'Merry-Go-Round'),
+        ('investment', 'Investment'),
+        ('hybrid', 'Hybrid')
+    ]
+    
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
+    chama_type = models.CharField(max_length=20, choices=CHAMA_TYPES, default='merry_go_round')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     admin = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='administered_chamas')
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_chama_type_display()})"
+
     
 
 class MemberRole(models.TextChoices):

@@ -45,10 +45,11 @@ INSTALLED_APPS = [
     'authentication',
     "corsheaders",
 ]
-firebase_credentials_json = os.getenv("FIREBASE_CREDENTIALS")
+FIREBASE_CREDENTIALS_PATH = "C:/Users/HomePC/Documents/firebase_credentials.json"
 
-if firebase_credentials_json:
-    firebase_credentials = json.loads(firebase_credentials_json)
+if FIREBASE_CREDENTIALS_PATH and os.path.exists(FIREBASE_CREDENTIALS_PATH):
+    with open(FIREBASE_CREDENTIALS_PATH) as f:
+        FIREBASE_CREDENTIALS = json.load(f)
 else:
     raise ValueError("Firebase credentials are missing. Set FIREBASE_CREDENTIALS in environment variables.")
 
