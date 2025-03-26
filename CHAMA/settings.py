@@ -7,7 +7,7 @@ import json
 import os
 from decouple import config
 import firebase_admin
-from firebase_admin import credentials, messaging
+from firebase_admin import firebase_credentials, messaging
 import dj_database_url
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -48,6 +48,8 @@ FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, "firebase_credentials.json")
 
 if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
     raise ValueError("Firebase credentials not found")
+
+firebase_config = json.loads(firebase_credentials)
 
 # Firebase push notifications
 FCM_DJANGO_SETTINGS = {
