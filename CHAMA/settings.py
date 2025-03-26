@@ -45,16 +45,12 @@ INSTALLED_APPS = [
     'authentication',
     "corsheaders",
 ]
-# Path to your Firebase credentials JSON file
-FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'firebase_credentials.json')
+firebase_credentials_json = os.getenv("FIREBASE_CREDENTIALS")
 
-# Load the credentials
-with open(FIREBASE_CREDENTIALS_PATH) as f:
-    firebase_config = json.load(f)
-
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
-firebase_admin.initialize_app(cred)
+if firebase_credentials_json:
+    firebase_credentials = json.loads(firebase_credentials_json)
+else:
+    raise ValueError("Firebase credentials are missing. Set FIREBASE_CREDENTIALS in environment variables.")
 
 # Firebase push notifications
 FCM_DJANGO_SETTINGS = {
