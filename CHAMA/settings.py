@@ -7,7 +7,8 @@ import json
 import os
 from decouple import config
 import firebase_admin
-from firebase_admin import firebase_credentials, messaging
+import firebase_admin
+from firebase_admin import credentials, messaging
 import dj_database_url
 from datetime import timedelta
 from dotenv import load_dotenv
@@ -44,12 +45,16 @@ INSTALLED_APPS = [
     'authentication',
     "corsheaders",
 ]
-FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, "firebase_credentials.json")
+# Path to your Firebase credentials JSON file
+FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'firebase_credentials.json')
 
-if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
-    raise ValueError("Firebase credentials not found")
+# Load the credentials
+with open(FIREBASE_CREDENTIALS_PATH) as f:
+    firebase_config = json.load(f)
 
-firebase_config = json.loads(firebase_credentials)
+# Initialize Firebase Admin SDK
+cred = credentials.Certificate(FIREBASE_CREDENTIALS_PATH)
+firebase_admin.initialize_app(cred)
 
 # Firebase push notifications
 FCM_DJANGO_SETTINGS = {
