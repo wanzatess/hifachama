@@ -2,6 +2,8 @@ from django.urls import path, include
 from .views import home, test_email, UserLoginView, verify_otp, mpesa_callback, mpesa_c2b_confirmation, transaction_history, RegisterView, homepage_view, ChamaListCreateView
 from .reports import generate_pdf_report, generate_excel_report
 from django.shortcuts import render
+from .views import home, test_email, UserLoginView, verify_otp, mpesa_callback, mpesa_c2b_confirmation, transaction_history, RegisterView, homepage_view
+from .reports import generate_pdf_report, generate_excel_report
 from rest_framework.authtoken.views import obtain_auth_token
 
 urlpatterns = [

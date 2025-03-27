@@ -18,6 +18,11 @@ class ChamaSerializer(serializers.ModelSerializer):
         read_only_fields = ['admin']
 
 
+    class Meta:
+        model = Chama
+        fields = ['id', 'name', 'description', 'admin', 'created_at', 'updated_at']
+        read_only_fields = ['admin'] 
+
 class ChamaMemberSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 

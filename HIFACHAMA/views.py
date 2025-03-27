@@ -418,6 +418,13 @@ class ChamaDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Chama.objects.all()
     serializer_class = ChamaSerializer
     permission_classes = [permissions.IsAuthenticated]
+class ChamaDetailView(APIView):
+    """Member can view Chama details"""
+    permission_classes = [IsAuthenticated, IsMember]
+
+    def get(self, request, chama_id):
+        chama = get_object_or_404(Chama, id=chama_id)
+        return Response({"chama_name": chama.name, "created_by": chama.created_by.username})
 
 class ContributionView(APIView):
     """Member can make contributions"""

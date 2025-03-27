@@ -16,6 +16,8 @@ class Chama(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
     chama_type = models.CharField(max_length=20, choices=CHAMA_TYPES, default='merry_go_round')
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     admin = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='administered_chamas')
@@ -23,6 +25,7 @@ class Chama(models.Model):
     def __str__(self):
         return f"{self.name} ({self.get_chama_type_display()})"
 
+        return self.name
     
 
 class MemberRole(models.TextChoices):

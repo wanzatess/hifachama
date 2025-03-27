@@ -54,6 +54,11 @@ if not firebase_credentials_base64:
 firebase_credentials_json = base64.b64decode(firebase_credentials_base64).decode('utf-8')
 FIREBASE_CREDENTIALS = json.loads(firebase_credentials_json)
 
+FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, "firebase_credentials.json")
+
+if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
+    raise ValueError("Firebase credentials not found")
+
 # Firebase push notifications
 FCM_DJANGO_SETTINGS = {
     "FCM_SERVER_KEY": "BMn282qB7U13tOgfDx-01KAL6_DkAaXVyXW3Em7BKSGbxzhdtqm83uQyZqaaWuMyOOgIl2TIJkNfOMKv-gzR5iE",
