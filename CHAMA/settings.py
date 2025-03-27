@@ -5,6 +5,7 @@ Django settings for CHAMA project.
 from pathlib import Path
 import json
 import os
+import base64
 from decouple import config
 import firebase_admin
 import firebase_admin
@@ -45,13 +46,13 @@ INSTALLED_APPS = [
     'authentication',
     "corsheaders",
 ]
-FIREBASE_CREDENTIALS_PATH = "C:/Users/HomePC/Documents/firebase_credentials.json"
+firebase_credentials_base64 = os.getenv("FIREBASE_CREDENTIALS")
 
-if FIREBASE_CREDENTIALS_PATH and os.path.exists(FIREBASE_CREDENTIALS_PATH):
-    with open(FIREBASE_CREDENTIALS_PATH) as f:
-        FIREBASE_CREDENTIALS = json.load(f)
-else:
+if not firebase_credentials_base64:
     raise ValueError("Firebase credentials are missing. Set FIREBASE_CREDENTIALS in environment variables.")
+
+firebase_credentials_json = base64.b64decode(firebase_credentials_base64).decode('utf-8')
+FIREBASE_CREDENTIALS = json.loads(firebase_credentials_json)
 
 # Firebase push notifications
 FCM_DJANGO_SETTINGS = {
