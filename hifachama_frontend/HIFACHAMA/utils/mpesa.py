@@ -3,21 +3,28 @@ import base64
 from decouple import config
 from datetime import datetime
 
+CONSUMER_KEY = "P2AGNjnYCmfBDeIrhJoL2MHV3bCsm0q0l0toXGhinihwBy9c"
+CONSUMER_SECRET = "GZg78T0GOKU3BbOH4tm4WfRVG7aEYY15Qf7AyYaRY5WbIFdGga2XdClHTshNiGVG"
+
 def get_mpesa_oauth_token():
-    """Fetch M-Pesa OAuth Token"""
     url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-    consumer_key = config("MPESA_CONSUMER_KEY")
-    consumer_secret = config("MPESA_CONSUMER_SECRET")
 
-    credentials = f"{consumer_key}:{consumer_secret}".encode()
-    encoded_credentials = base64.b64encode(credentials).decode()
+    # Encode credentials
+    credentials = f"{CONSUMER_KEY}:{CONSUMER_SECRET}"
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
-    headers = {"Authorization": f"Basic {encoded_credentials}"}
-    response = requests.get(url, headers=headers)
+    headers = {
+        "Authorization": f"Basic {encoded_credentials}"
+    }
 
-    if response.status_code == 200:
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()  # Raises an error if response is not 200
         return response.json().get("access_token")
-    return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching M-Pesa token: {e}")
+        return None
+
 
 def stk_push_request(phone_number, amount):
     """Initiate STK Push request to Safaricom M-Pesa API."""
