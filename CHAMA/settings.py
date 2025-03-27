@@ -46,18 +46,17 @@ INSTALLED_APPS = [
     'authentication',
     "corsheaders",
 ]
-firebase_credentials_base64 = os.getenv("FIREBASE_CREDENTIALS")
+FIREBASE_CREDENTIALS_BASE64 = os.getenv("FIREBASE_CREDENTIALS")
 
-if not firebase_credentials_base64:
-    raise ValueError("Firebase credentials are missing. Set FIREBASE_CREDENTIALS in environment variables.")
-
-firebase_credentials_json = base64.b64decode(firebase_credentials_base64).decode('utf-8')
-FIREBASE_CREDENTIALS = json.loads(firebase_credentials_json)
-
-FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, "firebase_credentials.json")
-
-if not os.path.exists(FIREBASE_CREDENTIALS_PATH):
-    raise ValueError("Firebase credentials not found")
+if FIREBASE_CREDENTIALS_BASE64:
+    FIREBASE_CREDENTIALS = json.loads(base64.b64decode(FIREBASE_CREDENTIALS_BASE64).decode())
+else:
+    FIREBASE_CREDENTIALS = None
+if FIREBASE_CREDENTIALS:
+    cred = credentials.Certificate(FIREBASE_CREDENTIALS)
+    firebase_admin.initialize_app(cred)
+else:
+    print("Firebase credentials are missing.")
 
 # Firebase push notifications
 FCM_DJANGO_SETTINGS = {
