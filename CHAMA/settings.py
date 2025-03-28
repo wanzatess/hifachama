@@ -150,11 +150,15 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
+# Static files (CSS, JavaScript, images)
 STATIC_URL = 'static/'
+
+# Where static files will be collected for production deployment
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Add the path to the staticfiles directory inside hifachama_frontend
 STATICFILES_DIRS = [
-    BASE_DIR / "src",  # Ensure this points to where your static files are located
+    os.path.join(BASE_DIR, 'hifachama_frontend', 'staticfiles'),  # Correct path to staticfiles directory
 ]
 
 

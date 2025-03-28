@@ -1,16 +1,18 @@
-from django.urls import path, include
-from django.shortcuts import render
+from django.urls import path, include, render
+from django.views.generic import TemplateView
 from rest_framework.authtoken.views import obtain_auth_token
 from .views import (
     home, test_email, UserLoginView, verify_otp, 
     mpesa_callback, mpesa_c2b_confirmation, transaction_history, 
-    RegisterView, homepage_view, ChamaListCreateView
+    RegisterView, ChamaListCreateView
 )
 from .reports import generate_pdf_report, generate_excel_report
 
 urlpatterns = [
-    # Homepage
-    path("", homepage_view, name="homepage"),
+    # Homepage: Serve React's index.html
+    path("", TemplateView.as_view(template_name='index.html'), name="homepage"),
+
+    # Other routes
     path("home/", home, name="home"),
 
     # Authentication Routes
@@ -36,4 +38,5 @@ urlpatterns = [
     path("api/verify/", verify_otp, name="verify_otp"),
     path("api/transactions/", transaction_history, name="transaction_history"),
 ]
+
 
