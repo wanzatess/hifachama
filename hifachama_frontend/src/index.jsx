@@ -1,20 +1,20 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
-import AppRoutes from "./routes";
-import "./styles.css"; // ✅ Ensure it's inside src/
+import AppRoutes from "./routes/AppRoutes";
+import "./styles/Home.css"; // ✅ Corrected path
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter> {/* ✅ Router wraps everything just once */}
+    <BrowserRouter> {/* ✅ Wrap everything in Router */}
       <AuthProvider>
-       <AppRoutes />
+        <AppRoutes /> {/* ✅ Renders your routes */}
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
+
 
 
 
