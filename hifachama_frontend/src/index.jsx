@@ -1,24 +1,22 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom"; // Importing from React Router v7
+import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import AppRoutes from "./routes/AppRoutes";
-import "./styles/Home.css"; // ✅ Corrected path
-
-// Create a router with the routes
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <AppRoutes />, // Renders your routes
-  },
-  // Add additional routes if needed
-]);
+import AppRoutes from "./routes/AppRoutes";  // Your Routes
+import "./styles/Home.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <RouterProvider router={router} /> {/* ✅ RouterProvider now wraps the routes */}
+    <BrowserRouter> {/* Wrap the entire app with BrowserRouter */}
+      <AuthProvider> {/* Your AuthProvider */}
+        <AppRoutes /> {/* Your Routes */}
+      </AuthProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
+
+
+
 
 
 
