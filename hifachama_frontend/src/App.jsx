@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import Sidebar from "./components/Sidebar";
-import Home from "./pages/HomePage";
+import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/dashboard";
 import Loans from "./pages/loans";
 import Contributions from "./pages/contributions";
@@ -22,8 +22,8 @@ const PrivateRoute = ({ element }) => {
 function App() {
   const location = useLocation(); // ✅ Get current page URL
 
-  // ✅ Hide Sidebar for Public Pages
-  const hideSidebar = ["/login", "/register"].includes(location.pathname);
+  // ✅ Hide Sidebar for Public Pages (Login, Register, and HomePage)
+  const hideSidebar = ["/login", "/register", "/"].includes(location.pathname);
 
   return (
     <div className="flex h-screen bg-primary text-white">
@@ -31,7 +31,7 @@ function App() {
       <div className="flex-1 p-6 bg-gray-100 text-gray-900">
         <Routes>
           {/* ✅ Public Routes */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
