@@ -9,29 +9,31 @@ from .views import (
 from .reports import generate_pdf_report, generate_excel_report
 
 urlpatterns = [
+    # Homepage
     path("", homepage_view, name="homepage"),
     path("home/", home, name="home"),
-    
+
     # Authentication Routes
-    path("register/", lambda request: render(request, "register.html"), name="register"),
-    path("api/register/", RegisterView.as_view(), name="api-register"),
-    path("api/login/", UserLoginView.as_view(), name="api-login"),
-    path("api/auth/", include("authentication.urls")),
-    path("api/token/", obtain_auth_token, name="api_token_auth"),
+    path("register/", lambda request: render(request, "register.html"), name="register"),  # Web registration page
+    path("api/register/", RegisterView.as_view(), name="api-register"),  # API registration
+    path("api/login/", UserLoginView.as_view(), name="api-login"),  # API login
+    path("api/auth/", include("authentication.urls")),  # Ensure no duplicates inside authentication.urls
+    path("api/token/", obtain_auth_token, name="api_token_auth"),  # DRF Token Authentication
 
-    # Chama Routes
-    path("create-chama/", ChamaListCreateView.as_view(), name="create-chama"),
+    # Chama Management
+    path("api/chama/", ChamaListCreateView.as_view(), name="chama-list-create"),
 
-    # M-Pesa Routes
-    path("mpesa/callback/", mpesa_callback, name="mpesa_callback"),
-    path("mpesa/c2b/confirmation/", mpesa_c2b_confirmation, name="mpesa_c2b_confirmation"),
+    # M-Pesa Integration
+    path("api/mpesa/callback/", mpesa_callback, name="mpesa_callback"),
+    path("api/mpesa/c2b/confirmation/", mpesa_c2b_confirmation, name="mpesa_c2b_confirmation"),
 
-    # Reports Routes
-    path("reports/pdf/", generate_pdf_report, name="generate_pdf_report"),
-    path("reports/excel/", generate_excel_report, name="generate_excel_report"),
+    # Reports
+    path("api/reports/pdf/", generate_pdf_report, name="generate_pdf_report"),
+    path("api/reports/excel/", generate_excel_report, name="generate_excel_report"),
 
-    # Other
-    path("test-email/", test_email, name="test_email"),
-    path("verify/", verify_otp, name="verify_otp"),
+    # Miscellaneous
+    path("api/test-email/", test_email, name="test_email"),
+    path("api/verify/", verify_otp, name="verify_otp"),
     path("api/transactions/", transaction_history, name="transaction_history"),
 ]
+

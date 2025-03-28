@@ -2,6 +2,12 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Chama, ChamaMember, Transaction, Loan, Meeting, Notification, MemberRole
 from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
+from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
+from django.contrib.auth.models import update_last_login
+from rest_framework.authtoken.models import Token
+from .models import CustomUser as User
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -83,3 +89,27 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         )
         Token.objects.create(user=user)  # Generate a token for the user
         return user
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        email = data.get('email', '').lower()
+        password = data.get('password', '')
+
+        user = authenticate(username=email, password=password)
+        if not user:
+            raise AuthenticationFailed("Invalid email or password")
+
+        if not user.is_active:
+            raise AuthenticationFailed("Your account is inactive")
+
+        update_last_login(None, user)
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return {
+            'user_id': user.id,
+            'email': user.email,
+            'role': user.role,  # Assuming you have a `role` field
+            'token': token.key
+        }

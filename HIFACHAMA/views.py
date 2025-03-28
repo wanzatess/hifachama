@@ -34,7 +34,7 @@ from django.shortcuts import get_object_or_404
 from .permissions import IsChairperson, IsMember, IsSecretary, IsTreasurer
 from .serializers import (
     UserSerializer, ChamaSerializer, ChamaMemberSerializer,
-    TransactionSerializer, LoanSerializer, MeetingSerializer, NotificationSerializer
+    TransactionSerializer, LoanSerializer, MeetingSerializer, NotificationSerializer, LoginSerializer
 )
 
 User = get_user_model()
@@ -107,20 +107,32 @@ def authenticate_user(identifier, password):
             return None
     return user if check_password(password, user.password) else None
 
-class UserLoginView(APIView):
-    """Authenticate user and send OTP"""
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-        user = authenticate_user(username, password)
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"token": token.key}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if user:
-            otp = send_otp(user)  # Generate and send OTP
-            request.session["otp_code"] = otp.otp_code  # Store OTP in session
-            request.session["otp_user"] = user.id  # Store user ID for verification
-            return Response({"message": "OTP sent to your email"}, status=status.HTTP_200_OK)
+class UserLoginView(APIView):
+    permission_classes = [AllowAny]
 
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            user = authenticate(username=username, password=password)
+            if user:
+                token, created = Token.objects.get_or_create(user=user)
+                return Response({"token": token.key}, status=status.HTTP_200_OK)
+            return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={"request": request})

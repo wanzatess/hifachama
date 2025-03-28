@@ -72,15 +72,19 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
 }
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # Token valid for 1 day
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Refresh token valid for 7 days
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'AUTH_HEADER_TYPES': ('Bearer',),  # Clients should send 'Authorization: Bearer <token>'
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "SIGNING_KEY": 'django-insecure-xk7cuuvt+l6n8*1l1rq6qztlj*mte(%syfs79_jx@^ws3zt&%n',  # Uses your existing SECRET_KEY
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
 # Middleware
 MIDDLEWARE = [
@@ -188,5 +192,6 @@ CORS_ALLOWED_ORIGINS = [
     "https://hifachama-frontend.onrender.com",  # React frontend URL
 ]
 CORS_ALLOW_CREDENTIALS = True
+AUTH_USER_MODEL = "HIFACHAMA.CustomUser"
 
 
