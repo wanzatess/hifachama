@@ -1,31 +1,95 @@
 import { Routes, Route } from "react-router-dom";
 import React from "react";
-import Login from "./pages/login";
-import Register from "./pages/register";
-import Homepage from "./pages/HomePage";
-import Dashboard from "./pages/dashboard";
-import Contributions from "./pages/contributions";
-import Loans from "./pages/loans";
-import Meetings from "./pages/meetings";
-import Members from "./pages/members";
-import Transactions from "./pages/transactions";
-import Withdrawals from "./pages/withdrawals";
-import ChamaList from "./pages/ChamaList";
+
+// Pages
+import Homepage from "/src/pages/HomePage";
+import Login from "/src/pages/Login";
+import Register from "/src/pages/Register";
+import Dashboard from "/src/pages/Dashboard";
+import Contributions from "/src/pages/Contributions";
+import Loans from "/src/pages/Loans";
+import Meetings from "/src/pages/Meetings";
+import Members from "/src/pages/Members";
+import Transactions from "/src/pages/Transactions";
+import Withdrawals from "/src/pages/Withdrawals";
+import ChamaList from "/src/pages/ChamaList";
+
+// Protected Route Wrapper
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<Homepage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/contributions" element={<Contributions />} />
-      <Route path="/loans" element={<Loans />} />
-      <Route path="/meetings" element={<Meetings />} />
-      <Route path="/members" element={<Members />} />
-      <Route path="/transactions" element={<Transactions />} />
-      <Route path="/withdrawals" element={<Withdrawals />} />
-      <Route path="/chama-list" element={<ChamaList />} />
+
+      {/* Protected Routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/contributions"
+        element={
+          <ProtectedRoute>
+            <Contributions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/loans"
+        element={
+          <ProtectedRoute>
+            <Loans />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/meetings"
+        element={
+          <ProtectedRoute>
+            <Meetings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/members"
+        element={
+          <ProtectedRoute>
+            <Members />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/transactions"
+        element={
+          <ProtectedRoute>
+            <Transactions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/withdrawals"
+        element={
+          <ProtectedRoute>
+            <Withdrawals />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chama-list"
+        element={
+          <ProtectedRoute>
+            <ChamaList />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };
