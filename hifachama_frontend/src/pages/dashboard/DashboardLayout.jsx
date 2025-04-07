@@ -1,6 +1,6 @@
 // DashboardLayout.jsx
 import { Outlet } from "react-router-dom";
-import "../../styles/dashboard.css";
+import "../../styles/Dashboard.css";
 
 const DashboardLayout = () => {
   return (
