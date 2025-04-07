@@ -3,17 +3,17 @@ import { useContext } from 'react';
 import { useAuth } from '../context/AuthContext'; 
 
 // Pages
-import HomePage from '../pages/HomePage';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import DashboardHome from '../pages/dashboard/DashboardHome';
-import DashboardLayout from '../pages/dashboard/DashboardLayout';
-import JoinChama from '../pages/dashboard/JoinChama';
-import Contributions from '../pages/Contributions';
-import Loans from '../pages/Loans';
-import Members from '../pages/Members';
-import ChamaDetails from '../pages/ChamaDetails';
-import CreateChama from '../pages/dashboard/CreateChama';
+import HomePage from '../pages/HomePage.jsx';
+import Login from '../pages/Login.jsx';
+import Register from '../pages/Register.jsx';
+import DashboardHome from '../pages/dashboard/DashboardHome.jsx';
+import DashboardLayout from '../pages/dashboard/DashboardLayout.jsx';
+import JoinChama from '../pages/dashboard/JoinChama.jsx';
+import Contributions from '../pages/Contributions.jsx';
+import Loans from '../pages/Loans.jsx';
+import Members from '../pages/Members.jsx';
+import ChamaDetails from '../pages/ChamaDetails.jsx';
+import CreateChama from '../pages/dashboard/CreateChama.jsx';
 
 // Components
 import LoadingSpinner from '../components/LoadingSpinner';
