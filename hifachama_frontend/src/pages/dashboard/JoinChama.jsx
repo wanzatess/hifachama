@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import "../../styles/dashboard.css"; // Assuming styling is in this file
+import "../../styles/Dashboard.css"; // Assuming styling is in this file
 
 const JoinChama = () => {
   const [loading, setLoading] = useState(false);
