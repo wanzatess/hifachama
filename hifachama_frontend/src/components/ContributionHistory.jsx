@@ -8,7 +8,7 @@ const ContributionHistory = () => {
     const fetchContributions = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:8080/api/contributions/", {
+        const response = await axios.get("https://hifachama-backend.onrender.com/api/contributions/", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setContributions(response.data);

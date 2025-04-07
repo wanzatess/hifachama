@@ -14,7 +14,7 @@ const LoanRequestForm = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:8080/api/loans/",
+        "https://hifachama-backend.onrender.com/api/loans/",
         {
           amount,
           repayment_period: repaymentPeriod,

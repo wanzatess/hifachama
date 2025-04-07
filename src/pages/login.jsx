@@ -12,7 +12,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8080/api/login/", { username, password });
+      const response = await axios.post("https://hifachama-backend.onrender.com/api/login/", { username, password });
       const token = response.data.access;
       const decodedToken = jwtDecode(token); // ✅ Correct function usage
 

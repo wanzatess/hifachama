@@ -14,7 +14,7 @@ const ContributionForm = () => {
     try {
       const token = localStorage.getItem("token"); // Assuming JWT authentication
       const response = await axios.post(
-        "http://localhost:8080/api/transactions/",
+        "https://hifachama-backend.onrender.com/api/transactions/",
         {
           amount,
           payment_method: paymentMethod,
