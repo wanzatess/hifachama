@@ -1,98 +1,111 @@
-import { Routes, Route } from "react-router-dom";
-import React from "react";
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { useAuth } from '../context/AuthContext'; 
 
 // Pages
-import Homepage from "/src/pages/HomePage";
-import Login from "/src/pages/Login";
-import Register from "/src/pages/Register";
-import Dashboard from "/src/pages/Dashboard";
-import Contributions from "/src/pages/Contributions";
-import Loans from "/src/pages/Loans";
-import Meetings from "/src/pages/Meetings";
-import Members from "/src/pages/Members";
-import Transactions from "/src/pages/Transactions";
-import Withdrawals from "/src/pages/Withdrawals";
-import ChamaList from "/src/pages/ChamaList";
+import HomePage from '../pages/HomePage';
+import Login from '../pages/Login';
+import Register from '../pages/Register';
+import DashboardHome from '../pages/dashboard/DashboardHome';
+import DashboardLayout from '../pages/dashboard/DashboardLayout';
+import JoinChama from '../pages/dashboard/JoinChama';
+import Contributions from '../pages/Contributions';
+import Loans from '../pages/Loans';
+import Members from '../pages/Members';
+import ChamaDetails from '../pages/ChamaDetails';
+import CreateChama from '../pages/dashboard/CreateChama';
 
-// Protected Route Wrapper
-import ProtectedRoute from "../components/ProtectedRoute";
+// Components
+import LoadingSpinner from '../components/LoadingSpinner';
+
+const PrivateRoute = ({ children, requiredRole }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
 
 const AppRoutes = () => {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner fullPage />;
+  }
+
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<Homepage />} />
+      <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Protected Routes */}
+      {/* Dashboard Routes */}
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
+          <PrivateRoute>
+            <DashboardLayout />
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<DashboardHome />} />
+        <Route path="home" element={<DashboardHome />} />
+        <Route path="join-chama" element={<JoinChama />} />
+        <Route 
+          path="create-chama" 
+          element={<CreateChama />} 
+        />
+      </Route>
+
+      {/* Other Protected Routes */}
+      <Route
+        path="/chama/:id"
+        element={
+          <PrivateRoute>
+            <ChamaDetails />
+          </PrivateRoute>
         }
       />
       <Route
         path="/contributions"
         element={
-          <ProtectedRoute>
+          <PrivateRoute>
             <Contributions />
-          </ProtectedRoute>
+          </PrivateRoute>
         }
       />
       <Route
         path="/loans"
         element={
-          <ProtectedRoute>
+          <PrivateRoute>
             <Loans />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/meetings"
-        element={
-          <ProtectedRoute>
-            <Meetings />
-          </ProtectedRoute>
+          </PrivateRoute>
         }
       />
       <Route
         path="/members"
         element={
-          <ProtectedRoute>
+          <PrivateRoute>
             <Members />
-          </ProtectedRoute>
+          </PrivateRoute>
         }
       />
-      <Route
-        path="/transactions"
-        element={
-          <ProtectedRoute>
-            <Transactions />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/withdrawals"
-        element={
-          <ProtectedRoute>
-            <Withdrawals />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/chama-list"
-        element={
-          <ProtectedRoute>
-            <ChamaList />
-          </ProtectedRoute>
-        }
-      />
+
+      {/* Catch-all route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
 
 export default AppRoutes;
-

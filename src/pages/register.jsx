@@ -1,24 +1,33 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
 
 const Register = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    console.log("Register button clicked!"); // ✅ Debugging Step 1
+    console.log("Sending request to:", "http://127.0.0.1:8080/api/register/"); // ✅ Debugging Step 2
+
     try {
-      await axios.post('http://localhost:8080/api/register/', { username, password, email });
-      setMessage('Registration successful!');
+      const response = await axios.post("http://127.0.0.1:8080/api/register/", {
+        username,
+        password,
+        email,
+      });
+
+      console.log("Response received:", response.data); // ✅ Debugging Step 3
+      setMessage("Registration successful!");
     } catch (err) {
-      setMessage('Registration failed');
+      console.error("Registration failed:", err.response?.data || err.message); // ✅ Debugging Step 4
+      setMessage("Registration failed");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <div>
       <h2>Register</h2>
       <input
         type="text"
@@ -38,9 +47,9 @@ const Register = () => {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <button type="submit">Register</button>
+      <button type="button" onClick={handleSubmit}>Register</button> {/* ✅ Fixed button */}
       {message && <p>{message}</p>}
-    </form>
+    </div>
   );
 };
 

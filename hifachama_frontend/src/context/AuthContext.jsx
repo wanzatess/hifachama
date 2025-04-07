@@ -1,98 +1,154 @@
-import { createContext, useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../services/api"; // ✅ Ensure this path is correct
+import { createContext, useState, useEffect, useCallback, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import api from '../api/axiosConfig';
+import { getAuthToken, setAuthToken, clearAuthToken } from '../utils/auth';
+import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [authState, setAuthState] = useState({
+    user: null,
+    loading: true,
+    error: null
+  });
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // ✅ Logout Function
-  const handleLogout = useCallback(() => {
-    console.log("Logging out...");
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("role");
-    setUser(null);
-    navigate("/login", { replace: true }); // ✅ Redirects user to login
-  }, [navigate]);
-
-  // ✅ Refresh Token Function
-  const refreshAccessToken = async () => {
-    try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) {
-        console.log("No refresh token found. Logging out...");
-        return handleLogout();
-      }
-
-      const response = await api.post("/auth/refresh/", { refresh: refreshToken });
-      localStorage.setItem("token", response.data.access);
-      return response.data.access;
-    } catch (error) {
-      console.error("Token refresh failed", error);
-      handleLogout();
+  // Initialize auth state - runs once on mount
+  const initializeAuth = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) {
+      setAuthState(prev => ({ ...prev, loading: false }));
+      return;
     }
-  };
 
-  // ✅ Login Function
-  const handleLogin = async (email, password) => {
     try {
-      const response = await api.post("/api/login/", { username: email, password });
+      // Verify token and get user data in parallel
+      const [isValid, userResponse] = await Promise.all([
+        api.get('/api/verify-token/', {
+          headers: { Authorization: `Token ${token}` }
+        }).then(res => res.data.valid),
+        api.get('/api/user/', {
+          headers: { Authorization: `Token ${token}` }
+        }).catch(() => null)
+      ]);
 
-      localStorage.setItem("token", response.data.access);
-      localStorage.setItem("refreshToken", response.data.refresh);
-      localStorage.setItem("role", response.data.role);
-      setUser(response.data.user);
-
-      console.log("Login successful! Redirecting to dashboard...");
-      navigate("/dashboard"); // ✅ Redirect user after login
-    } catch (error) {
-      console.error("Login failed", error.response?.data || error.message);
-    }
-  };
-
-  // ✅ Fetch User Data (Handles expired tokens)
-  const fetchUser = useCallback(async () => {
-    try {
-      let token = localStorage.getItem("token");
-      if (!token) {
-        console.log("No token found. User not logged in.");
-        return setLoading(false);
-      }
-
-      let response = await api.get("/auth/user/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      console.log("User authenticated:", response.data);
-      setUser(response.data);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        console.log("Token expired, attempting to refresh...");
-        const newToken = await refreshAccessToken();
-        if (newToken) return fetchUser(); // Retry fetching user
+      if (isValid) {
+        setAuthState({
+          user: userResponse?.data || { authenticated: true },
+          loading: false,
+          error: null
+        });
       } else {
-        console.error("Authentication failed. Logging out...");
-        handleLogout();
+        clearAuthToken();
+        setAuthState({ user: null, loading: false, error: null });
       }
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Auth init error:', error);
+      clearAuthToken();
+      setAuthState({ user: null, loading: false, error: 'Session expired' });
     }
-  }, [handleLogout]);
+  }, []);
 
   useEffect(() => {
-    console.log("Checking authentication...");
-    fetchUser();
-  }, [fetchUser]);
+    initializeAuth();
+  }, [initializeAuth]);
+
+  const login = async (email, password) => {
+    setAuthState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const response = await api.post('/api/login/', {
+        email: email.trim().toLowerCase(),
+        password
+      });
+  
+      const { token, user } = response.data;
+      
+      if (!user || !user.role) {
+        throw new Error('Invalid user data received from server');
+      }
+  
+      setAuthToken(token);
+      setAuthState({ 
+        user, 
+        loading: false, 
+        error: null 
+      });
+      toast.success('Login successful!');
+  
+      // Return the redirect path instead of navigating here
+      const redirectPath = determineRedirectPath(user);
+      return { 
+        success: true,
+        redirectTo: redirectPath,
+        user
+      };
+  
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 
+                         error.message || 
+                         'Login failed';
+      
+      setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+      return { success: false, error: errorMessage };
+    }
+  };
+
+  const determineRedirectPath = (user) => {
+    const from = location.state?.from?.pathname;
+    
+    // 1. Chairperson without chama goes to create chama
+    if (user.role === 'chairperson' && !user.chamaId) {
+      return '/dashboard/create-chama';
+    }
+    // 2. Members without chama go to join chama
+    else if (!user.chamaId) {
+      return '/dashboard/join-chama';
+    }
+    // 3. Users with chama go to their chama page
+    else if (user.chamaId) {
+      return `/chama/${user.chamaId}`;
+    }
+    // 4. Fallback to original path or dashboard
+    return from || '/dashboard';
+  };
+
+  const logout = useCallback(() => {
+    clearAuthToken();
+    setAuthState({ user: null, loading: false, error: null });
+    navigate('/login', { replace: true });
+    toast.info('You have been logged out');
+  }, [navigate]);
+
+  // Debugging - log auth state changes
+  useEffect(() => {
+    console.log('Auth state changed:', authState);
+  }, [authState]);
+
+  const value = {
+    ...authState,
+    login,
+    logout,
+    isAuthenticated: !!authState.user,
+    updateUser: (updates) => setAuthState(prev => ({
+      ...prev,
+      user: { ...prev.user, ...updates }
+    }))
+  };
 
   return (
-    <AuthContext.Provider value={{ user, handleLogin, handleLogout, loading }}>
-      {!loading ? children : <p>Loading...</p>} {/* ✅ Prevents UI flickering */}
+    <AuthContext.Provider value={value}>
+      {authState.loading ? <div className="loading-spinner" /> : children}
     </AuthContext.Provider>
   );
 };
 
-export default AuthContext;
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

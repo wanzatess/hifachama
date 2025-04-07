@@ -1,13 +1,23 @@
-import { useContext } from "react";
-import { Navigate, Outlet } from "react-router-dom";
-import AuthContext from "../context/AuthContext";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-const PrivateRoute = () => {
-  const { user, loading } = useContext(AuthContext);
+const PrivateRoute = ({ children, requiredRole }) => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
-  if (loading) return <p>Loading...</p>; // ✅ Prevents flickering
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-  return user ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
 };
 
 export default PrivateRoute;

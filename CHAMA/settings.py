@@ -19,7 +19,7 @@ print("DEBUG (settings.py) - SUPABASE_URL:", os.getenv("SUPABASE_URL"))
 print("DEBUG (settings.py) - SUPABASE_ANON_KEY:", "Loaded" if os.getenv("SUPABASE_ANON_KEY") else "None")
 
 # Base directory
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Security settings
@@ -75,8 +75,10 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+# Ensure this is set for email login
 AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
+    'HIFACHAMA.authentication.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
@@ -150,15 +152,12 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, images)
 STATIC_URL = 'static/'
-
-# Where static files will be collected for production deployment
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Add the path to the staticfiles directory inside hifachama_frontend
+# Tell Django where the React static files are located
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'hifachama_frontend', 'staticfiles'),  # Correct path to staticfiles directory
+    os.path.join(BASE_DIR, 'hifachama_frontend', 'dist'),
 ]
 
 
@@ -193,6 +192,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "https://rhzjaepghimzvdjyokcw.supabase.
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoemphZXBnaGltenZkanlva2N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4MjIxMDcsImV4cCI6MjA1ODM5ODEwN30.-N53uixRsUrfwzq7rcmwtpZf4YxhaR327Ift3Ymu_Z4")
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://localhost:3000",
     "https://hifachama-frontend.onrender.com",  # React frontend URL
 ]
 CORS_ALLOW_CREDENTIALS = True

@@ -1,0 +1,161 @@
+/* Register Page Styling */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #6F623E;
+  color: #F0EAD6;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+/* Register.css */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #6F623E; /* Rich brown background */
+  padding: 20px;
+}
+
+.formWrapper {
+  width: 100%;
+  max-width: 450px;
+  padding: 30px;
+  background: #b39534; /* Soft yellow background */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #FFE680; /* Light golden border */
+}
+
+.logo-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.logo {
+  height: 50px;
+  margin-bottom: 15px;
+}
+
+h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.spaced-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+label {
+  font-weight: 500;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.error {
+  border-color: #e74c3c;
+}
+
+.error-text {
+  color: #e74c3c;
+  font-size: 0.85rem;
+}
+
+.name-fields {
+  display: flex;
+  gap: 15px;
+}
+
+.half {
+  flex: 1;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+}
+
+.submit-btn:hover {
+  background-color: #2980b9;
+}
+
+.submit-btn:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 20px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.login-link a {
+  color: #3498db;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+
+.message {
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.rounded-box {
+  margin: 0;
+  padding: 8px;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.7);
+}

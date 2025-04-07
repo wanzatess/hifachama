@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/Home.css"; // Move your CSS file to React's src/styles/
+import logo from '../static/images/logo.png'; // Adjusted relative path
 
 const Home = () => {
   return (
@@ -9,7 +10,11 @@ const Home = () => {
       {/* Navigation Bar */}
       <nav className="navbar navbar-expand-lg navbar-dark" style={{ backgroundColor: "#4E4528" }}>
         <div className="container">
-          <a className="navbar-brand text-light" href="#">HIFACHAMA</a>
+          {/* Logo on the left side */}
+          <a className="navbar-brand text-light" href="#">
+            <img src={logo} alt="HIFACHAMA Logo" style={{ width: '50px', height: 'auto', marginRight: '10px' }} />
+            HIFACHAMA
+          </a>
           <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span className="navbar-toggler-icon"></span>
           </button>
@@ -84,3 +89,4 @@ const Home = () => {
 };
 
 export default Home;
+

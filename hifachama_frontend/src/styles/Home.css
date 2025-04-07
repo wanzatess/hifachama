@@ -1,73 +1,91 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #6F623E;
-    color: #F0EAD6;
-    text-align: center;
-    margin: 0;
-    padding: 0;
+/* Minimal Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Header */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 10%;
-    background-color: #4E4528;
+/* Base Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #6F623E;
+  color: #F0EAD6;
+  padding-top: 50px; /* Space for fixed navbar */
+}
+
+/* Compact Navigation Bar */
+nav {
+  background-color: #4E4528;
+  padding: 8px 5%;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 50px; /* Reduced from original */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .logo {
-    height: 50px;
+  height: 30px; /* Smaller logo */
 }
 
-/* Navigation */
 nav ul {
-    list-style: none;
-    display: flex;
-    gap: 20px;
-    padding: 0;
-    margin: 0;
-    flex-wrap: wrap; /* Ensure it wraps on smaller screens */
+  display: flex;
+  gap: 15px;
+  list-style: none;
 }
 
 nav a {
-    text-decoration: none;
-    color: #F0EAD6;
-    font-weight: bold;
-    transition: color 0.3s ease-in-out;
+  color: #F0EAD6;
+  text-decoration: none;
+  font-size: 14px; /* Smaller font */
+  font-weight: bold;
+  padding: 5px 0;
 }
 
-nav a:hover {
-    color: #CDBE96;
+/* Header Content (scrolls normally) */
+header {
+  padding: 30px 5%;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-/* Hero Section */
-#hero {
-    padding: 80px 10%;
-    max-width: 900px;
-    margin: auto;
-    line-height: 1.6;
-}
-
+/* Button Styles */
 .cta-button {
-    background-color: #9C8F5F;
-    padding: 12px 24px;
-    text-decoration: none;
-    color: #FFFFFF;
-    border-radius: 5px;
-    font-weight: bold;
-    display: inline-block;
-    transition: background-color 0.3s ease-in-out;
+  display: inline-block;
+  background-color: #9C8F5F;
+  color: #F0EAD6;
+  padding: 10px 20px;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-top: 20px;
+  font-weight: bold;
+  font-size: 14px;
 }
 
-.cta-button:hover {
-    background-color: #8A7B50;
-}
-
-/* Footer */
-footer {
-    background-color: #4E4528;
-    padding: 20px;
-    font-size: 14px;
-    margin-top: 50px;
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  body {
+    padding-top: 45px;
+  }
+  
+  nav {
+    padding: 6px 3%;
+    height: 45px;
+  }
+  
+  .logo {
+    height: 25px;
+  }
+  
+  nav ul {
+    gap: 10px;
+  }
+  
+  nav a {
+    font-size: 13px;
+  }
 }

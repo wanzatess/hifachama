@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from rest_framework.permissions import AllowAny
 from datetime import timedelta
 from django.utils import timezone
+from django.conf import settings
+from rest_framework.parsers import JSONParser
 from django.contrib.auth import login, authenticate, get_user_model
 from django.http import HttpResponse
 from django.core.mail import send_mail
@@ -9,9 +11,11 @@ from django.contrib.auth.hashers import check_password
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework import generics, permissions
-from HIFACHAMA.authentication import authenticate_user
+from HIFACHAMA.authentication import EmailBackend
 import pyotp
+import os
 from HIFACHAMA.utils.emails import send_email_notification
 from HIFACHAMA.utils.notifications import send_push_notification
 import pandas as pd
@@ -28,13 +32,13 @@ from rest_framework.permissions import AllowAny
 import json
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
-from .models import OTP, Chama, ChamaMember, Transaction, Loan, Meeting, Notification 
+from .models import OTP, Chama, ChamaMember, Transaction, Loan, Meeting, Notification, CustomUser
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from .permissions import IsChairperson, IsMember, IsSecretary, IsTreasurer
 from .serializers import (
     UserSerializer, ChamaSerializer, ChamaMemberSerializer,
-    TransactionSerializer, LoanSerializer, MeetingSerializer, NotificationSerializer, LoginSerializer
+    TransactionSerializer, LoanSerializer, MeetingSerializer, NotificationSerializer, LoginSerializer, UserRegistrationSerializer
 )
 
 User = get_user_model()
@@ -112,27 +116,83 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            
+            # Create token for immediate login after registration
             token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=status.HTTP_201_CREATED)
+            
+            return Response({
+                "user": UserSerializer(user).data,
+                "token": token.key,
+                "message": "Registration successful"
+            }, status=status.HTTP_201_CREATED)
+            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserLoginView(APIView):
     permission_classes = [AllowAny]
-
+    
     def post(self, request):
+        # Debugging: Log incoming request data
+        print(f"Login attempt at {timezone.now()}")
+        print(f"Request data: {request.data}")
+        
         serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            username = serializer.validated_data['username']
-            password = serializer.validated_data['password']
-            user = authenticate(username=username, password=password)
-            if user:
-                token, created = Token.objects.get_or_create(user=user)
-                return Response({"token": token.key}, status=status.HTTP_200_OK)
-            return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not serializer.is_valid():
+            print(f"Validation errors: {serializer.errors}")
+            return Response(
+                {"error": "Invalid input", "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        email = serializer.validated_data.get('email').lower()
+        password = serializer.validated_data.get('password')
+        
+        # Debugging: Before authentication attempt
+        print(f"Attempting authentication for: {email}")
+        
+        # Authenticate using Django's authenticate()
+        user = authenticate(request, username=email, password=password)
+        
+        if not user:
+            # Debugging: Check if user exists but password is wrong
+            user_exists = CustomUser.objects.filter(email=email).exists()
+            print(f"Authentication failed. User exists: {user_exists}")
+            return Response(
+                {"error": "Invalid email or password"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            
+        if not user.is_active:
+            print(f"Inactive user attempt: {email}")
+            return Response(
+                {"error": "Account is inactive"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        # Get or create token
+        token, created = Token.objects.get_or_create(user=user)
+        
+        # Debugging: Successful login
+        print(f"Successful login for: {email}. Token {'created' if created else 'exists'}")
+        
+        # Update last login
+        user.last_login = timezone.now()
+        user.save()
+        
+        return Response({
+            "token": token.key,
+            "user_id": user.pk,
+            "email": user.email,
+            "role": user.role,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name
+        }, status=status.HTTP_200_OK)
+
 class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={"request": request})
@@ -472,16 +532,71 @@ class WithdrawalRequestView(APIView):
             requested_by=request.user
         )
         return Response({"message": "Withdrawal requested successfully"}, status=201)
-class RegisterView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def homepage_view(request):
-    return render(request, 'homepage.html')
+    frontend_path = os.path.join(settings.BASE_DIR, 'hifachama_frontend', 'dist', 'index.html')
+
+    if os.path.exists(frontend_path):
+        with open(frontend_path, 'r') as file:
+            return HttpResponse(file.read(), content_type='text/html')
+    else:
+        return HttpResponse("React build not found. Run 'npm run build' in the frontend directory.", status=500)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def verify_token(request):
+    return Response({
+        "valid": True,
+        "user": {
+            "id": request.user.id,
+            "email": request.user.email,
+            "role": request.user.role
+        }
+    }, status=200)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_data(request):
+    user = request.user
+    try:
+        data = {
+            "user": {
+                "username": user.username,
+                "email": user.email,
+                "role": user.role
+            },
+            "stats": {
+                "balance": user.account_balance if hasattr(user, 'account_balance') else 0,
+                "active_loans": Loan.objects.filter(requested_by=user, status='active').count(),
+                "pending_contributions": Transaction.objects.filter(member=user, status='pending').count()
+            },
+            "recent_activity": TransactionSerializer(
+                Transaction.objects.filter(member=user).order_by('-date')[:5],
+                many=True
+            ).data
+        }
+        return Response(data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def contributions_data(request):
+    user = request.user
+    try:
+        contributions = Transaction.objects.filter(
+            member=user,
+            transaction_type='contribution'
+        ).order_by('-date')
+        serializer = TransactionSerializer(contributions, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    # Example Django View (adjust for your backend)
+@api_view(['GET'])
+def chama_detail(request, id):
+    try:
+        chama = Chama.objects.get(id=id)
+        serializer = ChamaSerializer(chama)
+        return Response(serializer.data)
+    except Chama.DoesNotExist:
+        return Response(status=404)

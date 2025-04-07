@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import api from "../services/api";
-import AuthContext from "../context/AuthContext";  // ✅ Add this
+import { AuthProvider } from "../context/AuthContext";  // ✅ Add this
 
 const Loans = () => {
   const { user } = useContext(AuthContext);  // ✅ Get the logged-in user's role
