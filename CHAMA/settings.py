@@ -25,7 +25,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Security settings
 SECRET_KEY = 'django-insecure-xk7cuuvt+l6n8*1l1rq6qztlj*mte(%syfs79_jx@^ws3zt&%n'
 DEBUG = True
-ALLOWED_HOSTS = ['https://hifachama-backend.onrender.com']
+ALLOWED_HOSTS = [
+    'hifachama-backend.onrender.com',
+    'localhost',
+    '127.0.0.1'
+]
+
 
 # Installed apps
 INSTALLED_APPS = [
