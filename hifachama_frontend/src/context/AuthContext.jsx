@@ -62,11 +62,10 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/api/login/', { email, password });
       const { token, ...userData } = response.data;
   
-      // Transform backend response to frontend format
       const user = {
         ...userData,
         token,
-        chamaId: userData.chama_id || null // Handle potential undefined
+        chamaId: userData.chama_id || null
       };
   
       setAuthToken(token);
@@ -76,10 +75,11 @@ export const AuthProvider = ({ children }) => {
         error: null 
       });
   
-      return { 
-        success: true, 
-        redirectTo: determineRedirectPath(user) 
-      };
+      // Auto-redirect here instead of returning path
+      const redirectPath = determineRedirectPath(user);
+      navigate(redirectPath, { replace: true });
+  
+      return { success: true };
   
     } catch (error) {
       const errorMessage = error.response?.data?.detail || 

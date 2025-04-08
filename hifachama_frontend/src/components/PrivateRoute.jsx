@@ -6,7 +6,7 @@ const PrivateRoute = ({ children, requiredRole }) => {
   const location = useLocation();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner fullPage />; // Use your existing spinner
   }
 
   if (!user) {
@@ -14,7 +14,7 @@ const PrivateRoute = ({ children, requiredRole }) => {
   }
 
   if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/unauthorized" replace />; // Better than dashboard
   }
 
   return children;

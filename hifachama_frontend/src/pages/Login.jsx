@@ -21,13 +21,7 @@ const handleLogin = async (e) => {
   setIsLoading(true);
 
   try {
-    const result = await login(email, password);
-    if (result.success) {
-      // Redirect after successful login
-      navigate(result.redirectTo);  // Use the redirect path from AuthContext
-    } else if (result.error) {
-      setError(result.error);
-    }
+    await login(email, password); // AuthContext now handles redirect
   } catch (err) {
     setError(err.message || "Login failed");
   } finally {
