@@ -24,8 +24,10 @@ class ChamaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Chama
-        fields = ['id', 'name', 'description', 'chama_type', 'admin', 'created_at', 'updated_at']
-        read_only_fields = ['admin']
+        fields = ['id', 'name', 'description', 'chama_type']  # Only these fields
+        extra_kwargs = {
+            'admin': {'read_only': True}  # Will auto-set to request.user
+        }
  
 
 class ChamaMemberSerializer(serializers.ModelSerializer):
