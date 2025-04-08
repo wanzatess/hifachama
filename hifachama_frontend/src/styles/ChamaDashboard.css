@@ -135,3 +135,27 @@
       grid-template-columns: 1fr 1fr;
     }
   }
+  /* Add to ChamaDashboard.css */
+.chama-type-badge {
+  background: #4e73df;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.tools-tab {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.member-list {
+  list-style: none;
+  padding: 0;
+}
+.member-list li {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
