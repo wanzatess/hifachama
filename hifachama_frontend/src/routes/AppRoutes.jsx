@@ -1,6 +1,6 @@
-import { Routes, Route, Navigate } from 'react-router-dom';  // Fixed spelling
-import { useContext } from 'react';
-import { useAuth } from '../context/AuthContext'; 
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useEffect } from 'react';
 
 // Pages
 import HomePage from '../pages/HomePage.jsx';
@@ -20,20 +20,31 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const PrivateRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
 
   return children;
+};
+
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
 };
 
 const AppRoutes = () => {
@@ -44,67 +55,67 @@ const AppRoutes = () => {
   }
 
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-      {/* Dashboard Routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <PrivateRoute>
-            <DashboardLayout />
-          </PrivateRoute>
-        }
-      >
-        <Route index element={<DashboardHome />} />
-        <Route path="home" element={<DashboardHome />} />
-        <Route path="join-chama" element={<JoinChama />} />
-        <Route 
-          path="create-chama" 
-          element={<CreateChama />} 
+        {/* Dashboard Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <DashboardLayout />
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<DashboardHome />} />
+          <Route path="home" element={<DashboardHome />} />
+          <Route path="join-chama" element={<JoinChama />} />
+          <Route path="create-chama" element={<CreateChama />} />
+        </Route>
+
+        {/* Other Protected Routes */}
+        <Route
+          path="/chama/:id"
+          element={
+            <PrivateRoute>
+              <ChamaDetails />
+            </PrivateRoute>
+          }
         />
-      </Route>
+        <Route
+          path="/contributions"
+          element={
+            <PrivateRoute>
+              <Contributions />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/loans"
+          element={
+            <PrivateRoute>
+              <Loans />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/members"
+          element={
+            <PrivateRoute>
+              <Members />
+            </PrivateRoute>
+          }
+        />
 
-      {/* Other Protected Routes */}
-      <Route
-        path="/chama/:id"
-        element={
-          <PrivateRoute>
-            <ChamaDetails />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/contributions"
-        element={
-          <PrivateRoute>
-            <Contributions />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/loans"
-        element={
-          <PrivateRoute>
-            <Loans />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/members"
-        element={
-          <PrivateRoute>
-            <Members />
-          </PrivateRoute>
-        }
-      />
-
-      {/* Catch-all route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Catch-all route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 };
 
