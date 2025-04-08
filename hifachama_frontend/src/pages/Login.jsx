@@ -23,7 +23,8 @@ const handleLogin = async (e) => {
   try {
     const result = await login(email, password);
     if (result.success) {
-      // No need to navigate here - AuthContext's login already does it
+      // Redirect after successful login
+      navigate(result.redirectTo);  // Use the redirect path from AuthContext
     } else if (result.error) {
       setError(result.error);
     }
@@ -33,8 +34,6 @@ const handleLogin = async (e) => {
     setIsLoading(false);
   }
 };
-
-  
 
   return (
     <div className="login-container">
