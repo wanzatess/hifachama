@@ -15,8 +15,8 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ['id', 'username', 'email']
+        model = CustomUser
+        fields = ['id', 'email', 'username', 'role', 'phone_number', 'first_name', 'last_name']
 
 class ChamaSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=True)
@@ -205,14 +205,15 @@ class LoginSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         user = instance['user']
-        token, created = user.auth_token.get_or_create()
+        token, created = Token.objects.get_or_create(user=user)
         
         return {
-            'token': token.key,
-            'user_id': user.pk,
-            'email': user.email,
-            'role': user.role,
-            'username': user.username,
-            'first_name': user.first_name,
-            'last_name': user.last_name
+            "token": token.key,
+            "user_id": user.pk,
+            "email": user.email,
+            "role": user.role,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "chama_id": user.chama.id if hasattr(user, 'chama') else None
         }

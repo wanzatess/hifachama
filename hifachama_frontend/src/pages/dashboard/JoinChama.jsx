@@ -25,7 +25,7 @@ const JoinChama = () => {
     setLoading(true);
     try {
       // Adjust your API base URL accordingly
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8080";
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "https://hifachama-backend.onrender.com";
       const response = await axios.post(`${API_BASE_URL}/api/chamas/${chamaId}/members`, {
         // Send the user ID (you can adapt it if needed)
         user_id: localStorage.getItem("user_id"), // Assuming you store user ID in local storage

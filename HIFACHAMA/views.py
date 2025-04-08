@@ -187,6 +187,7 @@ class UserLoginView(APIView):
             "token": token.key,
             "user_id": user.pk,
             "email": user.email,
+            "redirectTo": "/dashboard",
             "role": user.role,
             "username": user.username,
             "first_name": user.first_name,

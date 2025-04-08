@@ -59,16 +59,15 @@ export const AuthProvider = ({ children }) => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      const response = await api.post('/api/login/', {
-        email: email.trim().toLowerCase(),
-        password
-      });
+      const response = await api.post('/api/login/', { email, password });
+      const { token, ...userData } = response.data;
   
-      const { token, user } = response.data;
-      
-      if (!user || !user.role) {
-        throw new Error('Invalid user data received from server');
-      }
+      // Transform backend response to frontend format
+      const user = {
+        ...userData,
+        token,
+        chamaId: userData.chama_id || null // Handle potential undefined
+      };
   
       setAuthToken(token);
       setAuthState({ 
@@ -76,14 +75,10 @@ export const AuthProvider = ({ children }) => {
         loading: false, 
         error: null 
       });
-      toast.success('Login successful!');
   
-      // Return the redirect path instead of navigating here
-      const redirectPath = determineRedirectPath(user);
       return { 
-        success: true,
-        redirectTo: redirectPath,
-        user
+        success: true, 
+        redirectTo: determineRedirectPath(user) 
       };
   
     } catch (error) {

@@ -14,76 +14,26 @@ const Login = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
-  
-    try {
-      const loginResult = await login(email, password);
-      
-      if (loginResult.success) {
-        // Use redirectTo from login result to navigate
-        navigate(loginResult.redirectTo || "/dashboard", { replace: true });
-      } else {
-        setError(loginResult.error || "Login failed. Please try again.");
-      }
-    } catch (err) {
-      console.error("Full login error:", {
-        error: err,
-        response: err.response,
-        request: err.request
-      });
-  
-      let errorMessage = "Login failed. Please try again.";
-  
-      if (err.code === "ERR_NETWORK") {
-        errorMessage = "Cannot connect to server. Please check your network connection.";
-      } else if (err.response) {
-        // Handle Django error responses
-        if (err.response.status === 400) {
-          errorMessage = err.response.data?.error || "Invalid email or password";
-        } else if (err.response.status === 401) {
-          errorMessage = "Invalid credentials";
-        } else if (err.response.status === 403) {
-          errorMessage = "Account inactive - contact administrator";
-        } else {
-          errorMessage = err.response.data?.error || 
-                         err.response.data?.detail || 
-                         JSON.stringify(err.response.data);
-        }
-      }
-  
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
+// Simplify the handler to use AuthContext's redirect:
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setError("");
+  setIsLoading(true);
+
+  try {
+    const result = await login(email, password);
+    if (result.success) {
+      // No need to navigate here - AuthContext's login already does it
+    } else if (result.error) {
+      setError(result.error);
     }
-  };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
-    
-    try {
-      const { success, redirectTo } = await login(email, password);
-      
-      if (success) {
-        // Only navigate if we have a redirect path
-        if (redirectTo) {
-          navigate(redirectTo, { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
-      } else {
-        setError("Login failed. Please try again.");
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError(err.message || "Login failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  } catch (err) {
+    setError(err.message || "Login failed");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   
 
   return (
