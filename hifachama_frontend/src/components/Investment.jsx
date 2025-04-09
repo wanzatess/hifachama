@@ -1,16 +1,41 @@
+// In Hybrid.jsx, Investment.jsx, and Merrygoround.jsx
+import React, { useState } from 'react';
+import './Dashboard.css';
+
 export const SavingsTracker = () => {
-    const [savings, setSavings] = useState(0);
-    
-    return (
-      <div className="simple-card">
-        <h3>💰 Group Savings</h3>
-        <p>Total: KES {savings.toLocaleString()}</p>
+  const [savings, setSavings] = useState(0);
+  const [contribution, setContribution] = useState('');
+  
+  const handleContribution = () => {
+    if (!contribution || isNaN(contribution)) return;
+    setSavings(prev => prev + Number(contribution));
+    setContribution('');
+  };
+
+  return (
+    <div className="dashboard-card">
+      <h3 className="card-title">💰 Group Savings</h3>
+      <div className="stat-value">KES {savings.toLocaleString()}</div>
+      
+      <div className="form-group">
+        <label>Add Contribution</label>
         <input 
           type="number" 
-          placeholder="Add amount"
-          onChange={(e) => setSavings(prev => prev + Number(e.target.value))}
+          value={contribution}
+          onChange={(e) => setContribution(e.target.value)}
+          placeholder="Amount in KES"
         />
-        <button className="simple-button">Record</button>
       </div>
-    );
-  };
+      
+      <button className="action-btn" onClick={handleContribution}>
+        Record Contribution
+      </button>
+      
+      <div className="recent-activity">
+        <h4 className="activity-title">Recent Contributions</h4>
+        {/* You can add actual transaction history here later */}
+        <p>No recent contributions yet</p>
+      </div>
+    </div>
+  );
+};

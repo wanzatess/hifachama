@@ -1,15 +1,44 @@
+// In Hybrid.jsx, Investment.jsx, and Merrygoround.jsx
+import React, { useState } from 'react';
+import './Dashboard.css';
+
 export const MemberRotation = ({ members }) => {
-    return (
-      <div className="simple-card">
-        <h3>🎯 Next in Rotation</h3>
-        <ul>
-          {members.map((member, index) => (
-            <li key={index}>
-              {member.name} {index === 0 && "(Current)"}
+  const [completed, setCompleted] = useState(false);
+  
+  const handleComplete = () => {
+    setCompleted(true);
+    // Add logic to rotate members here
+  };
+
+  return (
+    <div className="dashboard-card">
+      <h3 className="card-title">🎯 Rotation Cycle</h3>
+      
+      <div className="rotation-status">
+        <h4>Current Recipient:</h4>
+        <div className="current-recipient">
+          {members[0]?.name || "No members"}
+        </div>
+      </div>
+      
+      <div className="upcoming-members">
+        <h4>Next in Rotation:</h4>
+        <ul className="member-list">
+          {members.slice(1).map((member, index) => (
+            <li key={index} className="member-item">
+              {member.name}
             </li>
           ))}
         </ul>
-        <button className="simple-button">Mark Complete</button>
       </div>
-    );
-  };
+      
+      <button 
+        className={`action-btn ${completed ? 'completed' : ''}`}
+        onClick={handleComplete}
+        disabled={completed}
+      >
+        {completed ? 'Cycle Completed' : 'Mark Current Cycle Complete'}
+      </button>
+    </div>
+  );
+};
