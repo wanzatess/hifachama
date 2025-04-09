@@ -17,7 +17,7 @@ import CreateChama from '../pages/dashboard/CreateChama.jsx';
 // Add these imports at the top of AppRoutes.jsx
 import HybridDashboard from '../pages/dashboard/HybridDashboard';
 import InvestmentDashboard from '../pages/dashboard/InvestmentDashboard';
-import MerryGoRoundDashboard from '../pages/dashboard/MerrygoroundDashboard';
+import MerrygoroundDashboard from '../pages/dashboard/MerrygoroundDashboard';
 
 // Components
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -82,7 +82,7 @@ const AppRoutes = () => {
           <Route path="create-chama" element={<CreateChama />} />
             {/* Add these new routes */}
           <Route path="hybrid" element={<HybridDashboard />} />
-          <Route path="merry_go_round" element={<MerryGoRoundDashboard />} />
+          <Route path="merry_go_round" element={<MerrygoroundDashboard />} />
           <Route path="investment" element={<InvestmentDashboard />} />
         </Route>
 
