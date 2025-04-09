@@ -55,8 +55,17 @@ class ChamaViewSet(viewsets.ModelViewSet):
     serializer_class = ChamaSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(admin=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        
+        # Include chama_type in the response
+        return Response({
+            **serializer.data,
+            "redirect_to": f"/dashboard/{serializer.data['chama_type']}"  # Add dynamic path
+        }, status=201, headers=headers)
 
 class ChamaMemberViewSet(viewsets.ModelViewSet):
     queryset = ChamaMember.objects.all()

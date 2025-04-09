@@ -24,7 +24,7 @@ const CreateChama = () => {
     try {
       await api.post("/api/chamas/", formData);
       toast.success("Chama created!");
-      navigate("/dashboard"); // Will redirect to chama details
+      navigate(`/dashboard/${formData.chama_type}`); // Dynamic redirect
     } catch (error) {
       toast.error(error.response?.data?.message || "Creation failed");
     }

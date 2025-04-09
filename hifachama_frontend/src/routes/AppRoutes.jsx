@@ -76,6 +76,10 @@ const AppRoutes = () => {
           <Route path="home" element={<DashboardHome />} />
           <Route path="join-chama" element={<JoinChama />} />
           <Route path="create-chama" element={<CreateChama />} />
+            {/* Add these new routes */}
+          <Route path="hybrid" element={<HybridDashboard />} />
+          <Route path="merry_go_round" element={<MerryGoRoundDashboard />} />
+          <Route path="investment" element={<InvestmentDashboard />} />
         </Route>
 
         {/* Other Protected Routes */}
