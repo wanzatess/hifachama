@@ -1,6 +1,6 @@
 import { SavingsTracker } from '../../components/Investment';
 import { BasicAccounting } from '../../components/Hybrid';
-import './Dashboard.css';
+import '../../Dashboard.css';
 
 const InvestmentDashboard = () => {
   return (

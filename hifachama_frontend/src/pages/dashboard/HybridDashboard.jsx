@@ -1,7 +1,7 @@
 import { BasicAccounting } from '../../components/Hybrid';
 import { SavingsTracker } from '../../components/Investment';
 import { MemberRotation } from '../../components/Merrygoround';
-import './Dashboard.css';
+import '../../Dashboard.css';
 
 const HybridDashboard = () => {
   const dummyMembers = [
