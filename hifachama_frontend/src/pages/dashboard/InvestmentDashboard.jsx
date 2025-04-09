@@ -1,5 +1,5 @@
-import { SavingsTracker } from '../components/Investment';
-import { BasicAccounting } from '../components/Hybrid';
+import { SavingsTracker } from '../../components/Investment';
+import { BasicAccounting } from '../../components/Hybrid';
 import './Dashboard.css';
 
 const InvestmentDashboard = () => {
