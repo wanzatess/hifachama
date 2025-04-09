@@ -58,6 +58,7 @@ class ChamaViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.save(admin=self.request.user)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         
