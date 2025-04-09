@@ -17,7 +17,7 @@ import CreateChama from '../pages/dashboard/CreateChama.jsx';
 // Add these imports at the top of AppRoutes.jsx
 import HybridDashboard from '../pages/dashboard/HybridDashboard';
 import InvestmentDashboard from '../pages/dashboard/InvestmentDashboard';
-import MerryGoRoundDashboard from '../pages/dashboard/MerryGoRoundDashboard';
+import MerryGoRoundDashboard from '../pages/dashboard/MerrygoroundDashboard';
 
 // Components
 import LoadingSpinner from '../components/LoadingSpinner';
