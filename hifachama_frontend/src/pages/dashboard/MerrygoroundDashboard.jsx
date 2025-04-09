@@ -1,6 +1,6 @@
 import { MemberRotation } from '../../components/Merrygoround';
 import { BasicAccounting } from '../../components/Hybrid';
-import '../../../styles/Dashboard.css';
+import '../../styles/Dashboard.css';
 
 const MerryGoRoundDashboard = () => {
   const dummyMembers = [
