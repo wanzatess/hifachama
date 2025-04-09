@@ -1,5 +1,6 @@
 // In Hybrid.jsx, Investment.jsx, and Merrygoround.jsx
 import React, { useState } from 'react';
+import '../styles/Dashboard.css';
 export const BasicAccounting = () => {
   const [transactions, setTransactions] = useState([]);
   const [amount, setAmount] = useState('');

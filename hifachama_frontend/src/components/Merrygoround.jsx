@@ -1,6 +1,6 @@
 // In Hybrid.jsx, Investment.jsx, and Merrygoround.jsx
 import React, { useState } from 'react';
-import './Dashboard.css';
+import '../styles/Dashboard.css';
 
 export const MemberRotation = ({ members }) => {
   const [completed, setCompleted] = useState(false);
