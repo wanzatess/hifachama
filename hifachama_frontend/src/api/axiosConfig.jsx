@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { getAuthToken } from '../utils/auth'; // Correct path
+import { getAuthToken, clearAuthToken } from '../utils/auth';
 
-// In axiosConfig.jsx
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://hifachama-backend.onrender.com/api';
 
 const api = axios.create({
@@ -11,20 +10,26 @@ const api = axios.create({
   },
 });
 
+// Request interceptor
 api.interceptors.request.use(config => {
-  const token = getAuthToken(); // Using the helper
+  const token = getAuthToken();
   if (token) {
     config.headers.Authorization = `Token ${token}`;
+  } else {
+    console.warn('No auth token found for request to:', config.url);
   }
-  return config;
+  return config}, (error) => {
+  return Promise.reject(error);
 });
-// In axiosConfig.jsx, add this after request interceptor
+
+// Response interceptor
 api.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 401) {
       clearAuthToken();
-      window.location.href = '/login?session=expired';
+      // Redirect to login with redirect back to current page
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
     }
     return Promise.reject(error);
   }
