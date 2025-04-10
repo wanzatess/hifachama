@@ -186,23 +186,64 @@ class UserLoginView(APIView):
         # Get or create token
         token, created = Token.objects.get_or_create(user=user)
         
+        # Get user's chama information
+        try:
+            chama_membership = ChamaMember.objects.filter(
+                user=user, 
+                is_active=True
+            ).select_related('chama').first()
+            
+            # For chairpersons, check if they administer any chama
+            if user.role == 'chairperson' and not chama_membership:
+                administered_chama = Chama.objects.filter(
+                    admin=user, 
+                    is_active=True
+                ).first()
+                if administered_chama:
+                    chama_data = {
+                        'id': administered_chama.id,
+                        'name': administered_chama.name,
+                        'type': administered_chama.chama_type,
+                        'role': 'admin'
+                    }
+            elif chama_membership:
+                chama_data = {
+                    'id': chama_membership.chama.id,
+                    'name': chama_membership.chama.name,
+                    'type': chama_membership.chama.chama_type,
+                    'role': chama_membership.role
+                }
+            else:
+                chama_data = None
+                
+        except Exception as e:
+            print(f"Error fetching chama data: {str(e)}")
+            chama_data = None
+        
         # Debugging: Successful login
-        print(f"Successful login for: {email}. Token {'created' if created else 'exists'}")
+        print(f"Successful login for: {email}. Chama data: {chama_data}")
         
         # Update last login
         user.last_login = timezone.now()
         user.save()
         
-        return Response({
+        # Prepare response data
+        response_data = {
             "token": token.key,
             "user_id": user.pk,
             "email": user.email,
-            "redirectTo": "/dashboard",
             "role": user.role,
             "username": user.username,
             "first_name": user.first_name,
-            "last_name": user.last_name
-        }, status=status.HTTP_200_OK)
+            "last_name": user.last_name,
+            "chama": chama_data,  # Include full chama details
+            "redirectTo": f"/chama/{chama_data['id']}" if chama_data else (
+                "/dashboard/create-chama" if user.role == 'chairperson' 
+                else "/dashboard/join-chama"
+            )
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
 
 class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
