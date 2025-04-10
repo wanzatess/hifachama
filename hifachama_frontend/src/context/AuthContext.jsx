@@ -16,40 +16,32 @@ export const AuthProvider = ({ children }) => {
   const location = useLocation();
 
   // Initialize auth state - runs once on mount
-  const initializeAuth = useCallback(async () => {
-    const token = getAuthToken();
-    if (!token) {
-      setAuthState(prev => ({ ...prev, loading: false }));
-      return;
-    }
+// Replace initializeAuth function in AuthContext.jsx
+const initializeAuth = useCallback(async () => {
+  const token = getAuthToken();
+  if (!token) {
+    setAuthState(prev => ({ ...prev, loading: false }));
+    return;
+  }
 
-    try {
-      // Verify token and get user data in parallel
-      const [isValid, userResponse] = await Promise.all([
-        api.get('/api/verify-token/', {
-          headers: { Authorization: `Token ${token}` }
-        }).then(res => res.data.valid),
-        api.get('/api/user/', {
-          headers: { Authorization: `Token ${token}` }
-        }).catch(() => null)
-      ]);
-
-      if (isValid) {
-        setAuthState({
-          user: userResponse?.data || { authenticated: true },
-          loading: false,
-          error: null
-        });
-      } else {
-        clearAuthToken();
-        setAuthState({ user: null, loading: false, error: null });
-      }
-    } catch (error) {
-      console.error('Auth init error:', error);
+  try {
+    const response = await api.get('/api/verify-token/');
+    if (response.data.valid) {
+      setAuthState({
+        user: response.data.user,
+        loading: false,
+        error: null
+      });
+    } else {
       clearAuthToken();
-      setAuthState({ user: null, loading: false, error: 'Session expired' });
+      setAuthState({ user: null, loading: false, error: null });
     }
-  }, []);
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    clearAuthToken();
+    setAuthState({ user: null, loading: false, error: 'Session expired' });
+  }
+}, []);
 
   useEffect(() => {
     initializeAuth();

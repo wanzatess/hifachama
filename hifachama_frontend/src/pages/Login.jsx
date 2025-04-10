@@ -21,11 +21,62 @@ const handleLogin = async (e) => {
   setIsLoading(true);
 
   try {
-    await login(email, password); // AuthContext now handles redirect
+    // Clear any existing token first
+    localStorage.removeItem('authToken');
+    
+    // Debug: Log login attempt
+    console.log('Attempting login with:', { email });
+    
+    // Use AuthContext's login function
+    const result = await login(email, password);
+    
+    // Debug: Verify token was stored correctly
+    const storedToken = localStorage.getItem('authToken');
+    if (!storedToken) {
+      throw new Error('Authentication token was not received');
+    }
+    
+    // Debug: Log successful auth flow
+    console.log('Login successful, token stored:', storedToken ? 'Yes' : 'No');
+    
+    // Additional verification (optional)
+    try {
+      const verification = await api.get('/api/verify-token/');
+      if (!verification.data.valid) {
+        throw new Error('Token verification failed');
+      }
+      console.log('Token verified successfully');
+    } catch (verifyError) {
+      console.error('Token verification error:', verifyError);
+      throw new Error('Session validation failed');
+    }
+    
   } catch (err) {
-    setError(err.message || "Login failed");
+    // Enhanced error handling
+    const errorMessage = err.response?.data?.error?.detail || 
+                        err.response?.data?.error ||
+                        err.message || 
+                        "Login failed";
+    
+    console.error('Login error:', {
+      error: err,
+      response: err.response,
+      message: errorMessage
+    });
+    
+    setError(errorMessage);
+    
+    // Clear invalid token if any exists
+    localStorage.removeItem('authToken');
+    
   } finally {
     setIsLoading(false);
+    
+    // Debug: Final auth state check
+    console.log('Post-login auth state:', {
+      hasToken: !!localStorage.getItem('authToken'),
+      loading: false
+    });
   }
 };
 

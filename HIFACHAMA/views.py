@@ -594,17 +594,20 @@ def homepage_view(request):
             return HttpResponse(file.read(), content_type='text/html')
     else:
         return HttpResponse("React build not found. Run 'npm run build' in the frontend directory.", status=500)
+# In views.py, update verify_token view
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def verify_token(request):
+    # This automatically validates the token via IsAuthenticated
     return Response({
         "valid": True,
         "user": {
             "id": request.user.id,
             "email": request.user.email,
-            "role": request.user.role
+            "role": request.user.role,
+            "chama_id": request.user.chama_memberships.first().chama.id if request.user.chama_memberships.exists() else None
         }
-    }, status=200)
+    })
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard_data(request):

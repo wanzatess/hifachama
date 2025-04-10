@@ -18,5 +18,16 @@ api.interceptors.request.use(config => {
   }
   return config;
 });
+// In axiosConfig.jsx, add this after request interceptor
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      clearAuthToken();
+      window.location.href = '/login?session=expired';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
