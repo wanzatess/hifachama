@@ -60,12 +60,12 @@ export const AuthProvider = ({ children }) => {
     
     try {
       const response = await api.post('/api/login/', { email, password });
-      const { token, ...userData } = response.data;
+      const { token, chama_id, ...userData } = response.data;
   
       const user = {
         ...userData,
         token,
-        chamaId: userData.chama_id || null
+        chamaId: chama_id || null // Simplified assignment
       };
   
       setAuthToken(token);
@@ -75,7 +75,6 @@ export const AuthProvider = ({ children }) => {
         error: null 
       });
   
-      // Auto-redirect here instead of returning path
       const redirectPath = determineRedirectPath(user);
       navigate(redirectPath, { replace: true });
   
@@ -91,24 +90,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const determineRedirectPath = (user) => {
-    const from = location.state?.from?.pathname;
-    
-    // 1. Chairperson without chama goes to create chama
-    if (user.role === 'chairperson' && !user.chamaId) {
-      return '/dashboard/create-chama';
-    }
-    // 2. Members without chama go to join chama
-    else if (!user.chamaId) {
-      return '/dashboard/join-chama';
-    }
-    // 3. Users with chama go to their chama page
-    else if (user.chamaId) {
-      return `/chama/${user.chamaId}`;
-    }
-    // 4. Fallback to original path or dashboard
-    return from || '/dashboard';
-  };
+// In AuthContext.jsx
+const determineRedirectPath = (user) => {
+  const from = location.state?.from?.pathname;
+  
+  // If user has a chama, redirect there
+  if (user.chama_id) {
+    return `/chama/${user.chama_id}`;
+  }
+  
+  // Chairpersons without chama go to create chama
+  if (user.role === 'chairperson') {
+    return '/dashboard/create-chama';
+  }
+  
+  // Regular members without chama go to join chama
+  return '/dashboard/join-chama';
+};
 
   const logout = useCallback(() => {
     clearAuthToken();
