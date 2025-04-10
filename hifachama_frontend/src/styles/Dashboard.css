@@ -314,3 +314,14 @@
     padding: 15px;
   }
 }
+/* Add this to your Dashboard.css */
+.chart-container {
+  height: 300px;
+  margin-top: 15px;
+}
+
+/* Make sure canvas fills its container */
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
