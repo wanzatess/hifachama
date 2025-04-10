@@ -1,61 +1,96 @@
 /* Sidebar.css */
 .sidebar-container {
-    width: 220px;
-    padding: 20px;
-    background: #f8f9fa;
-    height: 100vh;
-    border-right: 1px solid #e0e0e0;
-  }
-  
-  .sidebar-title {
-    color: #2c3e50;
-    margin-bottom: 20px;
-    font-size: 1.1rem;
-  }
-  
-  .sidebar-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .sidebar-link {
-    display: block;
-    padding: 10px 15px;
-    margin-bottom: 5px;
-    color: #34495e;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-  
-  .sidebar-link:hover {
-    background: #e9ecef;
-  }
-  
-  .sidebar-link.active {
-    background: #4e73df;
-    color: white;
-  }
-  
-  .sidebar-tools {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #e0e0e0;
-  }
-  
-  .sidebar-tools h4 {
-    font-size: 0.9rem;
-    color: #7f8c8d;
-    margin-bottom: 10px;
-  }
-  
-  .sidebar-tool-btn {
-    width: 100%;
-    padding: 8px;
-    background: #2ecc71;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
+  width: 240px;
+  padding: 20px;
+  background-color: #4E4528; /* Header/Footer background */
+  color: #F0EAD6; /* Primary Text */
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 2px solid #9C8F5F;
+}
+
+.sidebar-title {
+  color: #CDBE96; /* Hover effect color for branding */
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-link {
+  display: block;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  color: #F0EAD6;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.sidebar-link:hover {
+  background-color: #CDBE96;
+  color: #4E4528;
+}
+
+.sidebar-link.active {
+  background-color: #9C8F5F;
+  color: #F0EAD6;
+}
+
+.sidebar-tools {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #CDBE96;
+}
+
+.sidebar-tools h4 {
+  font-size: 1rem;
+  color: #F0EAD6;
+  margin-bottom: 10px;
+}
+
+.sidebar-tool-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #CDBE96;
+  color: #4E4528;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-tool-btn:hover {
+  background-color: #8A7B50;
+}
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+  background-color: #F0EAD6;
+  padding: 5px;
+}
+
+.sidebar-brand {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #F0EAD6;
+  margin: 0;
+}

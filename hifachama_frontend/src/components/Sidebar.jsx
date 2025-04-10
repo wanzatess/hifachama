@@ -1,16 +1,15 @@
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import "../styles/Sidebar.css"; // Create this file
+import logo from "../static/images/logo.png"; // Path to your logo
+import "../styles/Sidebar.css";
 
 const Sidebar = () => {
   const { chamaId } = useParams();
   const { pathname } = useLocation();
   const { user } = useAuth();
 
-  // Determine if we're on a chama-specific route
   const isChamaRoute = pathname.includes(`/chama/${chamaId}`);
 
-  // Common links for all routes
   const commonLinks = [
     { path: "/dashboard", label: "Dashboard" },
     { path: "/loans", label: "Loans" },
@@ -18,33 +17,36 @@ const Sidebar = () => {
     { path: "/withdrawals", label: "Withdrawals" }
   ];
 
-  // Chama-specific links
   const chamaLinks = [
     { path: `/chama/${chamaId}/overview`, label: "Overview" },
     { path: `/chama/${chamaId}/transactions`, label: "Transactions" },
     { path: `/chama/${chamaId}/members`, label: "Members" }
   ];
 
-  // Admin-only links
   const adminLinks = user?.role === "chairperson" ? [
     { path: `/chama/${chamaId}/admin`, label: "Admin Tools" }
   ] : [];
 
   return (
     <div className="sidebar-container">
+      {/* Logo and Brand */}
+      <div className="sidebar-header">
+        <img src={logo} alt="HIFACHAMA Logo" className="sidebar-logo" />
+        <h2 className="sidebar-brand">HIFACHAMA</h2>
+      </div>
+
+      {/* Title */}
       <h3 className="sidebar-title">
         {isChamaRoute ? "Chama Menu" : "Main Menu"}
       </h3>
-      
+
+      {/* Navigation Links */}
       <ul className="sidebar-list">
-        {/* Render appropriate links based on route */}
         {(isChamaRoute ? [...chamaLinks, ...adminLinks] : commonLinks).map((link) => (
           <li key={link.path}>
             <Link
               to={link.path}
-              className={`sidebar-link ${
-                pathname === link.path ? "active" : ""
-              }`}
+              className={`sidebar-link ${pathname === link.path ? "active" : ""}`}
             >
               {link.label}
             </Link>
@@ -52,7 +54,7 @@ const Sidebar = () => {
         ))}
       </ul>
 
-      {/* Additional chama-type specific tools */}
+      {/* Tools Section */}
       {isChamaRoute && (
         <div className="sidebar-tools">
           <h4>Quick Tools</h4>

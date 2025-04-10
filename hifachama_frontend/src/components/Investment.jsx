@@ -1,40 +1,60 @@
-// In Hybrid.jsx, Investment.jsx, and Merrygoround.jsx
 import React, { useState } from 'react';
 import '../styles/Dashboard.css';
 
 export const SavingsTracker = () => {
-  const [savings, setSavings] = useState(0);
-  const [contribution, setContribution] = useState('');
-  
-  const handleContribution = () => {
-    if (!contribution || isNaN(contribution)) return;
-    setSavings(prev => prev + Number(contribution));
-    setContribution('');
+  const [savings, setSavings] = useState([]);
+  const [amount, setAmount] = useState('');
+  const [goal, setGoal] = useState('');
+
+  const addSaving = () => {
+    if (!amount || isNaN(amount)) return;
+    setSavings([...savings, {
+      id: Date.now(),
+      amount: parseFloat(amount),
+      goal,
+      date: new Date().toLocaleDateString()
+    }]);
+    setAmount('');
+    setGoal('');
   };
 
   return (
-    <div className="dashboard-card">
-      <h3 className="card-title">💰 Group Savings</h3>
-      <div className="stat-value">KES {savings.toLocaleString()}</div>
-      
+    <div>
+      <div className="card-header">
+        <span className="card-icon">🎯</span>
+        <h3 className="card-title">Savings Tracker</h3>
+      </div>
+
       <div className="form-group">
-        <label>Add Contribution</label>
-        <input 
-          type="number" 
-          value={contribution}
-          onChange={(e) => setContribution(e.target.value)}
-          placeholder="Amount in KES"
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="Amount Saved (KES)"
         />
       </div>
-      
-      <button className="action-btn" onClick={handleContribution}>
-        Record Contribution
+      <div className="form-group">
+        <input
+          type="text"
+          value={goal}
+          onChange={(e) => setGoal(e.target.value)}
+          placeholder="Goal"
+        />
+      </div>
+      <button className="action-btn" onClick={addSaving}>
+        Add Saving
       </button>
-      
+
       <div className="recent-activity">
-        <h4 className="activity-title">Recent Contributions</h4>
-        {/* You can add actual transaction history here later */}
-        <p>No recent contributions yet</p>
+        <h4>Recent Savings</h4>
+        <ul>
+          {savings.map(s => (
+            <li key={s.id}>
+              <span>KES {s.amount} - {s.goal}</span>
+              <small>{s.date}</small>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

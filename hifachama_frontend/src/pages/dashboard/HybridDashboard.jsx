@@ -11,12 +11,18 @@ const HybridDashboard = () => {
   ];
 
   return (
-    <div className="dashboard-grid">
-      <h1>Hybrid Chama Dashboard</h1>
-      <div className="widgets-container">
-        <BasicAccounting />
-        <SavingsTracker />
-        <MemberRotation members={dummyMembers} />
+    <div className="dashboard-container">
+      <h1 className="dashboard-header">Hybrid Chama Dashboard</h1>
+      <div className="dashboard-cards-grid">
+        <div className="dashboard-card">
+          <BasicAccounting />
+        </div>
+        <div className="dashboard-card">
+          <SavingsTracker />
+        </div>
+        <div className="dashboard-card">
+          <MemberRotation members={dummyMembers} />
+        </div>
       </div>
     </div>
   );
