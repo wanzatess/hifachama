@@ -3,6 +3,8 @@ import { SavingsTracker } from '../../components/Investment';
 import { MemberRotation } from '../../components/Merrygoround';
 import { BarChartComponent } from '../../components/Hybrid'; // Add this import
 import '../../styles/Dashboard.css';
+import React, { useState } from 'react';
+
 
 const HybridDashboard = () => {
   const dummyMembers = [
