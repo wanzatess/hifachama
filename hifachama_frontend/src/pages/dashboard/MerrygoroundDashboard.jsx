@@ -1,33 +1,40 @@
-import { MemberRotation, RotationAnalytics } from '../../components/Merrygoround';
-import { BasicAccounting } from '../../components/Hybrid';
+import { MemberRotation, RotationAnalytics, MemberManager } from '../../components/Merrygoround';
 import '../../styles/Dashboard.css';
 import React, { useState } from 'react';
 
 const MerryGoRoundDashboard = () => {
-  const dummyMembers = [
-    { name: "David" },
-    { name: "Eve" },
-    { name: "Frank" }
-  ];
+  const [members, setMembers] = useState([
+    { id: 1, name: "David", role: "Chairperson", phone: "0712345678", joinDate: "2023-01-01" },
+    { id: 2, name: "Eve", role: "Treasurer", phone: "0723456789", joinDate: "2023-01-01" },
+    { id: 3, name: "Frank", role: "Member", phone: "0734567890", joinDate: "2023-01-15" }
+  ]);
   
-  // State to share transactions between components
-  const [transactions, setTransactions] = useState([]);
+  const [contributions, setContributions] = useState([]);
+  const [missedContributions, setMissedContributions] = useState([]);
 
   return (
     <div className="dashboard-container">
       <h1 className="dashboard-header">Merry-go-round Chama Dashboard</h1>
       <div className="dashboard-cards-grid">
         <div className="dashboard-card">
-          <MemberRotation members={dummyMembers} />
+          <MemberManager members={members} setMembers={setMembers} />
         </div>
         <div className="dashboard-card">
-          <BasicAccounting 
-            transactions={transactions} 
-            setTransactions={setTransactions} 
+          <MemberRotation 
+            members={members} 
+            onUpdateMembers={setMembers}
+            contributions={contributions}
+            setContributions={setContributions}
+            missedContributions={missedContributions}
+            setMissedContributions={setMissedContributions}
           />
         </div>
         <div className="dashboard-card">
-          <RotationAnalytics />
+          <RotationAnalytics 
+            members={members}
+            contributions={contributions}
+            missedContributions={missedContributions}
+          />
         </div>
       </div>
     </div>

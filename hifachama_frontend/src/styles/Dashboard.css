@@ -22,7 +22,7 @@
   border-bottom: 1px solid #9C8F5F;
   font-size: 24px;
   font-weight: bold;
-  color: #333;
+  color: #F0EAD6;
 }
 
 .dashboard-title {
@@ -120,24 +120,6 @@
   resize: vertical;
 }
 
-.chama-type-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 16px;
-  margin-top: 8px;
-  background-color: white;
-  color: #333;
-  transition: border-color 0.3s ease;
-}
-
-.chama-type-select:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-}
-
 /* ================ BUTTON STYLES ================ */
 .action-btn {
   background-color: #9C8F5F;
@@ -149,44 +131,34 @@
   transition: background-color 0.3s;
   border: none;
   cursor: pointer;
+  margin-top: 10px;
 }
 
 .action-btn:hover {
   background-color: #8A7B50;
 }
 
-.action-btn.completed {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-
-.report-btn {
+.small-btn {
   background-color: #9C8F5F;
   color: white;
-  padding: 10px 20px;
+  padding: 5px 10px;
   border-radius: 4px;
   border: none;
-  margin-right: 10px;
-  font-weight: 600;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
-.report-btn:hover {
+.small-btn:hover {
   background-color: #8A7B50;
-}
-
-.quick-actions {
-  display: flex;
-  gap: 15px;
-  margin: 20px 0;
 }
 
 /* ================ LIST STYLES ================ */
 .chama-list,
 .recent-activity ul,
 .transaction-list,
-.member-list {
+.member-list,
+.notification-list {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -215,6 +187,11 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
+.transaction-list li > span {
+  display: flex;
+  flex-direction: column;
+}
+
 .member-item {
   padding: 8px 0;
   border-bottom: 1px solid #e0e0e0;
@@ -225,6 +202,7 @@
   border-bottom: none;
 }
 
+/* ================ ACTIVITY & NOTIFICATION STYLES ================ */
 .recent-activity {
   background-color: rgba(240, 234, 214, 0.8);
   border-radius: 8px;
@@ -233,49 +211,113 @@
 }
 
 .activity-title {
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   margin-bottom: 15px;
   color: #4E4528;
   font-weight: 600;
 }
 
-/* ================ ROTATION COMPONENT STYLES ================ */
-.rotation-status {
-  margin: 20px 0;
+.notification-item {
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  position: relative;
 }
 
-.current-recipient {
-  font-size: 1.5rem;
-  font-weight: bold;
+.notification-item.unread {
+  background-color: rgba(156, 143, 95, 0.1);
+  border-left: 4px solid #9C8F5F;
+}
+
+.notification-item.read {
+  opacity: 0.8;
+}
+
+.notification-type {
+  font-size: 0.8rem;
+  text-transform: uppercase;
   color: #9C8F5F;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.unread-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #9C8F5F;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+}
+
+/* ================ CHART STYLES ================ */
+.chart-container {
+  height: 300px;
+  margin-top: 15px;
+  background-color: white;
   padding: 10px;
-  background: rgba(156, 143, 95, 0.1);
   border-radius: 6px;
 }
 
-.upcoming-members {
-  margin: 20px 0;
+canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
-/* ================ LOADING STATES ================ */
-.loading-spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
+/* ================ REPORT STYLES ================ */
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #F0EAD6;
-  animation: spin 1s ease-in-out infinite;
+.report-item {
+  background-color: white;
+  padding: 15px;
+  border-radius: 6px;
+  text-align: center;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.report-item h4 {
+  font-size: 1rem;
+  color: #4E4528;
+  margin-bottom: 10px;
+}
+
+.report-item p {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #9C8F5F;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.summary-card {
+  background-color: white;
+  padding: 15px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.summary-card h4 {
+  font-size: 1rem;
+  color: #4E4528;
+  margin-bottom: 10px;
+}
+
+.summary-card p {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #9C8F5F;
 }
 
 /* ================ UTILITY CLASSES ================ */
@@ -290,10 +332,6 @@
   .dashboard-grid,
   .dashboard-cards-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .quick-actions {
-    flex-direction: column;
   }
   
   .dashboard-header {
@@ -313,15 +351,105 @@
   .dashboard-card {
     padding: 15px;
   }
-}
-/* Add this to your Dashboard.css */
-.chart-container {
-  height: 300px;
-  margin-top: 15px;
+
+  .report-summary,
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* Make sure canvas fills its container */
-canvas {
-  width: 100% !important;
-  height: 100% !important;
+@media (max-width: 480px) {
+  .transaction-list li {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+/* ================ ROTATION SPECIFIC STYLES ================ */
+.rotation-status {
+  background-color: rgba(240, 234, 214, 0.8);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.current-recipient {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #9C8F5F;
+  margin: 10px 0;
+}
+
+.upcoming-members {
+  margin: 20px 0;
+}
+
+.member-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.member-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 6px;
+  background-color: white;
+  margin-bottom: 10px;
+}
+
+/* Penalty warning */
+.text-danger {
+  color: #dc3545;
+}
+
+/* Form control styling */
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #9C8F5F;
+  background-color: white;
+}
+/* Hybrid Specific Styles */
+.contribution-type-tabs {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.contribution-type-tabs button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #F0EAD6;
+  cursor: pointer;
+}
+
+.contribution-type-tabs button.active {
+  background: #9C8F5F;
+  color: white;
+}
+
+.investment-status {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-left: 10px;
+}
+
+.status-active {
+  background: #28a745;
+  color: white;
+}
+
+.status-pending {
+  background: #ffc107;
+  color: black;
+}
+
+.status-closed {
+  background: #dc3545;
+  color: white;
 }
