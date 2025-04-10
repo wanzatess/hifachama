@@ -145,14 +145,9 @@ class UserLoginView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):
-        # Debugging: Log incoming request data
-        print(f"Login attempt at {timezone.now()}")
-        print(f"Request data: {request.data}")
-        
         serializer = LoginSerializer(data=request.data)
         
         if not serializer.is_valid():
-            print(f"Validation errors: {serializer.errors}")
             return Response(
                 {"error": "Invalid input", "details": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST
@@ -161,23 +156,15 @@ class UserLoginView(APIView):
         email = serializer.validated_data.get('email').lower()
         password = serializer.validated_data.get('password')
         
-        # Debugging: Before authentication attempt
-        print(f"Attempting authentication for: {email}")
-        
-        # Authenticate using Django's authenticate()
         user = authenticate(request, username=email, password=password)
         
         if not user:
-            # Debugging: Check if user exists but password is wrong
-            user_exists = CustomUser.objects.filter(email=email).exists()
-            print(f"Authentication failed. User exists: {user_exists}")
             return Response(
                 {"error": "Invalid email or password"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
             
         if not user.is_active:
-            print(f"Inactive user attempt: {email}")
             return Response(
                 {"error": "Account is inactive"},
                 status=status.HTTP_403_FORBIDDEN
@@ -186,48 +173,42 @@ class UserLoginView(APIView):
         # Get or create token
         token, created = Token.objects.get_or_create(user=user)
         
-        # Get user's chama information
+        # Initialize chama_data with default None
+        chama_data = None
+        
         try:
-            chama_membership = ChamaMember.objects.filter(
-                user=user, 
+            # Check for admin chamas first
+            administered_chama = Chama.objects.filter(
+                admin=user, 
                 is_active=True
-            ).select_related('chama').first()
+            ).first()
             
-            # For chairpersons, check if they administer any chama
-            if user.role == 'chairperson' and not chama_membership:
-                administered_chama = Chama.objects.filter(
-                    admin=user, 
-                    is_active=True
-                ).first()
-                if administered_chama:
-                    chama_data = {
-                        'id': administered_chama.id,
-                        'name': administered_chama.name,
-                        'type': administered_chama.chama_type,
-                        'role': 'admin'
-                    }
-            elif chama_membership:
+            if administered_chama:
                 chama_data = {
-                    'id': chama_membership.chama.id,
-                    'name': chama_membership.chama.name,
-                    'type': chama_membership.chama.chama_type,
-                    'role': chama_membership.role
+                    'id': administered_chama.id,
+                    'name': administered_chama.name,
+                    'type': administered_chama.chama_type,
+                    'role': 'admin'
                 }
             else:
-                chama_data = None
+                # Check for regular memberships
+                chama_membership = ChamaMember.objects.filter(
+                    user=user, 
+                    is_active=True
+                ).select_related('chama').first()
                 
+                if chama_membership:
+                    chama_data = {
+                        'id': chama_membership.chama.id,
+                        'name': chama_membership.chama.name,
+                        'type': chama_membership.chama.chama_type,
+                        'role': chama_membership.role
+                    }
+                    
         except Exception as e:
             print(f"Error fetching chama data: {str(e)}")
-            chama_data = None
         
-        # Debugging: Successful login
-        print(f"Successful login for: {email}. Chama data: {chama_data}")
-        
-        # Update last login
-        user.last_login = timezone.now()
-        user.save()
-        
-        # Prepare response data
+        # Prepare response - now chama_data is always defined
         response_data = {
             "token": token.key,
             "user_id": user.pk,
@@ -236,12 +217,16 @@ class UserLoginView(APIView):
             "username": user.username,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "chama": chama_data,  # Include full chama details
+            "chama": chama_data,  # Will be None if no chama found
             "redirectTo": f"/chama/{chama_data['id']}" if chama_data else (
                 "/dashboard/create-chama" if user.role == 'chairperson' 
                 else "/dashboard/join-chama"
             )
         }
+        
+        # Update last login
+        user.last_login = timezone.now()
+        user.save()
         
         return Response(response_data, status=status.HTTP_200_OK)
 

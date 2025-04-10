@@ -1,6 +1,6 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import api from "../api/axiosConfig";
 import "../styles/Login.css";
 import logo from '../static/images/logo.png';
 import { useAuth } from '../context/AuthContext';
@@ -12,73 +12,72 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
 
-// Simplify the handler to use AuthContext's redirect:
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setError("");
-  setIsLoading(true);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-  try {
-    // Clear any existing token first
-    localStorage.removeItem('authToken');
-    
-    // Debug: Log login attempt
-    console.log('Attempting login with:', { email });
-    
-    // Use AuthContext's login function
-    const result = await login(email, password);
-    
-    // Debug: Verify token was stored correctly
-    const storedToken = localStorage.getItem('authToken');
-    if (!storedToken) {
-      throw new Error('Authentication token was not received');
+    // Basic validation
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      setIsLoading(false);
+      return;
     }
-    
-    // Debug: Log successful auth flow
-    console.log('Login successful, token stored:', storedToken ? 'Yes' : 'No');
-    
-    // Additional verification (optional)
+
     try {
-      const verification = await api.get('/api/verify-token/');
-      if (!verification.data.valid) {
-        throw new Error('Token verification failed');
+      // Debug: Verify endpoint URL
+      const loginUrl = `${api.defaults.baseURL}/login/`;
+      console.log("Attempting login at:", loginUrl);
+
+      // First check if endpoint exists
+      const endpointCheck = await fetch(loginUrl, {
+        method: 'OPTIONS'
+      });
+
+      if (!endpointCheck.ok) {
+        throw new Error(`Endpoint not found (${endpointCheck.status})`);
       }
-      console.log('Token verified successfully');
-    } catch (verifyError) {
-      console.error('Token verification error:', verifyError);
-      throw new Error('Session validation failed');
+
+      // Proceed with actual login
+      await login(email, password);
+
+      // Verify token was stored
+      if (!localStorage.getItem('authToken')) {
+        throw new Error("Authentication token not received");
+      }
+
+    } catch (err) {
+      console.error("Login error:", {
+        error: err,
+        response: err.response?.data,
+        status: err.response?.status,
+        config: err.config
+      });
+
+      // Handle 404 specifically
+      if (err.message.includes('404') || err.response?.status === 404) {
+        setError("Login service unavailable. Please try later.");
+        console.error("Backend endpoint not found at:", err.config?.url);
+      } 
+      // Handle network errors
+      else if (err.message.includes('Network Error')) {
+        setError("Network error. Please check your connection.");
+      }
+      // Handle other errors
+      else {
+        setError(err.response?.data?.detail || 
+                err.response?.data?.error || 
+                "Login failed. Please try again.");
+      }
+
+      // Clear any partial authentication
+      localStorage.removeItem('authToken');
+    } finally {
+      setIsLoading(false);
     }
-    
-  } catch (err) {
-    // Enhanced error handling
-    const errorMessage = err.response?.data?.error?.detail || 
-                        err.response?.data?.error ||
-                        err.message || 
-                        "Login failed";
-    
-    console.error('Login error:', {
-      error: err,
-      response: err.response,
-      message: errorMessage
-    });
-    
-    setError(errorMessage);
-    
-    // Clear invalid token if any exists
-    localStorage.removeItem('authToken');
-    
-  } finally {
-    setIsLoading(false);
-    
-    // Debug: Final auth state check
-    console.log('Post-login auth state:', {
-      hasToken: !!localStorage.getItem('authToken'),
-      loading: false
-    });
-  }
-};
+  };
 
   return (
     <div className="login-container">
@@ -86,6 +85,11 @@ const handleLogin = async (e) => {
         <div className="login-header">
           <img src={logo} alt="Company Logo" className="login-logo" />
           <h2>Welcome Back</h2>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="dev-notice">
+              Development Mode - Using endpoint: {api.defaults.baseURL}
+            </div>
+          )}
         </div>
 
         {error && (
@@ -109,14 +113,11 @@ const handleLogin = async (e) => {
               type="email"
               placeholder="Enter your email"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError("");
-              }}
+              onChange={(e) => setEmail(e.target.value.trim())}
               required
               className="form-input"
               autoComplete="username"
-              autoFocus
+              disabled={isLoading}
             />
           </div>
 
@@ -128,18 +129,17 @@ const handleLogin = async (e) => {
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError("");
-                }}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 className="form-input"
                 autoComplete="current-password"
+                disabled={isLoading}
               />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? "HIDE" : "SHOW"}
