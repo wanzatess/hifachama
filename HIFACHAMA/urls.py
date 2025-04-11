@@ -79,7 +79,7 @@ urlpatterns = [
     path('api/stats/', dashboard_data, name='stats-data'),  # Reuses dashboard_data
 
     # Chama Management
-    path("api/chama/", ChamaListCreateView.as_view(), name="chama-list-create"),
+    path("api/chamas/", ChamaListCreateView.as_view(), name="chama-list-create"),
 
     # M-Pesa Integration
     path("api/mpesa/callback/", mpesa_callback, name="mpesa_callback"),
