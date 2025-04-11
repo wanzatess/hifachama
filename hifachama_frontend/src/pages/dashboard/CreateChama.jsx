@@ -27,33 +27,32 @@ const CreateChama = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+// Update CreateChama.jsx
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    try {
-      // Debug: Check token before request
-      console.log('Current token:', localStorage.getItem('authToken'));
-      
-      const response = await api.post("/api/chamas/", formData); // Remove /api/ prefix since baseURL includes it
-      toast.success("Chama created successfully!");
-      navigate(`/chama/${response.data.id}`); // Redirect to new chama
-    } catch (error) {
-      console.error('Chama creation error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        config: error.config
-      });
-
-      toast.error(
-        error.response?.data?.detail || 
-        error.response?.data?.message || 
-        "Failed to create chama. Please try again."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  try {
+    const response = await api.post("/chamas/", formData);
+    toast.success("Chama created successfully!");
+    
+    // Update user's chama membership in context
+    const userResponse = await api.get('/users/me/');
+    user.setUser(userResponse.data);
+    
+    // Redirect to chama dashboard
+    navigate(`/dashboard/chama/${response.data.id}`);
+  } catch (error) {
+    console.error('Chama creation error:', error);
+    toast.error(
+      error.response?.data?.detail || 
+      error.response?.data?.message || 
+      "Failed to create chama. Please try again."
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

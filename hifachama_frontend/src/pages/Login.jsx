@@ -19,30 +19,17 @@ const Login = () => {
     setError("");
     setIsLoading(true);
   
-    if (!email || !password) {
-      setError("Please fill in all fields");
-      setIsLoading(false);
-      return;
-    }
-  
     try {
-      const loginUrl = `${api.defaults.baseURL}/api/login/`; // ✅ Correct path
-      console.log("Attempting login at:", loginUrl);
-  
-      // Optional: check if endpoint exists (mainly useful for debugging)
-      const endpointCheck = await fetch(loginUrl, {
-        method: 'OPTIONS'
-      });
-  
-      if (!endpointCheck.ok) {
-        throw new Error(`Endpoint not found (${endpointCheck.status})`);
-      }
-  
-      // Proceed with actual login
-      await login(email, password); // Assuming `login` sends POST request correctly
-  
-      if (!localStorage.getItem('authToken')) {
-        throw new Error("Authentication token not received");
+      await login(email, password);
+      
+      // Fetch user data including chama info
+      const userResponse = await api.get('/users/me/');
+      
+      // Check if user has a chama
+      if (userResponse.data.chama_id) {
+        navigate(`/dashboard/chama/${userResponse.data.chama_id}`);
+      } else {
+        navigate('/create-chama');
       }
   
     } catch (err) {

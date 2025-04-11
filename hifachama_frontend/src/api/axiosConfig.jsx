@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAuthToken, clearAuthToken } from '../utils/auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://hifachama-backend.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://hifachama-backend.onrender.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
