@@ -36,10 +36,6 @@ const handleSubmit = async (e) => {
     const response = await api.post("/api/chamas/", formData);
     toast.success("Chama created successfully!");
     
-    // Update user's chama membership in context
-    const userResponse = await api.get('/users/me/');
-    user.setUser(userResponse.data);
-    
     // Redirect to chama dashboard
     navigate(`/dashboard/chama/${response.data.id}`);
   } catch (error) {
