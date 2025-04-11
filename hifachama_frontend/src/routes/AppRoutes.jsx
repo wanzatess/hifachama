@@ -88,7 +88,7 @@ const AppRoutes = () => {
 
         {/* Other Protected Routes */}
         <Route
-          path="/chama/:id"
+          path="/chamas/:id"
           element={
             <PrivateRoute>
               <ChamaDetails />

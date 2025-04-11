@@ -88,7 +88,7 @@ const determineRedirectPath = (user) => {
   
   // If user has a chama, redirect there
   if (user.chama_id) {
-    return `/chama/${user.chama_id}`;
+    return `/chamas/${user.chama_id}`;
   }
   
   // Chairpersons without chama go to create chama
