@@ -33,7 +33,7 @@ const handleSubmit = async (e) => {
   setIsSubmitting(true);
 
   try {
-    const response = await api.post("/chamas/", formData);
+    const response = await api.post("/api/chamas/", formData);
     toast.success("Chama created successfully!");
     
     // Update user's chama membership in context
