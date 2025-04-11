@@ -218,7 +218,7 @@ class UserLoginView(APIView):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "chama": chama_data,  # Will be None if no chama found
-            "redirectTo": f"/api/chama/{chama_data['id']}" if chama_data else (
+            "redirectTo": f"/api/chamas/{chama_data['id']}" if chama_data else (
                 "/dashboard/create-chama" if user.role == 'chairperson' 
                 else "/dashboard/join-chama"
             )
