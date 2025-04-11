@@ -18,36 +18,33 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
-    // Basic validation
+  
     if (!email || !password) {
       setError("Please fill in all fields");
       setIsLoading(false);
       return;
     }
-
+  
     try {
-      // Debug: Verify endpoint URL
-      const loginUrl = `${api.defaults.baseURL}/login/`;
+      const loginUrl = `${api.defaults.baseURL}/api/login/`; // ✅ Correct path
       console.log("Attempting login at:", loginUrl);
-
-      // First check if endpoint exists
+  
+      // Optional: check if endpoint exists (mainly useful for debugging)
       const endpointCheck = await fetch(loginUrl, {
         method: 'OPTIONS'
       });
-
+  
       if (!endpointCheck.ok) {
         throw new Error(`Endpoint not found (${endpointCheck.status})`);
       }
-
+  
       // Proceed with actual login
-      await login(email, password);
-
-      // Verify token was stored
+      await login(email, password); // Assuming `login` sends POST request correctly
+  
       if (!localStorage.getItem('authToken')) {
         throw new Error("Authentication token not received");
       }
-
+  
     } catch (err) {
       console.error("Login error:", {
         error: err,
@@ -55,30 +52,23 @@ const Login = () => {
         status: err.response?.status,
         config: err.config
       });
-
-      // Handle 404 specifically
+  
       if (err.message.includes('404') || err.response?.status === 404) {
         setError("Login service unavailable. Please try later.");
-        console.error("Backend endpoint not found at:", err.config?.url);
-      } 
-      // Handle network errors
-      else if (err.message.includes('Network Error')) {
+      } else if (err.message.includes('Network Error')) {
         setError("Network error. Please check your connection.");
-      }
-      // Handle other errors
-      else {
+      } else {
         setError(err.response?.data?.detail || 
-                err.response?.data?.error || 
-                "Login failed. Please try again.");
+                 err.response?.data?.error || 
+                 "Login failed. Please try again.");
       }
-
-      // Clear any partial authentication
+  
       localStorage.removeItem('authToken');
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <div className="login-container">
       <div className="login-card">
