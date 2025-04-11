@@ -35,7 +35,7 @@ const CreateChama = () => {
       // Debug: Check token before request
       console.log('Current token:', localStorage.getItem('authToken'));
       
-      const response = await api.post("/chamas/", formData); // Remove /api/ prefix since baseURL includes it
+      const response = await api.post("/api/chamas/", formData); // Remove /api/ prefix since baseURL includes it
       toast.success("Chama created successfully!");
       navigate(`/chama/${response.data.id}`); // Redirect to new chama
     } catch (error) {
