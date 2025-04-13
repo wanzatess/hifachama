@@ -25,75 +25,44 @@ const JoinChama = () => {
 
     if (!isAuthenticated || !user) {
       toast.error("You must be logged in to join a Chama");
-      navigate('/login', { state: { from: location } });
+      navigate('/login');
       return;
     }
 
     setLoading(true);
     try {
-      // Verify chama exists and get its details
+      // First verify the chama exists
       const chamaResponse = await api.get(`/api/chamas/${chamaId}/`);
-      const chamaData = chamaResponse.data;
+      const chamaType = chamaResponse.data.type;
 
-      // Prepare payload matching backend expectations
-      const payload = {
+      // Submit minimal required data
+      await api.post('/api/chama-members/', {
         chama: chamaId,
-        user: user.id,
-        role: 'member',  // Default role for new members
-        email: user.email,
-        phone_number: user.phone_number || null,
-      };
+        role: 'member' // Default role
+      });
 
-      // Submit membership request
-      await api.post('/api/chama-members/', payload);
-
-      toast.success("Successfully requested to join Chama!");
+      toast.success("Successfully joined Chama!");
       
-      // Redirect using the same pattern as auth context
-      let redirectPath = `/chamas/${chamaId}`; // Default fallback
-      
-      if (chamaData.type) {
-        switch (chamaData.type) {
-          case 'hybrid':
-            redirectPath = `/dashboard/hybrid/${chamaId}`;
-            break;
-          case 'investment':
-            redirectPath = `/dashboard/investment/${chamaId}`;
-            break;
-          case 'merry_go_round':
-            redirectPath = `/dashboard/merry_go_round/${chamaId}`;
-            break;
-        }
-      }
+      // Redirect based on chama type
+      const redirectPath = chamaType 
+        ? `/dashboard/${chamaType}/${chamaId}`
+        : `/chamas/${chamaId}`;
       
       navigate(redirectPath);
     } catch (error) {
       let errorMessage = "Failed to join Chama";
       
       if (error.response) {
-        // Handle different error statuses
-        switch (error.response.status) {
-          case 400:
-            errorMessage = error.response.data.detail || "Invalid request data";
-            break;
-          case 404:
-            errorMessage = "Chama not found";
-            break;
-          case 409:
-            errorMessage = "You're already a member of this Chama";
-            break;
-          default:
-            // Handle serializer validation errors
-            if (error.response.data) {
-              errorMessage = Object.entries(error.response.data)
-                .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
-                .join('; ');
-            }
+        if (error.response.status === 400) {
+          errorMessage = error.response.data.detail || "Invalid request data";
+        } else if (error.response.status === 404) {
+          errorMessage = "Chama not found";
+        } else if (error.response.status === 409) {
+          errorMessage = "You're already a member of this Chama";
         }
       }
       
       toast.error(errorMessage);
-      console.error("Join Chama error:", error);
     } finally {
       setLoading(false);
     }
@@ -111,8 +80,8 @@ const JoinChama = () => {
             onChange={handleInputChange}
             placeholder="Enter Chama ID (e.g., 26)"
             required
-            pattern="\d+"  // Ensure only numbers are entered
-            title="Please enter a numeric Chama ID"
+            pattern="\d+"
+            title="Please enter a numeric ID"
           />
         </div>
         <button 
@@ -127,17 +96,12 @@ const JoinChama = () => {
       <div className="chama-help">
         <h3>How to join a Chama</h3>
         <ol>
-          <li>Get the Chama ID from the Chama administrator</li>
-          <li>Enter the Chama ID in the field above</li>
+          <li>Get the Chama ID from the administrator</li>
+          <li>Enter the Chama ID above</li>
           <li>Click "Join Chama"</li>
         </ol>
-        <p className="note">
-          Note: You'll need approval from the Chama administrator to complete the process.
-        </p>
         {!isAuthenticated && (
-          <p className="auth-warning">
-            You must be logged in to join a Chama. <a href="/login">Login here</a>.
-          </p>
+          <p className="auth-warning">You must be logged in to join a Chama.</p>
         )}
       </div>
     </div>

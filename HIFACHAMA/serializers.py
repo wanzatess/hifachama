@@ -31,11 +31,25 @@ class ChamaSerializer(serializers.ModelSerializer):
  
 
 class ChamaMemberSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-
+    email = serializers.EmailField(source='user.email', read_only=True)
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True, required=False)
+    
     class Meta:
         model = ChamaMember
-        fields = ['id', 'chama', 'user', 'role', 'email', 'phone_number', 'joined_at']
+        fields = ['id', 'chama', 'user', 'role', 'email', 'phone_number', 'joined_at', 'is_active']
+        extra_kwargs = {
+            'user': {'read_only': True},
+            'chama': {'required': True}
+        }
+    
+    def validate(self, data):
+        # Add any custom validation here
+        return data
+    
+    def create(self, validated_data):
+        # Automatically set the user to current user
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
 
 class TransactionSerializer(serializers.ModelSerializer):
     member_username = serializers.CharField(source='member.user.username', read_only=True)

@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import generics, permissions
+from django.core.exceptions import ValidationError
 from HIFACHAMA.authentication import EmailBackend
 import pyotp
 import os
@@ -72,14 +73,17 @@ class ChamaMemberViewSet(viewsets.ModelViewSet):
     queryset = ChamaMember.objects.all()
     serializer_class = ChamaMemberSerializer
     permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        # Ensure the user is set to current user and validate data
-        serializer.save(user=self.request.user)
     
     def get_queryset(self):
-        # Optionally filter by current user
+        # Only show memberships for the current user
         return self.queryset.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        # Verify the user isn't already a member
+        chama_id = serializer.validated_data['chama'].id
+        if ChamaMember.objects.filter(chama_id=chama_id, user=self.request.user).exists():
+            raise ValidationError("You are already a member of this Chama")
+        serializer.save(user=self.request.user)
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-date')
