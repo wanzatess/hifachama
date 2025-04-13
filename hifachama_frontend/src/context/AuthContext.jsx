@@ -49,15 +49,15 @@ const initializeAuth = useCallback(async () => {
 
   const login = async (email, password) => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
-    
+  
     try {
       const response = await api.post('/api/login/', { email, password });
-      const { token, chama_id, ...userData } = response.data;
+      const { token, chama, redirectTo, ...userData } = response.data;
   
       const user = {
         ...userData,
         token,
-        chamaId: chama_id || null // Simplified assignment
+        chamaId: chama?.id || null
       };
   
       setAuthToken(token);
@@ -67,38 +67,20 @@ const initializeAuth = useCallback(async () => {
         error: null 
       });
   
-      const redirectPath = determineRedirectPath(user);
-      navigate(redirectPath, { replace: true });
+      navigate(redirectTo || '/', { replace: true });
   
       return { success: true };
   
     } catch (error) {
       const errorMessage = error.response?.data?.detail || 
-                         error.message || 
-                         'Login failed';
-      
+                           error.message || 
+                           'Login failed';
+  
       setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return { success: false, error: errorMessage };
     }
   };
 
-// In AuthContext.jsx
-const determineRedirectPath = (user) => {
-  const from = location.state?.from?.pathname;
-  
-  // If user has a chama, redirect there
-  if (user.chama_id) {
-    return `/chamas/${user.chama_id}`;
-  }
-  
-  // Chairpersons without chama go to create chama
-  if (user.role === 'chairperson') {
-    return '/dashboard/create-chama';
-  }
-  
-  // Regular members without chama go to join chama
-  return '/dashboard/join-chama';
-};
 
   const logout = useCallback(() => {
     clearAuthToken();
