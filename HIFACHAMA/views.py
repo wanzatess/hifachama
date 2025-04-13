@@ -515,13 +515,29 @@ class NotificationView(APIView):
             sent_by=request.user
         )
         return Response({"message": "Notification sent successfully"}, status=201)
-class ChamaListCreateView(generics.ListCreateAPIView):
-    queryset = Chama.objects.all()
-    serializer_class = ChamaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+# views.py
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .models import Chama
+from .serializers import ChamaSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(admin=self.request.user)
+class ChamaListCreateView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = ChamaSerializer(data=request.data)
+        if serializer.is_valid():
+            # Save the new Chama
+            chama = serializer.save()
+            
+            # Return the chama details along with chama_type for redirection
+            return Response({
+                'id': chama.id,
+                'name': chama.name,
+                'chama_type': chama.chama_type  # Return chama_type for frontend redirection
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ChamaDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Chama.objects.all()

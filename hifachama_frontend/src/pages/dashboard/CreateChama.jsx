@@ -8,7 +8,7 @@ const CreateChama = () => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    chama_type: "hybrid", // Set default value
+    chama_type: "", // Default value for chama type
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -27,32 +27,42 @@ const CreateChama = () => {
     }
   }, [isAuthenticated, navigate]);
 
-// Update CreateChama.jsx
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-
-  try {
-    const response = await api.post("/api/chamas/", formData);
-    toast.success("Chama created successfully!");
-    
-    // Redirect to chama dashboard
-    navigate(`/dashboard/chama/${response.data.id}`);
-  } catch (error) {
-    console.error('Chama creation error:', error);
-    toast.error(
-      error.response?.data?.detail || 
-      error.response?.data?.message || 
-      "Failed to create chama. Please try again."
-    );
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+  // Handle form data change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Send API request to create a new chama
+      const response = await api.post("/api/chamas/", formData);
+      toast.success("Chama created successfully!");
+
+      const { chama_type, id } = response.data; // Get chama_type from the response
+
+      // Redirect based on chama_type
+      if (chama_type === 'hybrid') {
+        navigate(`/dashboard/hybrid/${id}`);
+      } else if (chama_type === 'merry_go_round') {
+        navigate(`/dashboard/merry_go_round/${id}`);
+      } else if (chama_type === 'investment') {
+        navigate(`/dashboard/investment/${id}`);
+      }
+    } catch (error) {
+      console.error('Chama creation error:', error);
+      toast.error(
+        error.response?.data?.detail || 
+        error.response?.data?.message || 
+        "Failed to create chama. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

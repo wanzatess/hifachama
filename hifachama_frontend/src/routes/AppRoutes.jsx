@@ -81,9 +81,9 @@ const AppRoutes = () => {
           <Route path="join-chama" element={<JoinChama />} />
           <Route path="create-chama" element={<CreateChama />} />
             {/* Add these new routes */}
-          <Route path="hybrid" element={<HybridDashboard />} />
-          <Route path="merry_go_round" element={<MerrygoroundDashboard />} />
-          <Route path="investment" element={<InvestmentDashboard />} />
+          <Route path="hybrid/:id" element={<HybridDashboard />} />
+          <Route path="merry_go_round/:id" element={<MerrygoroundDashboard />} />
+          <Route path="investment/:id" element={<InvestmentDashboard />} />
         </Route>
 
         {/* Other Protected Routes */}
