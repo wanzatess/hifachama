@@ -97,7 +97,7 @@ const initializeAuth = useCallback(async () => {
         success: true, 
         role, 
         chama,
-        redirectTo 
+        redirectTo: frontendRedirectTo
       };
   
     } catch (error) {
