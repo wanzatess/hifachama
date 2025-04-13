@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
@@ -8,65 +8,87 @@ import "../../styles/Dashboard.css";
 const JoinChama = () => {
   const [loading, setLoading] = useState(false);
   const [chamaId, setChamaId] = useState("");
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
-    setChamaId(e.target.value);
+    setChamaId(e.target.value.trim());
   };
 
   const handleJoinChama = async (e) => {
     e.preventDefault();
 
     if (!chamaId) {
-      toast.error("Please enter a Chama ID");
+      toast.error("Please enter a valid Chama ID");
       return;
     }
 
-    if (!user) {
+    if (!isAuthenticated || !user) {
       toast.error("You must be logged in to join a Chama");
+      navigate('/login', { state: { from: location } });
       return;
     }
 
     setLoading(true);
     try {
-      // First verify the chama exists and get its type
+      // Verify chama exists and get its details
       const chamaResponse = await api.get(`/api/chamas/${chamaId}/`);
-      const { type: chamaType } = chamaResponse.data;
+      const chamaData = chamaResponse.data;
 
-      // Then join the chama
-      const joinResponse = await api.post('/api/chama-members/', {
+      // Prepare payload matching backend expectations
+      const payload = {
         chama: chamaId,
         user: user.id,
-        status: 'pending' // or 'active' depending on your workflow
-      });
+        role: 'member',  // Default role for new members
+        email: user.email,
+        phone_number: user.phone_number || null,
+      };
 
-      toast.success("Successfully joined Chama!");
+      // Submit membership request
+      await api.post('/api/chama-members/', payload);
+
+      toast.success("Successfully requested to join Chama!");
       
-      // Redirect based on chama type (consistent with creation flow)
-      switch (chamaType) {
-        case 'hybrid':
-          navigate(`/dashboard/hybrid/${chamaId}`);
-          break;
-        case 'merry_go_round':
-          navigate(`/dashboard/merry_go_round/${chamaId}`);
-          break;
-        case 'investment':
-          navigate(`/dashboard/investment/${chamaId}`);
-          break;
-        default:
-          navigate(`/chamas/${chamaId}`); // Fallback for unknown types
+      // Redirect using the same pattern as auth context
+      let redirectPath = `/chamas/${chamaId}`; // Default fallback
+      
+      if (chamaData.type) {
+        switch (chamaData.type) {
+          case 'hybrid':
+            redirectPath = `/dashboard/hybrid/${chamaId}`;
+            break;
+          case 'investment':
+            redirectPath = `/dashboard/investment/${chamaId}`;
+            break;
+          case 'merry_go_round':
+            redirectPath = `/dashboard/merry_go_round/${chamaId}`;
+            break;
+        }
       }
+      
+      navigate(redirectPath);
     } catch (error) {
       let errorMessage = "Failed to join Chama";
       
       if (error.response) {
-        if (error.response.status === 400) {
-          errorMessage = error.response.data.detail || "Invalid request";
-        } else if (error.response.status === 404) {
-          errorMessage = "Chama not found";
-        } else if (error.response.status === 409) {
-          errorMessage = "You're already a member of this Chama";
+        // Handle different error statuses
+        switch (error.response.status) {
+          case 400:
+            errorMessage = error.response.data.detail || "Invalid request data";
+            break;
+          case 404:
+            errorMessage = "Chama not found";
+            break;
+          case 409:
+            errorMessage = "You're already a member of this Chama";
+            break;
+          default:
+            // Handle serializer validation errors
+            if (error.response.data) {
+              errorMessage = Object.entries(error.response.data)
+                .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                .join('; ');
+            }
         }
       }
       
@@ -89,10 +111,16 @@ const JoinChama = () => {
             onChange={handleInputChange}
             placeholder="Enter Chama ID (e.g., 26)"
             required
+            pattern="\d+"  // Ensure only numbers are entered
+            title="Please enter a numeric Chama ID"
           />
         </div>
-        <button type="submit" className="action-btn" disabled={loading}>
-          {loading ? "Joining..." : "Join Chama"}
+        <button 
+          type="submit" 
+          className="action-btn" 
+          disabled={loading || !isAuthenticated}
+        >
+          {loading ? "Processing..." : "Join Chama"}
         </button>
       </form>
 
@@ -106,6 +134,11 @@ const JoinChama = () => {
         <p className="note">
           Note: You'll need approval from the Chama administrator to complete the process.
         </p>
+        {!isAuthenticated && (
+          <p className="auth-warning">
+            You must be logged in to join a Chama. <a href="/login">Login here</a>.
+          </p>
+        )}
       </div>
     </div>
   );

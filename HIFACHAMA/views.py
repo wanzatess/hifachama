@@ -73,6 +73,14 @@ class ChamaMemberViewSet(viewsets.ModelViewSet):
     serializer_class = ChamaMemberSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def perform_create(self, serializer):
+        # Ensure the user is set to current user and validate data
+        serializer.save(user=self.request.user)
+    
+    def get_queryset(self):
+        # Optionally filter by current user
+        return self.queryset.filter(user=self.request.user)
+
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-date')
     serializer_class = TransactionSerializer
