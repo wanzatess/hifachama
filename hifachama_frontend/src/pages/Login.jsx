@@ -20,17 +20,27 @@ const Login = () => {
     setIsLoading(true);
   
     try {
-      await login(email, password);
+      // 1. Perform authentication
+      const loginResponse = await login(email, password);
       
-      // Fetch user data including chama info
+      // 2. Fetch complete user data including chama status
       const userResponse = await api.get('/users/me/');
+      const { role, chama_id } = userResponse.data;
+  
+      // 3. Determine redirect path based on role and chama status
+      let redirectPath = '/dashboard'; // fallback
       
-      // Check if user has a chama
-      if (userResponse.data.chama_id) {
-        navigate(`/dashboard/chama/${userResponse.data.chama_id}`);
+      if (role === 'chairperson') {
+        redirectPath = chama_id 
+          ? `/dashboard/chama/${chama_id}`  // Existing chairperson
+          : '/dashboard/create-chama';      // New chairperson
       } else {
-        navigate('/create-chama');
+        redirectPath = chama_id
+          ? `/dashboard/chama/${chama_id}`  // Existing member
+          : '/dashboard/join-chama';        // New member
       }
+  
+      navigate(redirectPath);
   
     } catch (err) {
       console.error("Login error:", {
