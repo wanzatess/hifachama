@@ -31,24 +31,22 @@ const JoinChama = () => {
 
     setLoading(true);
     try {
-      // First verify the chama exists
+      // 1. First get chama details to determine its type
       const chamaResponse = await api.get(`/api/chamas/${chamaId}/`);
       const chamaType = chamaResponse.data.type;
 
-      // Submit minimal required data
+      // 2. Join the chama
       await api.post('/api/chama-members/', {
         chama: chamaId,
-        role: 'member' // Default role
+        role: 'member'
       });
 
       toast.success("Successfully joined Chama!");
       
-      // Redirect based on chama type
-      const redirectPath = chamaType 
-        ? `/dashboard/${chamaType}/${chamaId}`
-        : `/chamas/${chamaId}`;
+      // 3. Redirect based on chama type
+      const dashboardPath = getDashboardPath(chamaType, chamaId);
+      navigate(dashboardPath);
       
-      navigate(redirectPath);
     } catch (error) {
       let errorMessage = "Failed to join Chama";
       
@@ -66,6 +64,21 @@ const JoinChama = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to determine dashboard path
+  const getDashboardPath = (chamaType, chamaId) => {
+    const validTypes = ['hybrid', 'investment', 'merry_go_round'];
+    const normalizedType = validTypes.includes(chamaType) ? chamaType : 'default';
+    
+    const paths = {
+      hybrid: `/dashboard/hybrid/${chamaId}`,
+      investment: `/dashboard/investment/${chamaId}`,
+      merry_go_round: `/dashboard/merry_go_round/${chamaId}`,
+      default: `/chamas/${chamaId}`
+    };
+    
+    return paths[normalizedType];
   };
 
   return (
