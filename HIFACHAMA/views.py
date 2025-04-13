@@ -640,3 +640,9 @@ def chama_detail(request, id):
         return Response(serializer.data)
     except Chama.DoesNotExist:
         return Response(status=404)
+    # Example Django REST Framework implementation
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def current_user(request):
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data)

@@ -10,7 +10,7 @@ from .serializers import UserSerializer, TransactionSerializer, LoanSerializer, 
 from .views import (
     home, test_email, UserLoginView, verify_otp, 
     mpesa_callback, mpesa_c2b_confirmation, transaction_history, 
-    RegisterView, ChamaListCreateView, verify_token, dashboard_data, contributions_data, chama_detail
+    RegisterView, ChamaListCreateView, verify_token, dashboard_data, contributions_data, chama_detail, current_user
 )
 from .reports import generate_pdf_report, generate_excel_report
 
@@ -71,6 +71,7 @@ urlpatterns = [
     path("api/auth/", include("authentication.urls")),  # Ensure no duplicates inside authentication.urls
     
     path('api/verify-token/', verify_token, name='verify-token'),
+    path('users/me/', current_user, name='current_user'),
     
     # Dashboard Routes
 # Add to your urlpatterns
