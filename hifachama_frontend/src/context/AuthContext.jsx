@@ -52,12 +52,13 @@ const initializeAuth = useCallback(async () => {
   
     try {
       const response = await api.post('/api/login/', { email, password });
-      const { token, chama, redirectTo, ...userData } = response.data;
+      const { token, chama, redirectTo, role, ...userData } = response.data;
   
       const user = {
         ...userData,
         token,
-        chamaId: chama?.id || null
+        chamaId: chama?.id || null,
+        role
       };
   
       setAuthToken(token);
@@ -69,7 +70,12 @@ const initializeAuth = useCallback(async () => {
   
       navigate(redirectTo || '/', { replace: true });
   
-      return { success: true };
+      return { 
+        success: true, 
+        role, 
+        chama,
+        redirectTo 
+      };
   
     } catch (error) {
       const errorMessage = error.response?.data?.detail || 
