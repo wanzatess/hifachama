@@ -523,17 +523,19 @@ from .models import Chama
 from .serializers import ChamaSerializer
 
 class ChamaListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         serializer = ChamaSerializer(data=request.data)
         if serializer.is_valid():
             # Save the new Chama
-            chama = serializer.save()
+            chama = serializer.save(admin=request.user)
             
             # Return the chama details along with chama_type for redirection
             return Response({
                 'id': chama.id,
                 'name': chama.name,
-                'chama_type': chama.chama_type  # Return chama_type for frontend redirection
+                'chama_type': chama.chama_type, # Return chama_type for frontend redirection
+                'admin_id': chama.admin.id
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
