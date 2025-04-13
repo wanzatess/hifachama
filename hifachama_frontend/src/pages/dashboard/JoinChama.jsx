@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
-import "../../styles/Dashboard.css"; // Assuming styling is in this file
+import { useAuth } from "../../context/AuthContext";
+import api from "../../api/axiosConfig";
+import "../../styles/Dashboard.css";
 
 const JoinChama = () => {
   const [loading, setLoading] = useState(false);
-  const [chamaId, setChamaId] = useState(""); // State for Chama ID input
-
+  const [chamaId, setChamaId] = useState("");
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
-    setChamaId(e.target.value); // Update the Chama ID on input change
+    setChamaId(e.target.value);
   };
 
   const handleJoinChama = async (e) => {
@@ -22,23 +23,53 @@ const JoinChama = () => {
       return;
     }
 
+    if (!user) {
+      toast.error("You must be logged in to join a Chama");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Adjust your API base URL accordingly
-      const API_BASE_URL = import.meta.env.VITE_API_URL || "https://hifachama-backend.onrender.com";
-      const response = await axios.post(`${API_BASE_URL}/api/chamas/${chamaId}/members`, {
-        // Send the user ID (you can adapt it if needed)
-        user_id: localStorage.getItem("user_id"), // Assuming you store user ID in local storage
-      }, {
-        headers: {
-          Authorization: `Token ${localStorage.getItem("authToken")}`,
-        },
+      // First verify the chama exists and get its type
+      const chamaResponse = await api.get(`/api/chamas/${chamaId}/`);
+      const { type: chamaType } = chamaResponse.data;
+
+      // Then join the chama
+      const joinResponse = await api.post('/api/chama-members/', {
+        chama: chamaId,
+        user: user.id,
+        status: 'pending' // or 'active' depending on your workflow
       });
 
       toast.success("Successfully joined Chama!");
-      navigate(`/chama/${chamaId}`); // Redirect to the Chama page after joining
+      
+      // Redirect based on chama type (consistent with creation flow)
+      switch (chamaType) {
+        case 'hybrid':
+          navigate(`/dashboard/hybrid/${chamaId}`);
+          break;
+        case 'merry_go_round':
+          navigate(`/dashboard/merry_go_round/${chamaId}`);
+          break;
+        case 'investment':
+          navigate(`/dashboard/investment/${chamaId}`);
+          break;
+        default:
+          navigate(`/chamas/${chamaId}`); // Fallback for unknown types
+      }
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Failed to join Chama";
+      let errorMessage = "Failed to join Chama";
+      
+      if (error.response) {
+        if (error.response.status === 400) {
+          errorMessage = error.response.data.detail || "Invalid request";
+        } else if (error.response.status === 404) {
+          errorMessage = "Chama not found";
+        } else if (error.response.status === 409) {
+          errorMessage = "You're already a member of this Chama";
+        }
+      }
+      
       toast.error(errorMessage);
       console.error("Join Chama error:", error);
     } finally {
@@ -56,7 +87,7 @@ const JoinChama = () => {
             type="text"
             value={chamaId}
             onChange={handleInputChange}
-            placeholder="Enter Chama ID (e.g., CH12345)"
+            placeholder="Enter Chama ID (e.g., 26)"
             required
           />
         </div>
