@@ -20,18 +20,24 @@ const Login = () => {
     setIsLoading(true);
   
     try {
-      // 1. Perform authentication and get user data
-      const { token, user_id, role, chama, redirectTo } = await login(email, password);
+      // Perform authentication
+      const { role, chama } = await login(email, password);
       
-      // 2. Immediate redirect without flashing
-      if (redirectTo) {
-        navigate(redirectTo, { replace: true });  // replace: true prevents back navigation
-      } 
-      // 3. Or handle based on role/chama status
-      else if (role === 'chairperson') {
-        navigate(chama ? `/dashboard/chama/${chama.id}` : '/dashboard/create-chama', { replace: true });
+      // Determine redirect path based on role and chama status
+      if (role === 'chairperson') {
+        navigate(
+          chama 
+            ? `/dashboard/chama/${chama.id}`  // Existing chair - go to chama
+            : '/dashboard/create-chama',     // New chair - create chama
+          { replace: true }
+        );
       } else {
-        navigate(chama ? `/dashboard/chama/${chama.id}` : '/dashboard/join-chama', { replace: true });
+        navigate(
+          chama
+            ? `/dashboard/chama/${chama.id}`  // Existing member - go to chama
+            : '/dashboard/join-chama',        // New member - join chama
+          { replace: true }
+        );
       }
   
     } catch (err) {
