@@ -46,6 +46,28 @@ const initializeAuth = useCallback(async () => {
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
+  const resolveFrontendPath = (redirectTo, chama) => {
+    if (!redirectTo) return '/'; // Fallback to home
+
+    // Handle API-style redirects (e.g., "/api/chamas/26")
+    if (redirectTo.startsWith('/api/chamas/')) {
+      const chamaId = redirectTo.split('/')[3];
+
+      // Map chama.type to frontend dashboard routes
+      switch (chama?.type) {
+        case 'hybrid':
+          return `/dashboard/hybrid/${chamaId}`;
+        case 'investment':
+          return `/dashboard/investment/${chamaId}`;
+        case 'merry_go_round':
+          return `/dashboard/merry_go_round/${chamaId}`;
+        default:
+          return `/chamas/${chamaId}`; // Generic fallback
+      }
+    }
+
+    return redirectTo; // Use as-is if not an API path
+  };
 
   const login = async (email, password) => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
@@ -68,7 +90,8 @@ const initializeAuth = useCallback(async () => {
         error: null 
       });
   
-      navigate(redirectTo || '/', { replace: true });
+      const frontendRedirectTo = resolveFrontendPath(redirectTo, chama);
+      navigate(frontendRedirectTo, { replace: true });
   
       return { 
         success: true, 
