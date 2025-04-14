@@ -1,16 +1,51 @@
 import { MemberRotation, RotationAnalytics, MemberManager } from '../../components/Merrygoround';
 import '../../styles/Dashboard.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../supabaseClient';
 
 const MerryGoRoundDashboard = () => {
-  const [members, setMembers] = useState([
-    { id: 1, name: "David", role: "Chairperson", phone: "0712345678", joinDate: "2023-01-01" },
-    { id: 2, name: "Eve", role: "Treasurer", phone: "0723456789", joinDate: "2023-01-01" },
-    { id: 3, name: "Frank", role: "Member", phone: "0734567890", joinDate: "2023-01-15" }
-  ]);
-  
+  const [members, setMembers] = useState([]);
   const [contributions, setContributions] = useState([]);
   const [missedContributions, setMissedContributions] = useState([]);
+
+  // Fetch initial data
+  const fetchData = async () => {
+    const { data: membersData } = await supabase.from('HIFACHAMA_customuser').select('*');
+    const { data: transactionsData } = await supabase.from('HIFACHAMA_transaction')
+      .select('*')
+      .eq('transaction_type', 'contribution');  // Assuming 'transaction_type' is how contributions are tracked
+
+    const missedContributionsData = transactionsData.filter(transaction => !transaction.paid);  // Example: filter unpaid contributions
+
+    setMembers(membersData || []);
+    setContributions(transactionsData || []);
+    setMissedContributions(missedContributionsData || []);
+  };
+
+  useEffect(() => {
+    fetchData();
+
+    const memberSub = supabase.channel('realtime:members')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'HIFACHAMA_customuser',
+      }, fetchData)
+      .subscribe();
+
+    const transactionSub = supabase.channel('realtime:transactions')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'HIFACHAMA_transaction',
+      }, fetchData)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(memberSub);
+      supabase.removeChannel(transactionSub);
+    };
+  }, []);
 
   return (
     <div className="dashboard-container">
