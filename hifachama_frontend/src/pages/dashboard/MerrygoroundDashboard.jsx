@@ -1,7 +1,7 @@
 import { MemberRotation, RotationAnalytics, MemberManager } from '../../components/Merrygoround';
 import '../../styles/Dashboard.css';
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../utils/supabaseClient';
 
 const MerryGoRoundDashboard = () => {
   const [members, setMembers] = useState([]);
