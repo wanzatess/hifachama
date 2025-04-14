@@ -98,16 +98,16 @@ export const ContributionTracker = ({ members, contributions, setContributions }
   };
 
   const processChartData = () => {
-    const rotational = contributions.filter(c => c.type === 'rotational');
-    const investment = contributions.filter(c => c.type === 'investment');
+    const rotational = (contributions || []).filter(c => c.type === 'rotational');
+    const investment = (contributions || []).filter(c => c.type === 'investment');
     
     return {
       labels: ['Rotational', 'Investment'],
       datasets: [{
         label: 'Contributions (KES)',
         data: [
-          rotational.reduce((sum, c) => sum + c.amount, 0),
-          investment.reduce((sum, c) => sum + c.amount, 0)
+          rotational.reduce((sum, c) => sum + (c.amount || 0), 0),
+          investment.reduce((sum, c) => sum + (c.amount || 0), 0)
         ],
         backgroundColor: [
           'rgba(156, 143, 95, 0.6)',
@@ -298,18 +298,18 @@ export const InvestmentTracker = ({ investments, setInvestments }) => {
   );
 };
 
-export const HybridReports = ({ members, contributions, investments }) => {
+export const HybridReports = ({ members = [], contributions = [], investments = [] }) => {
   const calculateStats = () => {
-    const rotationalTotal = contributions
+    const rotationalTotal = (contributions || [])
       .filter(c => c.type === 'rotational')
-      .reduce((sum, c) => sum + c.amount, 0);
+      .reduce((sum, c) => sum + (c.amount || 0), 0);
       
-    const investmentTotal = contributions
+    const investmentTotal = (contributions || [])
       .filter(c => c.type === 'investment')
-      .reduce((sum, c) => sum + c.amount, 0);
+      .reduce((sum, c) => sum + (c.amount || 0), 0);
       
-    const investmentValue = investments
-      .reduce((sum, i) => sum + i.amount, 0);
+    const investmentValue = (investments || [])
+      .reduce((sum, i) => sum + (i.amount || 0), 0);
 
     return {
       rotationalTotal,
@@ -318,6 +318,7 @@ export const HybridReports = ({ members, contributions, investments }) => {
       memberCount: members.length
     };
   };
+
 
   const stats = calculateStats();
 
