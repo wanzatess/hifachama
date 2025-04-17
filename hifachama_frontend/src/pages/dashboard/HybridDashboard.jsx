@@ -10,10 +10,9 @@ import {
 import ContributionForm from '../../components/ContributionForm';
 import WithdrawalForm from '../../components/WithdrawalForm';
 import { useParams } from 'react-router-dom';
-import '../../styles/Dashboard.css';
 
 const HybridDashboard = () => {
-  const { id } = useParams(); // Get the chama ID from the URL
+  const { id } = useParams();
   const [members, setMembers] = useState([]);
   const [contributions, setContributions] = useState([]);
   const [meetings, setMeetings] = useState([]);
@@ -26,30 +25,18 @@ const HybridDashboard = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
-        
-        // Fetch chama data
         const chamaResponse = await axios.get(
           `https://hifachama-backend.onrender.com/api/chamas/${id}/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         setChamaData(chamaResponse.data);
 
-        // Fetch user data
         const userResponse = await axios.get(
           'https://hifachama-backend.onrender.com/api/current_user/',
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         setUserData(userResponse.data);
 
-        // Fetch Supabase data
         const { data: membersData } = await supabase.from('HIFACHAMA_customuser').select('*');
         const { data: transactionsData } = await supabase.from('HIFACHAMA_transaction').select('*');
         const { data: meetingsData } = await supabase.from('HIFACHAMA_meeting').select('*');
@@ -68,51 +55,22 @@ const HybridDashboard = () => {
 
     fetchData();
 
-    // Set up realtime subscriptions
-    const memberSub = supabase.channel('realtime:members')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'HIFACHAMA_customuser',
-      }, () => fetchData())
-      .subscribe();
+    const subscriptions = [
+      supabase.channel('realtime:members').on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_customuser' }, fetchData),
+      supabase.channel('realtime:transactions').on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_transaction' }, fetchData),
+      supabase.channel('realtime:meetings').on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_meeting' }, fetchData),
+      supabase.channel('realtime:loans').on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_loan' }, fetchData)
+    ].map(channel => channel.subscribe());
 
-    const transactionSub = supabase.channel('realtime:transactions')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'HIFACHAMA_transaction',
-      }, () => fetchData())
-      .subscribe();
-
-    const meetingSub = supabase.channel('realtime:meetings')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'HIFACHAMA_meeting',
-      }, () => fetchData())
-      .subscribe();
-
-    const loanSub = supabase.channel('realtime:loans')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'HIFACHAMA_loan',
-      }, () => fetchData())
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(memberSub);
-      supabase.removeChannel(transactionSub);
-      supabase.removeChannel(meetingSub);
-      supabase.removeChannel(loanSub);
-    };
+    return () => subscriptions.forEach(channel => supabase.removeChannel(channel));
   }, [id]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#4E4528]"></div>
-    </div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#4E4528]"></div>
+      </div>
+    );
   }
 
   return (
@@ -122,45 +80,45 @@ const HybridDashboard = () => {
       </h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+        <DashboardCard title="Member Management">
           <MemberManager members={members} setMembers={setMembers} />
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
+        </DashboardCard>
+        
+        <DashboardCard title="Contributions">
           <ContributionTracker 
             members={members} 
             contributions={contributions} 
             setContributions={setContributions} 
           />
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          {userData && chamaData && (
-            <ContributionForm 
-              chamaId={chamaData.id} 
-              userId={userData.id} 
-            />
-          )}
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          {userData && chamaData && (
-            <WithdrawalForm 
-              chamaId={chamaData.id} 
-              userId={userData.id} 
-            />
-          )}
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
+        </DashboardCard>
+
+        <DashboardCard title="Contribution Form">
+          {userData && chamaData && <ContributionForm chamaId={chamaData.id} userId={userData.id} />}
+        </DashboardCard>
+
+        <DashboardCard title="Withdrawal Form">
+          {userData && chamaData && <WithdrawalForm chamaId={chamaData.id} userId={userData.id} />}
+        </DashboardCard>
+
+        <DashboardCard title="Member Rotation">
           <MemberRotation members={members} contributions={contributions} />
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <HybridReports 
-            members={members}
-            contributions={contributions}
-            loans={loans}
-          />
-        </div>
+        </DashboardCard>
+
+        <DashboardCard title="Reports">
+          <HybridReports members={members} contributions={contributions} loans={loans} />
+        </DashboardCard>
       </div>
     </div>
   );
 };
+
+function DashboardCard({ title, children }) {
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-lg font-semibold mb-4">{title}</h2>
+      {children}
+    </div>
+  );
+}
 
 export default HybridDashboard;
