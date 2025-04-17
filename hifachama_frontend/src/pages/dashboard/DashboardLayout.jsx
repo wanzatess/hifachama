@@ -13,7 +13,7 @@ import {
   FaFileAlt
 } from "react-icons/fa";
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext.jsx";  // Adjusted import path
+import { useAuth } from '../../../context/AuthContext';  // Adjusted import path
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
