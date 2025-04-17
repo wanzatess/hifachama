@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { supabase } from '../../utils/supabaseClient';
 import { 
   MemberManager, 
@@ -8,7 +9,9 @@ import {
 } from '../../components/Hybrid';
 import ContributionForm from '../../components/ContributionForm';
 import WithdrawalForm from '../../components/WithdrawalForm';
+import Sidebar from '../../components/Sidebar';
 import '../../styles/Dashboard.css';
+import '../../styles/Sidebar.css'; // <-- Add sidebar styles
 
 const HybridDashboard = () => {
   const [members, setMembers] = useState([]);
@@ -18,7 +21,6 @@ const HybridDashboard = () => {
   const [userData, setUserData] = useState(null);
   const [chamaData, setChamaData] = useState(null);
 
-  // Fetch user and chama data on component mount
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem('token');
@@ -33,8 +35,7 @@ const HybridDashboard = () => {
             }
           );
           setUserData(response.data);
-          
-          // If user has a chama, fetch chama details
+
           if (response.data.chama_memberships && response.data.chama_memberships.length > 0) {
             const chamaResponse = await axios.get(
               `https://hifachama-backend.onrender.com/api/chamas/${response.data.chama_memberships[0].chama.id}/`,
@@ -55,7 +56,6 @@ const HybridDashboard = () => {
     fetchUserData();
   }, []);
 
-  // Fetch initial data
   const fetchData = async () => {
     const { data: membersData } = await supabase.from('HIFACHAMA_customuser').select('*');
     const { data: transactionsData } = await supabase.from('HIFACHAMA_transaction').select('*');
@@ -112,44 +112,47 @@ const HybridDashboard = () => {
   }, []);
 
   return (
-    <div className="dashboard-container">
-      <h1 className="dashboard-header">Hybrid Chama Dashboard</h1>
-      <div className="dashboard-cards-grid">
-        <div className="dashboard-card">
-          <MemberManager members={members} setMembers={setMembers} />
-        </div>
-        <div className="dashboard-card">
-          <ContributionTracker 
-            members={members} 
-            contributions={contributions} 
-            setContributions={setContributions} 
-          />
-        </div>
-        <div className="dashboard-card">
-          {userData && chamaData && (
-            <ContributionForm 
-              chamaId={chamaData.id} 
-              userId={userData.id} 
+    <div className="dashboard-wrapper">
+      <Sidebar />
+      <div className="dashboard-container with-sidebar">
+        <h1 className="dashboard-header">Hybrid Chama Dashboard</h1>
+        <div className="dashboard-cards-grid">
+          <div className="dashboard-card">
+            <MemberManager members={members} setMembers={setMembers} />
+          </div>
+          <div className="dashboard-card">
+            <ContributionTracker 
+              members={members} 
+              contributions={contributions} 
+              setContributions={setContributions} 
             />
-          )}
-        </div>
-        <div className="dashboard-card">
-          {userData && chamaData && (
-            <WithdrawalForm 
-              chamaId={chamaData.id} 
-              userId={userData.id} 
+          </div>
+          <div className="dashboard-card">
+            {userData && chamaData && (
+              <ContributionForm 
+                chamaId={chamaData.id} 
+                userId={userData.id} 
+              />
+            )}
+          </div>
+          <div className="dashboard-card">
+            {userData && chamaData && (
+              <WithdrawalForm 
+                chamaId={chamaData.id} 
+                userId={userData.id} 
+              />
+            )}
+          </div>
+          <div className="dashboard-card">
+            <MemberRotation members={members} contributions={contributions} />
+          </div>
+          <div className="dashboard-card">
+            <HybridReports 
+              members={members}
+              contributions={contributions}
+              loans={loans}
             />
-          )}
-        </div>
-        <div className="dashboard-card">
-          <MemberRotation members={members} contributions={contributions} />
-        </div>
-        <div className="dashboard-card">
-          <HybridReports 
-            members={members}
-            contributions={contributions}
-            loans={loans}
-          />
+          </div>
         </div>
       </div>
     </div>

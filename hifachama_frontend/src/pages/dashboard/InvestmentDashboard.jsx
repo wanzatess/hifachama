@@ -12,7 +12,8 @@ import {
   AssetRegister 
 } from '../../components/Investment';
 import { BasicAccounting } from '../../components/Hybrid';
-import { ContributionForm, WithdrawalForm } from '../../components'; // Import both forms
+import ContributionForm from "../../components/ContributionForm";
+import WithdrawalForm from "../../components/WithdrawalForm";
 import '../../styles/Dashboard.css';
 
 const InvestmentDashboard = () => {

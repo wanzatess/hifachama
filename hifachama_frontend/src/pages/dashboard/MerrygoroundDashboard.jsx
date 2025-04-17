@@ -5,7 +5,8 @@ import {
   RotationAnalytics, 
   MemberManager 
 } from '../../components/Merrygoround';
-import { ContributionForm, WithdrawalForm } from '../../components';
+import ContributionForm from "../../components/ContributionForm";
+import WithdrawalForm from "../../components/WithdrawalForm";
 import '../../styles/Dashboard.css';
 
 const MerryGoRoundDashboard = () => {

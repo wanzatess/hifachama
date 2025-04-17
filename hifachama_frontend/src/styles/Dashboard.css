@@ -453,3 +453,11 @@ canvas {
   background: #dc3545;
   color: white;
 }
+.dashboard-wrapper {
+  display: flex;
+}
+
+.with-sidebar {
+  margin-left: 240px; /* Sidebar width */
+  width: calc(100% - 240px);
+}
