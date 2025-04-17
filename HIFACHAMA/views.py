@@ -43,9 +43,46 @@ User = get_user_model()
 # ======================
 # Authentication Views
 # ======================
+def send_otp(user):
+    """Generate and send OTP via email"""
+    OTP.objects.filter(user=user).delete()
+    otp_code = pyotp.TOTP(pyotp.random_base32()).now()
+    otp = OTP.objects.create(user=user, otp_code=otp_code)
+    
+    send_mail(
+        'Your OTP Code',
+        f'Your OTP is: {otp_code}. It expires in 5 minutes.',
+        'noreply@yourdomain.com',
+        [user.email],
+        fail_silently=False,
+    )
+    return otp
+
+def verify_otp(request):
+    """Verify OTP before logging in the user"""
+    if request.method == "POST":
+        otp_code = request.POST.get("otp")
+        user_id = request.session.get("otp_user")
+
+        if not user_id:
+            return render(request, "verify_otp.html", {"error": "Session expired. Please log in again."})
+
+        OTP.objects.filter(created_at__lt=timezone.now() - timedelta(minutes=5)).delete()
+        otp_record = OTP.objects.filter(user_id=user_id, otp_code=otp_code).first()
+
+        if otp_record:
+            if otp_record.is_expired():
+                return render(request, "verify_otp.html", {"error": "OTP expired. Request a new one."})
+            user = otp_record.user
+            login(request, user)
+            otp_record.delete()
+            del request.session["otp_user"]
+            return redirect("home")
+        return render(request, "verify_otp.html", {"error": "Invalid OTP."})
+    return render(request, "verify_otp.html")
+
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
-
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -60,36 +97,22 @@ class RegisterView(APIView):
 
 class UserLoginView(APIView):
     permission_classes = [permissions.AllowAny]
-    
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
-        
         if not serializer.is_valid():
-            return Response(
-                {"error": "Invalid input", "details": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Invalid input", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
             
         email = serializer.validated_data.get('email').lower()
         password = serializer.validated_data.get('password')
-        
         user = authenticate(request, username=email, password=password)
         
         if not user:
-            return Response(
-                {"error": "Invalid email or password"},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-            
+            return Response({"error": "Invalid email or password"}, status=status.HTTP_401_UNAUTHORIZED)
         if not user.is_active:
-            return Response(
-                {"error": "Account is inactive"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"error": "Account is inactive"}, status=status.HTTP_403_FORBIDDEN)
             
         token, created = Token.objects.get_or_create(user=user)
         chama_data = self._get_chama_data(user)
-        
         response_data = {
             "token": token.key,
             "user_id": user.pk,
@@ -101,10 +124,8 @@ class UserLoginView(APIView):
             "chama": chama_data,
             "redirectTo": self._get_redirect_path(user, chama_data)
         }
-        
         user.last_login = timezone.now()
         user.save()
-        
         return Response(response_data, status=status.HTTP_200_OK)
     
     def _get_chama_data(self, user):
@@ -117,11 +138,7 @@ class UserLoginView(APIView):
                     'type': administered_chama.chama_type,
                     'role': 'admin'
                 }
-            
-            chama_membership = ChamaMember.objects.filter(
-                user=user, is_active=True
-            ).select_related('chama').first()
-                
+            chama_membership = ChamaMember.objects.filter(user=user, is_active=True).select_related('chama').first()
             if chama_membership:
                 return {
                     'id': chama_membership.chama.id,
@@ -152,7 +169,7 @@ def verify_token(request):
     })
 
 # ======================
-# Model ViewSets
+# Model ViewSets 
 # ======================
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -163,7 +180,6 @@ class ChamaViewSet(viewsets.ModelViewSet):
     queryset = Chama.objects.all()
     serializer_class = ChamaSerializer
     permission_classes = [permissions.IsAuthenticated]
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -179,10 +195,8 @@ class ChamaMemberViewSet(viewsets.ModelViewSet):
     queryset = ChamaMember.objects.all()
     serializer_class = ChamaMemberSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
-    
     def perform_create(self, serializer):
         chama_id = serializer.validated_data['chama'].id
         if ChamaMember.objects.filter(chama_id=chama_id, user=self.request.user).exists():
@@ -193,7 +207,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-date')
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
-
     def perform_create(self, serializer):
         serializer.save(member=self.request.user)
 
@@ -206,13 +219,11 @@ class MeetingViewSet(viewsets.ModelViewSet):
     queryset = Meeting.objects.all()
     serializer_class = MeetingSerializer
     permission_classes = [permissions.IsAuthenticated]
-
     def perform_create(self, serializer):
         meeting_date = serializer.validated_data['date']
         if meeting_date and timezone.is_naive(meeting_date):
             meeting_date = timezone.make_aware(meeting_date)
         serializer.save(date=meeting_date)
-
     def perform_update(self, serializer):
         meeting_date = serializer.validated_data.get('date')
         if meeting_date and timezone.is_naive(meeting_date):
@@ -229,11 +240,9 @@ class NotificationViewSet(viewsets.ModelViewSet):
 # ======================
 class ChamaManagementView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsChairperson]
-
     def post(self, request):
         chama = Chama.objects.create(name=request.data["name"], created_by=request.user)
         return Response({"message": "Chama created successfully", "chama_id": chama.id}, status=201)
-
     def delete(self, request, chama_id):
         chama = get_object_or_404(Chama, id=chama_id)
         chama.delete()
@@ -241,7 +250,6 @@ class ChamaManagementView(APIView):
 
 class LoanApprovalView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsChairperson]
-
     def put(self, request, loan_id):
         loan = get_object_or_404(Loan, id=loan_id)
         loan.status = "approved"
@@ -250,7 +258,6 @@ class LoanApprovalView(APIView):
 
 class ContributionApprovalView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsTreasurer]
-
     def put(self, request, contribution_id):
         contribution = get_object_or_404(Transaction, id=contribution_id, transaction_type="contribution")
         contribution.status = "approved"
@@ -259,7 +266,6 @@ class ContributionApprovalView(APIView):
 
 class WithdrawalApprovalView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsTreasurer]
-
     def put(self, request, withdrawal_id):
         withdrawal = get_object_or_404(Transaction, id=withdrawal_id, transaction_type="withdrawal")
         withdrawal.status = "approved"
@@ -268,7 +274,6 @@ class WithdrawalApprovalView(APIView):
 
 class MeetingView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsSecretary]
-
     def post(self, request):
         meeting = Meeting.objects.create(
             title=request.data["title"],
@@ -279,7 +284,6 @@ class MeetingView(APIView):
 
 class NotificationView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsSecretary]
-
     def post(self, request):
         notification = Notification.objects.create(
             message=request.data["message"],
@@ -287,26 +291,73 @@ class NotificationView(APIView):
         )
         return Response({"message": "Notification sent successfully"}, status=201)
 
+# ======================
+# Utility Functions
+# ======================
 def test_email(request):
-    try:
-        # Replace with actual email details
-        send_mail(
-            'Test Email Subject',
-            'This is a test email from HIFACHAMA.',
-            'hifachama@gmail.com',  # Sender email
-            ['to@example.com'],  # Receiver email
-            fail_silently=False,
-        )
-        return JsonResponse({"message": "Email sent successfully"}, status=200)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+    send_mail(
+        'Test Email',
+        'This is a test email sent via Gmail SMTP.',
+        'hifachama@gmail.com',
+        ['recipient-email@gmail.com'],
+        fail_silently=False,
+    )
+    return HttpResponse("Test email sent successfully.")
+
+def notify_user():
+    subject = "Chama Contribution Alert"
+    message = "Your contribution has been received successfully!"
+    recipient_list = ["user@example.com"]
+    send_email_notification(subject, message, recipient_list)
+
+def notify_user_via_push(request):
+    user_id = request.user.id
+    title = "Loan Approval"
+    message = "Your loan application has been approved!"
+    send_push_notification(user_id, title, message)
+
+def get_transaction_data():
+    transactions = Transaction.objects.all().values('member__username', 'amount', 'transaction_type', 'timestamp')
+    df = pd.DataFrame(list(transactions))
+    return df
+
+def generate_pdf_report(request):
+    transactions = get_transaction_data()
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="transaction_report.pdf"'
+    pdf = canvas.Canvas(response, pagesize=letter)
+    pdf.setTitle("Transaction Report")
+    pdf.drawString(100, 750, "Transaction Report")
+    pdf.drawString(100, 730, "----------------------")
+    y_position = 700
+    for index, row in transactions.iterrows():
+        pdf.drawString(100, y_position, f"{row['member__username']} | {row['transaction_type']} | KES {row['amount']} | {row['timestamp']}")
+        y_position -= 20
+    pdf.save()
+    return response
+
+def generate_excel_report(request):
+    transactions = get_transaction_data()
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="transaction_report.xlsx"'
+    workbook = xlsxwriter.Workbook(response, {'in_memory': True})
+    worksheet = workbook.add_worksheet()
+    headers = ["Member", "Transaction Type", "Amount", "Timestamp"]
+    for col_num, header in enumerate(headers):
+        worksheet.write(0, col_num, header)
+    for row_num, row in enumerate(transactions.itertuples(), start=1):
+        worksheet.write(row_num, 0, row.member__username)
+        worksheet.write(row_num, 1, row.transaction_type)
+        worksheet.write(row_num, 2, row.amount)
+        worksheet.write(row_num, 3, str(row.timestamp))
+    workbook.close()
+    return response
 
 # ======================
 # Member Actions
 # ======================
 class ContributionView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsMember]
-
     def post(self, request):
         contribution = Transaction.objects.create(
             transaction_type="contribution",
@@ -317,7 +368,6 @@ class ContributionView(APIView):
 
 class LoanRequestView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsMember]
-
     def post(self, request):
         loan = Loan.objects.create(
             amount=request.data["amount"],
@@ -327,7 +377,6 @@ class LoanRequestView(APIView):
 
 class WithdrawalRequestView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsMember]
-
     def post(self, request):
         withdrawal = Transaction.objects.create(
             transaction_type="withdrawal",
@@ -429,45 +478,6 @@ def mpesa_callback(request):
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
     return JsonResponse({"error": "Invalid request method"}, status=405)
-
-# ======================
-# Report Generation
-# ======================
-def generate_transaction_report(request, format_type):
-    transactions = Transaction.objects.all().values('member__username', 'amount', 'transaction_type', 'timestamp')
-    df = pd.DataFrame(list(transactions))
-    
-    if format_type == 'pdf':
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="transaction_report.pdf"'
-        pdf = canvas.Canvas(response, pagesize=letter)
-        pdf.setTitle("Transaction Report")
-        pdf.drawString(100, 750, "Transaction Report")
-        y_position = 700
-        for _, row in df.iterrows():
-            pdf.drawString(100, y_position, 
-                         f"{row['member__username']} | {row['transaction_type']} | KES {row['amount']} | {row['timestamp']}")
-            y_position -= 20
-        pdf.save()
-        return response
-    
-    elif format_type == 'excel':
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="transaction_report.xlsx"'
-        workbook = xlsxwriter.Workbook(response, {'in_memory': True})
-        worksheet = workbook.add_worksheet()
-        headers = ["Member", "Transaction Type", "Amount", "Timestamp"]
-        for col_num, header in enumerate(headers):
-            worksheet.write(0, col_num, header)
-        for row_num, row in enumerate(df.itertuples(), start=1):
-            worksheet.write(row_num, 0, row.member__username)
-            worksheet.write(row_num, 1, row.transaction_type)
-            worksheet.write(row_num, 2, row.amount)
-            worksheet.write(row_num, 3, str(row.timestamp))
-        workbook.close()
-        return response
-    
-    return HttpResponse("Invalid format specified", status=400)
 
 # ======================
 # Frontend Views
