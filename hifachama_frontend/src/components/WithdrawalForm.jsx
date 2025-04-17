@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const ContributionForm = ({ chamaId, userId }) => {
+const WithdrawalForm = ({ chamaId, userId }) => {
   const [formData, setFormData] = useState({
     amount: "",
     description: "",
-    transaction_type: "contribution",
+    transaction_type: "withdrawal",
     chama: chamaId,
     member: userId
   });
@@ -43,19 +43,25 @@ const ContributionForm = ({ chamaId, userId }) => {
         }
       );
 
-      toast.success("Contribution submitted successfully!");
+      toast.success("Withdrawal request submitted successfully!");
       setFormData({
         amount: "",
         description: "",
-        transaction_type: "contribution",
+        transaction_type: "withdrawal",
         chama: chamaId,
         member: userId
       });
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        toast.error(error.response.data.error || "Invalid contribution details.");
+      if (error.response) {
+        if (error.response.status === 400) {
+          toast.error(error.response.data.error || "Invalid withdrawal details.");
+        } else if (error.response.status === 403) {
+          toast.error("Withdrawal amount exceeds chama balance.");
+        } else {
+          toast.error("Failed to submit withdrawal request.");
+        }
       } else {
-        toast.error("Failed to submit contribution.");
+        toast.error("Network error. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -64,7 +70,7 @@ const ContributionForm = ({ chamaId, userId }) => {
 
   return (
     <div className="p-4 bg-white shadow rounded-lg">
-      <h2 className="text-xl font-bold mb-4">Make a Contribution</h2>
+      <h2 className="text-xl font-bold mb-4">Request Withdrawal</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-gray-700">Amount</label>
@@ -80,13 +86,14 @@ const ContributionForm = ({ chamaId, userId }) => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-gray-700">Description</label>
+          <label className="block text-gray-700">Reason/Description</label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
             className="w-full border rounded p-2"
             rows="3"
+            required
           />
         </div>
         <button
@@ -94,11 +101,11 @@ const ContributionForm = ({ chamaId, userId }) => {
           className="bg-blue-500 text-white p-2 rounded w-full"
           disabled={loading}
         >
-          {loading ? "Processing..." : "Submit Contribution"}
+          {loading ? "Processing..." : "Submit Withdrawal Request"}
         </button>
       </form>
     </div>
   );
 };
 
-export default ContributionForm;
+export default WithdrawalForm;

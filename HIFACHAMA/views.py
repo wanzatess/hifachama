@@ -91,7 +91,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(member=self.request.user)
+        # Get the ChamaMember instance for the current user and chama
+        chama_id = serializer.validated_data.get('chama').id
+        chama_member = get_object_or_404(
+            ChamaMember, 
+            user=self.request.user, 
+            chama_id=chama_id
+        )
+        serializer.save(member=chama_member)
 
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
@@ -566,19 +573,25 @@ class ChamaDetailView(APIView):
         return Response({"chama_name": chama.name, "created_by": chama.created_by.username})
 
 class ContributionView(APIView):
-    """Member can make contributions"""
-    permission_classes = [IsAuthenticated, IsMember]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         data = request.data.copy()
+
+        # Check if the user has a ChamaMember profile
+        try:
+            data['member'] = request.user.chamamember.id
+        except AttributeError:
+            return Response({"error": "You are not an active member of any chama."}, status=400)
+
         data['transaction_type'] = 'contribution'
-        data['member'] = request.user.chamamember.id  # ensure member is passed correctly
 
         serializer = TransactionSerializer(data=data, context={'request': request})
         if serializer.is_valid():
             serializer.save(created_by=request.user)
-            return Response({"message": "Contribution made successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Contribution made successfully", "data": serializer.data}, status=201)
+        return Response(serializer.errors, status=400)
+
 
 class LoanRequestView(APIView):
     """Member can request a loan"""

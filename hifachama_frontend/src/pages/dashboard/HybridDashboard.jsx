@@ -6,6 +6,8 @@ import {
   MemberRotation, 
   HybridReports 
 } from '../../components/Hybrid';
+import ContributionForm from '../../components/ContributionForm';
+import WithdrawalForm from '../../components/WithdrawalForm';
 import '../../styles/Dashboard.css';
 
 const HybridDashboard = () => {
@@ -13,6 +15,45 @@ const HybridDashboard = () => {
   const [contributions, setContributions] = useState([]);
   const [meetings, setMeetings] = useState([]);
   const [loans, setLoans] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [chamaData, setChamaData] = useState(null);
+
+  // Fetch user and chama data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await axios.get(
+            'https://hifachama-backend.onrender.com/api/current_user/',
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setUserData(response.data);
+          
+          // If user has a chama, fetch chama details
+          if (response.data.chama_memberships && response.data.chama_memberships.length > 0) {
+            const chamaResponse = await axios.get(
+              `https://hifachama-backend.onrender.com/api/chamas/${response.data.chama_memberships[0].chama.id}/`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            setChamaData(chamaResponse.data);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Fetch initial data
   const fetchData = async () => {
@@ -83,6 +124,22 @@ const HybridDashboard = () => {
             contributions={contributions} 
             setContributions={setContributions} 
           />
+        </div>
+        <div className="dashboard-card">
+          {userData && chamaData && (
+            <ContributionForm 
+              chamaId={chamaData.id} 
+              userId={userData.id} 
+            />
+          )}
+        </div>
+        <div className="dashboard-card">
+          {userData && chamaData && (
+            <WithdrawalForm 
+              chamaId={chamaData.id} 
+              userId={userData.id} 
+            />
+          )}
         </div>
         <div className="dashboard-card">
           <MemberRotation members={members} contributions={contributions} />

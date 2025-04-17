@@ -1,24 +1,65 @@
-import { MemberRotation, RotationAnalytics, MemberManager } from '../../components/Merrygoround';
-import '../../styles/Dashboard.css';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabaseClient';
+import { 
+  MemberRotation, 
+  RotationAnalytics, 
+  MemberManager 
+} from '../../components/Merrygoround';
+import { ContributionForm, WithdrawalForm } from '../../components';
+import '../../styles/Dashboard.css';
 
 const MerryGoRoundDashboard = () => {
   const [members, setMembers] = useState([]);
-  const [contributions, setContributions] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [missedContributions, setMissedContributions] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [chamaData, setChamaData] = useState(null);
 
-  // Fetch initial data
+  // Fetch user and chama data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await axios.get(
+            'https://hifachama-backend.onrender.com/api/current_user/',
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setUserData(response.data);
+          
+          if (response.data.chama_memberships && response.data.chama_memberships.length > 0) {
+            const chamaResponse = await axios.get(
+              `https://hifachama-backend.onrender.com/api/chamas/${response.data.chama_memberships[0].chama.id}/`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            setChamaData(chamaResponse.data);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
+
   const fetchData = async () => {
     const { data: membersData } = await supabase.from('HIFACHAMA_customuser').select('*');
     const { data: transactionsData } = await supabase.from('HIFACHAMA_transaction')
-      .select('*')
-      .eq('transaction_type', 'contribution');  // Assuming 'transaction_type' is how contributions are tracked
+      .select('*');
 
-    const missedContributionsData = transactionsData.filter(transaction => !transaction.paid);  // Example: filter unpaid contributions
+    const contributions = transactionsData.filter(t => t.transaction_type === 'contribution');
+    const missedContributionsData = contributions.filter(transaction => !transaction.paid);
 
     setMembers(membersData || []);
-    setContributions(transactionsData || []);
+    setTransactions(transactionsData || []);
     setMissedContributions(missedContributionsData || []);
   };
 
@@ -58,8 +99,8 @@ const MerryGoRoundDashboard = () => {
           <MemberRotation 
             members={members} 
             onUpdateMembers={setMembers}
-            contributions={contributions}
-            setContributions={setContributions}
+            contributions={transactions.filter(t => t.transaction_type === 'contribution')}
+            setContributions={setTransactions}
             missedContributions={missedContributions}
             setMissedContributions={setMissedContributions}
           />
@@ -67,9 +108,26 @@ const MerryGoRoundDashboard = () => {
         <div className="dashboard-card">
           <RotationAnalytics 
             members={members}
-            contributions={contributions}
+            contributions={transactions.filter(t => t.transaction_type === 'contribution')}
             missedContributions={missedContributions}
           />
+        </div>
+        {/* Transaction Forms */}
+        <div className="dashboard-card">
+          {userData && chamaData && (
+            <ContributionForm 
+              chamaId={chamaData.id} 
+              userId={userData.id} 
+            />
+          )}
+        </div>
+        <div className="dashboard-card">
+          {userData && chamaData && (
+            <WithdrawalForm 
+              chamaId={chamaData.id} 
+              userId={userData.id} 
+            />
+          )}
         </div>
       </div>
     </div>

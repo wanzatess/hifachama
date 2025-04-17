@@ -57,20 +57,50 @@ class ContributionDetailSerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     member_username = serializers.CharField(source='member.user.username', read_only=True)
-    contribution_details = ContributionDetailSerializer(required=False)
+    contribution_details = ContributionDetailSerializer(required=False, allow_null=True)
+    purpose = serializers.CharField(
+        write_only=True, 
+        required=False,
+        help_text="Required for contributions. One of: monthly_dues, emergency_fund, project_fund, other"
+    )
 
     class Meta:
         model = Transaction
         fields = [
             'id', 'chama', 'member', 'amount', 'transaction_type', 'status',
             'date', 'description', 'receipt_number', 'created_by',
-            'member_username', 'contribution_details'
+            'member_username', 'contribution_details', 'purpose'
         ]
-        read_only_fields = ['status', 'date', 'id', 'member_username']
+        read_only_fields = ['status', 'date', 'id', 'member_username', 'contribution_details']
+        extra_kwargs = {
+            'member': {'required': False},  # Will be set automatically
+            'chama': {'required': False},  # Will be set from URL or form
+        }
+
+    def validate(self, data):
+        # Ensure purpose is provided for contributions
+        if data.get('transaction_type') == 'contribution' and not data.get('purpose'):
+            raise serializers.ValidationError({
+                'purpose': 'Purpose is required for contributions'
+            })
+        
+        # Ensure purpose is not provided for non-contributions
+        if data.get('transaction_type') != 'contribution' and data.get('purpose'):
+            raise serializers.ValidationError({
+                'purpose': 'Purpose should only be specified for contributions'
+            })
+        
+        return data
 
     def create(self, validated_data):
-        contribution_data = validated_data.pop('contribution_details', None)
+        # Extract purpose if it exists
+        purpose = validated_data.pop('purpose', None)
         transaction_type = validated_data.get('transaction_type')
+
+        # Auto-set the member from the request user
+        user = self.context['request'].user
+        chama_id = validated_data.get('chama').id
+        validated_data['member'] = ChamaMember.objects.get(user=user, chama_id=chama_id)
 
         # Auto-approve contributions
         if transaction_type == 'contribution':
@@ -80,9 +110,12 @@ class TransactionSerializer(serializers.ModelSerializer):
 
         transaction = super().create(validated_data)
 
-        # If it's a contribution, attach extra details
-        if transaction_type == 'contribution' and contribution_data:
-            Contribution.objects.create(transaction=transaction, **contribution_data)
+        # Create contribution details if it's a contribution
+        if transaction_type == 'contribution' and purpose:
+            Contribution.objects.create(
+                transaction=transaction,
+                purpose=purpose
+            )
 
         return transaction
 

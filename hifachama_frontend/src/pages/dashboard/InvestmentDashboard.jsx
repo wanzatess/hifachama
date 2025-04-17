@@ -12,6 +12,7 @@ import {
   AssetRegister 
 } from '../../components/Investment';
 import { BasicAccounting } from '../../components/Hybrid';
+import { ContributionForm, WithdrawalForm } from '../../components'; // Import both forms
 import '../../styles/Dashboard.css';
 
 const InvestmentDashboard = () => {
@@ -21,6 +22,43 @@ const InvestmentDashboard = () => {
   const [investments, setInvestments] = useState([]);
   const [loans, setLoans] = useState([]);
   const [expenses, setExpenses] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [chamaData, setChamaData] = useState(null);
+
+  // Fetch user and chama data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await axios.get(
+            'https://hifachama-backend.onrender.com/api/current_user/',
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setUserData(response.data);
+          
+          if (response.data.chama_memberships && response.data.chama_memberships.length > 0) {
+            const chamaResponse = await axios.get(
+              `https://hifachama-backend.onrender.com/api/chamas/${response.data.chama_memberships[0].chama.id}/`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            setChamaData(chamaResponse.data);
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
 
   const fetchData = async () => {
     const { data: users } = await supabase.from('HIFACHAMA_customuser').select('*');
@@ -31,7 +69,7 @@ const InvestmentDashboard = () => {
 
     setMembers(users || []);
     setTransactions(trans || []);
-    setContributions(trans || []);
+    setContributions(trans.filter(t => t.transaction_type === 'contribution') || []);
     setInvestments(invest || []);
     setLoans(loan || []);
     setExpenses(expense || []);
@@ -116,6 +154,23 @@ const InvestmentDashboard = () => {
         </div>
         <div className="dashboard-card">
           <AssetRegister />
+        </div>
+        {/* Transaction Forms */}
+        <div className="dashboard-card">
+          {userData && chamaData && (
+            <ContributionForm 
+              chamaId={chamaData.id} 
+              userId={userData.id} 
+            />
+          )}
+        </div>
+        <div className="dashboard-card">
+          {userData && chamaData && (
+            <WithdrawalForm 
+              chamaId={chamaData.id} 
+              userId={userData.id} 
+            />
+          )}
         </div>
       </div>
     </div>
