@@ -570,12 +570,15 @@ class ContributionView(APIView):
     permission_classes = [IsAuthenticated, IsMember]
 
     def post(self, request):
-        contribution = Transaction.objects.create(
-            transaction_type="contribution",
-            amount=request.data["amount"],
-            member=request.user
-        )
-        return Response({"message": "Contribution made successfully"}, status=201)
+        data = request.data.copy()
+        data['transaction_type'] = 'contribution'
+        data['member'] = request.user.chamamember.id  # ensure member is passed correctly
+
+        serializer = TransactionSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(created_by=request.user)
+            return Response({"message": "Contribution made successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoanRequestView(APIView):
     """Member can request a loan"""

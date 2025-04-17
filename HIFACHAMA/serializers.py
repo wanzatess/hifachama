@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Chama, ChamaMember, Transaction, Loan, Meeting, Notification, MemberRole
+from .models import Chama, ChamaMember, Transaction, Loan, Meeting, Notification, MemberRole, Contribution
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
@@ -50,23 +50,41 @@ class ChamaMemberSerializer(serializers.ModelSerializer):
         # Automatically set the user to current user
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+class ContributionDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contribution
+        fields = ['purpose']
 
 class TransactionSerializer(serializers.ModelSerializer):
     member_username = serializers.CharField(source='member.user.username', read_only=True)
-    
+    contribution_details = ContributionDetailSerializer(required=False)
+
     class Meta:
         model = Transaction
-        fields = ['__all__']
-        read_only_fields = ['status', 'date']
+        fields = [
+            'id', 'chama', 'member', 'amount', 'transaction_type', 'status',
+            'date', 'description', 'receipt_number', 'created_by',
+            'member_username', 'contribution_details'
+        ]
+        read_only_fields = ['status', 'date', 'id', 'member_username']
 
     def create(self, validated_data):
-        """Automatically set contributions to 'approved' and withdrawals to 'pending'."""
+        contribution_data = validated_data.pop('contribution_details', None)
         transaction_type = validated_data.get('transaction_type')
+
+        # Auto-approve contributions
         if transaction_type == 'contribution':
-            validated_data['status'] = 'approved'  # Contributions are approved immediately
+            validated_data['status'] = 'approved'
         else:
-            validated_data['status'] = 'pending'  # Withdrawals require approval
-        return super().create(validated_data)
+            validated_data['status'] = 'pending'
+
+        transaction = super().create(validated_data)
+
+        # If it's a contribution, attach extra details
+        if transaction_type == 'contribution' and contribution_data:
+            Contribution.objects.create(transaction=transaction, **contribution_data)
+
+        return transaction
 
 class LoanSerializer(serializers.ModelSerializer):
     member = UserSerializer(read_only=True)

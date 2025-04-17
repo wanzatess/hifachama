@@ -1,11 +1,7 @@
 from django.urls import path, include
-from django.http import JsonResponse
-from django.shortcuts import render  # Import render here
+from django.http import JsonResponse  # <-- Add this import
+from django.shortcuts import render  # <-- Add this import
 from rest_framework.routers import DefaultRouter
-from rest_framework.authtoken.views import obtain_auth_token
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from .models import Transaction, Loan, Notification
 from .serializers import UserSerializer, TransactionSerializer, LoanSerializer, NotificationSerializer
 from .views import (
@@ -18,45 +14,6 @@ from .reports import generate_pdf_report, generate_excel_report
 # Function to return JSON response instead of index.html
 def api_home(request):
     return JsonResponse({"message": "Welcome to HIFACHAMA API"}, status=200)
-
-# Add dashboard view functions here
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def dashboard_data(request):
-    user = request.user
-    data = {
-        "user": UserSerializer(user).data,
-        "contributions": TransactionSerializer(
-            Transaction.objects.filter(member=user), 
-            many=True
-        ).data,
-        "loans": LoanSerializer(
-            Loan.objects.filter(requested_by=user), 
-            many=True
-        ).data,
-        "notifications": NotificationSerializer(
-            Notification.objects.filter(user=user)[:5], 
-            many=True
-        ).data
-    }
-    return Response(data)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def member_stats(request):
-    user = request.user
-    stats = {
-        "balance": user.account_balance,
-        "activeLoans": Loan.objects.filter(
-            requested_by=user, 
-            status='active'
-        ).count(),
-        "pendingContributions": Transaction.objects.filter(
-            member=user,
-            status='pending'
-        ).count()
-    }
-    return Response(stats)
 
 # Set up router for transactions
 router = DefaultRouter()
