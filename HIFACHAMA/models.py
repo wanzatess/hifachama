@@ -197,6 +197,17 @@ class Transaction(models.Model):
     def clean(self):
         if self.transaction_type == 'withdrawal' and self.amount > self.chama.current_balance:
             raise ValidationError('Withdrawal amount cannot exceed chama balance')
+class Contribution(models.Model):
+    PURPOSE_CHOICES = [
+        ('monthly_dues', 'Monthly Dues'),
+        ('emergency_fund', 'Emergency Fund'),
+        ('project_fund', 'Project Fund'),
+        ('other', 'Other'),
+    ]
+
+    transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE, related_name='contribution_details')
+    purpose = models.CharField(max_length=30, choices=PURPOSE_CHOICES)
+
 
 class Loan(models.Model):
     LOAN_STATUS = [

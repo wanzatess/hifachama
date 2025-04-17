@@ -1,6 +1,7 @@
 from django.urls import path, include
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render  # Import render here
+from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -8,8 +9,8 @@ from rest_framework.response import Response
 from .models import Transaction, Loan, Notification
 from .serializers import UserSerializer, TransactionSerializer, LoanSerializer, NotificationSerializer
 from .views import (
-    home, test_email, UserLoginView, verify_otp, 
-    mpesa_callback, mpesa_c2b_confirmation, transaction_history, 
+    home, test_email, UserLoginView, verify_otp,
+    mpesa_callback, mpesa_c2b_confirmation, transaction_history,
     RegisterView, ChamaListCreateView, verify_token, dashboard_data, contributions_data, chama_detail, current_user
 )
 from .reports import generate_pdf_report, generate_excel_report
@@ -57,6 +58,13 @@ def member_stats(request):
     }
     return Response(stats)
 
+# Set up router for transactions
+router = DefaultRouter()
+
+# Automatically create routes for transactions
+from .views import TransactionViewSet
+router.register(r'transactions', TransactionViewSet, basename='transaction')
+
 urlpatterns = [
     # Homepage: Serve JSON response
     path("", api_home, name="homepage"),
@@ -74,7 +82,6 @@ urlpatterns = [
     path('users/me/', current_user, name='current_user'),
     
     # Dashboard Routes
-# Add to your urlpatterns
     path('api/dashboard/', dashboard_data, name='dashboard-data'),
     path('api/contributions/', contributions_data, name='contributions-data'),
     path('api/stats/', dashboard_data, name='stats-data'),  # Reuses dashboard_data
@@ -93,6 +100,10 @@ urlpatterns = [
     # Miscellaneous
     path("api/test-email/", test_email, name="test_email"),
     path("api/verify/", verify_otp, name="verify_otp"),
-    path("api/transactions/", transaction_history, name="transaction_history"),
+
+    # Transactions Routes (from the router)
+    path('api/', include(router.urls)),
+
+    # Chama Details
     path('api/chamas/<int:id>/', chama_detail),
 ]

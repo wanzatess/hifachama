@@ -9,6 +9,11 @@ const ContributionForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (amount <= 0) {
+      toast.error("Amount must be greater than zero.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -30,7 +35,11 @@ const ContributionForm = () => {
       toast.success("Contribution submitted successfully!");
       setAmount("");
     } catch (error) {
-      toast.error("Failed to submit contribution.");
+      if (error.response && error.response.status === 400) {
+        toast.error("Invalid contribution details.");
+      } else {
+        toast.error("Failed to submit contribution.");
+      }
     } finally {
       setLoading(false);
     }
