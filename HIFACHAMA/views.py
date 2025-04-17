@@ -287,6 +287,20 @@ class NotificationView(APIView):
         )
         return Response({"message": "Notification sent successfully"}, status=201)
 
+def test_email(request):
+    try:
+        # Replace with actual email details
+        send_mail(
+            'Test Email Subject',
+            'This is a test email from HIFACHAMA.',
+            'hifachama@gmail.com',  # Sender email
+            ['to@example.com'],  # Receiver email
+            fail_silently=False,
+        )
+        return JsonResponse({"message": "Email sent successfully"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 # ======================
 # Member Actions
 # ======================
