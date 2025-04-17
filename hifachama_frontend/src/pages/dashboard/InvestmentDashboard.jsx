@@ -4,19 +4,20 @@ import {
   MemberManager, 
   SavingsTracker, 
   InvestmentTracker, 
-  LoanManager, 
-  MeetingManager, 
-  ExpenseTracker, 
-  FinancialReports, 
-  NotificationCenter, 
-  AssetRegister 
+  LoanManager,
+  MeetingManager,
+  ExpenseTracker,
+  FinancialReports,
+  NotificationCenter,
+  AssetRegister
 } from '../../components/Investment';
-import { BasicAccounting } from '../../components/Hybrid';
 import ContributionForm from "../../components/ContributionForm";
 import WithdrawalForm from "../../components/WithdrawalForm";
-import '../../styles/Dashboard.css';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
 
 const InvestmentDashboard = () => {
+  const { id } = useParams();
   const [members, setMembers] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [contributions, setContributions] = useState([]);
@@ -25,78 +26,76 @@ const InvestmentDashboard = () => {
   const [expenses, setExpenses] = useState([]);
   const [userData, setUserData] = useState(null);
   const [chamaData, setChamaData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch user and chama data
   useEffect(() => {
-    const fetchUserData = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await axios.get(
-            'https://hifachama-backend.onrender.com/api/current_user/',
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          setUserData(response.data);
-          
-          if (response.data.chama_memberships && response.data.chama_memberships.length > 0) {
-            const chamaResponse = await axios.get(
-              `https://hifachama-backend.onrender.com/api/chamas/${response.data.chama_memberships[0].chama.id}/`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-            setChamaData(chamaResponse.data);
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        
+        // Fetch chama data
+        const chamaResponse = await axios.get(
+          `https://hifachama-backend.onrender.com/api/chamas/${id}/`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
+        );
+        setChamaData(chamaResponse.data);
+
+        // Fetch user data
+        const userResponse = await axios.get(
+          'https://hifachama-backend.onrender.com/api/current_user/',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setUserData(userResponse.data);
+
+        // Fetch Supabase data
+        const { data: users } = await supabase.from('HIFACHAMA_customuser').select('*');
+        const { data: trans } = await supabase.from('HIFACHAMA_transaction').select('*');
+        const { data: invest } = await supabase.from('HIFACHAMA_investment').select('*');
+        const { data: loan } = await supabase.from('HIFACHAMA_loan').select('*');
+        const { data: expense } = await supabase.from('HIFACHAMA_expense').select('*');
+
+        setMembers(users || []);
+        setTransactions(trans || []);
+        setContributions(trans.filter(t => t.transaction_type === 'contribution') || []);
+        setInvestments(invest || []);
+        setLoans(loan || []);
+        setExpenses(expense || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchUserData();
-  }, []);
 
-  const fetchData = async () => {
-    const { data: users } = await supabase.from('HIFACHAMA_customuser').select('*');
-    const { data: trans } = await supabase.from('HIFACHAMA_transaction').select('*');
-    const { data: invest } = await supabase.from('HIFACHAMA_investment').select('*');
-    const { data: loan } = await supabase.from('HIFACHAMA_loan').select('*');
-    const { data: expense } = await supabase.from('HIFACHAMA_expense').select('*');
-
-    setMembers(users || []);
-    setTransactions(trans || []);
-    setContributions(trans.filter(t => t.transaction_type === 'contribution') || []);
-    setInvestments(invest || []);
-    setLoans(loan || []);
-    setExpenses(expense || []);
-  };
-
-  useEffect(() => {
     fetchData();
 
+    // Set up realtime subscriptions
     const membersSub = supabase.channel('realtime:members')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_customuser' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_customuser' }, () => fetchData())
       .subscribe();
 
     const transSub = supabase.channel('realtime:transactions')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_transaction' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_transaction' }, () => fetchData())
       .subscribe();
 
     const investSub = supabase.channel('realtime:investments')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_investment' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_investment' }, () => fetchData())
       .subscribe();
 
     const loanSub = supabase.channel('realtime:loans')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_loan' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_loan' }, () => fetchData())
       .subscribe();
 
     const expenseSub = supabase.channel('realtime:expenses')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_expense' }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_expense' }, () => fetchData())
       .subscribe();
 
     return () => {
@@ -106,43 +105,52 @@ const InvestmentDashboard = () => {
       supabase.removeChannel(loanSub);
       supabase.removeChannel(expenseSub);
     };
-  }, []);
+  }, [id]);
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#4E4528]"></div>
+    </div>;
+  }
 
   return (
-    <div className="dashboard-container">
-      <h1 className="dashboard-header">Investment Chama Dashboard</h1>
-      <div className="dashboard-cards-grid">
-        <div className="dashboard-card">
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-gray-800">
+        {chamaData?.name || 'Investment Chama'} Dashboard
+      </h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg shadow p-6">
           <MemberManager members={members} setMembers={setMembers} />
         </div>
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           <SavingsTracker 
             contributions={contributions} 
             setContributions={setContributions} 
           />
         </div>
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           <InvestmentTracker 
             investments={investments} 
             setInvestments={setInvestments} 
           />
         </div>
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           <LoanManager 
             loans={loans} 
             setLoans={setLoans} 
           />
         </div>
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           <MeetingManager />
         </div>
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           <ExpenseTracker 
             expenses={expenses} 
             setExpenses={setExpenses} 
           />
         </div>
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           <FinancialReports 
             contributions={contributions}
             expenses={expenses}
@@ -150,14 +158,13 @@ const InvestmentDashboard = () => {
             loans={loans}
           />
         </div>
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           <NotificationCenter />
         </div>
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           <AssetRegister />
         </div>
-        {/* Transaction Forms */}
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           {userData && chamaData && (
             <ContributionForm 
               chamaId={chamaData.id} 
@@ -165,7 +172,7 @@ const InvestmentDashboard = () => {
             />
           )}
         </div>
-        <div className="dashboard-card">
+        <div className="bg-white rounded-lg shadow p-6">
           {userData && chamaData && (
             <WithdrawalForm 
               chamaId={chamaData.id} 
