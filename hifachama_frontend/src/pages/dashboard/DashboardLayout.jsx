@@ -13,11 +13,11 @@ import {
   FaFileAlt
 } from "react-icons/fa";
 import { useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";  // Adjusted import path
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { user } = useAuth();
+  const { user } = useAuth();  // Using the user context
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
