@@ -76,39 +76,47 @@ const HybridDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">
-        {chamaData?.name || 'Hybrid Chama'} Dashboard
-      </h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <DashboardCard title="Member Management">
-          <MemberManager members={members} setMembers={setMembers} />
-        </DashboardCard>
+      <div className="bg-white rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">
+          {chamaData?.name || 'Hybrid Chama'} Dashboard
+        </h1>
         
-        <DashboardCard title="Contributions">
-          <ContributionTracker 
-            members={members} 
-            contributions={contributions} 
-            setContributions={setContributions} 
-          />
-        </DashboardCard>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <DashboardCard title="Member Management">
+            <MemberManager members={members} setMembers={setMembers} />
+          </DashboardCard>
+          
+          <DashboardCard title="Contributions">
+            <ContributionTracker 
+              members={members} 
+              contributions={contributions} 
+              setContributions={setContributions} 
+            />
+          </DashboardCard>
 
-        <DashboardCard title="Contribution Form">
-          {userData && chamaData && <ContributionForm chamaId={chamaData.id} userId={userData.id} />}
-        </DashboardCard>
+          <DashboardCard title="Contribution Form">
+            {userData && chamaData && <ContributionForm chamaId={chamaData.id} userId={userData.id} />}
+          </DashboardCard>
+        </div>
+      </div>
 
-        <DashboardCard title="Contribution History">
-          <ContributionHistory />
-        </DashboardCard>
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <DashboardCard title="Contribution History">
+            <ContributionHistory />
+          </DashboardCard>
 
-        <DashboardCard title="Withdrawal Form">
-          {userData && chamaData && <WithdrawalForm chamaId={chamaData.id} userId={userData.id} />}
-        </DashboardCard>
+          <DashboardCard title="Withdrawal Form">
+            {userData && chamaData && <WithdrawalForm chamaId={chamaData.id} userId={userData.id} />}
+          </DashboardCard>
 
-        <DashboardCard title="Member Rotation">
-          <MemberRotation members={members} contributions={contributions} />
-        </DashboardCard>
+          <DashboardCard title="Member Rotation">
+            <MemberRotation members={members} contributions={contributions} />
+          </DashboardCard>
+        </div>
+      </div>
 
+      <div className="bg-white rounded-lg shadow p-6">
         <DashboardCard title="Reports">
           <HybridReports members={members} contributions={contributions} loans={loans} />
         </DashboardCard>
@@ -119,8 +127,8 @@ const HybridDashboard = () => {
 
 function DashboardCard({ title, children }) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-lg font-semibold mb-4">{title}</h2>
+    <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+      <h2 className="text-lg font-semibold mb-4 text-[#4E4528]">{title}</h2>
       {children}
     </div>
   );

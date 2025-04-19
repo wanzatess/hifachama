@@ -22,34 +22,34 @@ export default function DashboardLayout() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? "w-64" : "w-20"} bg-[#4E4528] text-white flex flex-col transition-all duration-300 fixed h-full`}>
+      <aside className={`${sidebarOpen ? "w-64" : "w-20"} bg-white text-gray-800 border-r border-gray-200 flex flex-col transition-all duration-300 fixed h-full`}>
         {/* Logo and Toggle */}
-        <div className="p-4 border-b border-[#9C8F5F] flex items-center justify-between">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
           {sidebarOpen ? (
             <div className="flex items-center">
               <img src="/logo.png" alt="Logo" className="h-8 mr-2" />
-              <span className="text-xl font-bold">Chamasoft</span>
+              <span className="text-xl font-bold text-[#4E4528]">Chamasoft</span>
             </div>
           ) : (
             <img src="/logo-icon.png" alt="Icon" className="h-8 mx-auto" />
           )}
-          <button className="text-white hover:text-[#CDBE96]" onClick={toggleSidebar}>
+          <button className="text-gray-600 hover:text-[#4E4528]" onClick={toggleSidebar}>
             {sidebarOpen ? <FaTimes size={18} /> : <FaBars size={18} />}
           </button>
         </div>
 
         {/* Chama Info */}
         {sidebarOpen && (
-          <div className="p-4 border-b border-[#9C8F5F]">
-            <h3 className="font-semibold">{user?.currentChama?.name || "My Chama"}</h3>
-            <p className="text-sm text-[#CDBE96]">
+          <div className="p-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="font-semibold text-lg">{user?.currentChama?.name || "My Chama"}</h3>
+            <p className="text-sm text-gray-500">
               {user?.currentChama?.type || "Hybrid"}
             </p>
             <div className="mt-2">
-              <p className="text-xs text-[#F0EAD6]">Current Balance:</p>
-              <p className="font-bold">
+              <p className="text-xs text-gray-500">Current Balance:</p>
+              <p className="font-bold text-[#4E4528]">
                 KES {user?.currentChama?.balance?.toLocaleString() || "0.00"}
               </p>
             </div>
@@ -75,8 +75,10 @@ export default function DashboardLayout() {
 
       {/* Main Content */}
       <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
-        <div className="p-6">
-          <Outlet />
+        <div className="p-6 bg-gray-100 min-h-full">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>
@@ -91,8 +93,8 @@ function NavItem({ to, icon, label, sidebarOpen }) {
       className={({ isActive }) =>
         `flex items-center p-3 rounded-lg transition ${
           isActive 
-            ? "bg-[#CDBE96] text-[#4E4528] font-semibold" 
-            : "text-[#F0EAD6] hover:bg-[#9C8F5F] hover:text-white"
+            ? "bg-[#4E4528] text-white font-semibold" 
+            : "text-gray-600 hover:bg-gray-100 hover:text-[#4E4528]"
         }`
       }
     >

@@ -207,6 +207,23 @@ class Contribution(models.Model):
 
     transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE, related_name='contribution_details')
     purpose = models.CharField(max_length=30, choices=PURPOSE_CHOICES)
+class Withdrawal(models.Model):
+    REASON_CHOICES = [
+        ('personal', 'Personal'),
+        ('medical', 'Medical'),
+        ('emergency', 'Emergency'),
+        ('investment', 'Investment'),
+        ('other', 'Other'),
+    ]
+
+    transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE, related_name='withdrawal_details')
+    reason = models.CharField(max_length=30, choices=REASON_CHOICES)
+    approval_status = models.CharField(
+        max_length=20, 
+        choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')],
+        default='pending'
+    )
+
 
 
 class Loan(models.Model):
