@@ -1,134 +1,123 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { 
-  FaWallet, 
-  FaUsers, 
-  FaMoneyCheck, 
   FaHome, 
-  FaEnvelope, 
-  FaCog, 
-  FaBars, 
-  FaTimes,
+  FaUsers, 
+  FaCalendarAlt, 
+  FaWallet, 
+  FaMoneyBillWave,
+  FaHandHoldingUsd,
+  FaExchangeAlt,
   FaChartLine,
-  FaHandshake,
-  FaFileAlt,
-  FaGlobe,
-  FaBell
+  FaHeart,
+  FaBullseye,
+  FaBars,
+  FaTimes,
+  FaBell,
+  FaCog
 } from "react-icons/fa";
 import { useState } from "react";
 import { useAuth } from '../../context/AuthContext';
+import logo from "../../assets/logo.png";
+
+const navigationItems = [
+  { to: "", icon: <FaHome />, label: "Home" },
+  { to: "membership", icon: <FaUsers />, label: "Membership" },
+  { to: "meetings", icon: <FaCalendarAlt />, label: "Meetings" },
+  { to: "accounts", icon: <FaWallet />, label: "Accounts" },
+  { to: "loans", icon: <FaMoneyBillWave />, label: "Loans" },
+  { to: "soft-loans", icon: <FaHandHoldingUsd />, label: "Soft Loans" },
+  { to: "merry-go-round", icon: <FaExchangeAlt />, label: "Merry Go Round" },
+  { to: "shares", icon: <FaChartLine />, label: "Shares" },
+  { to: "welfare", icon: <FaHeart />, label: "Welfare" },
+  { to: "goals", icon: <FaBullseye />, label: "Goals" }
+];
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { user } = useAuth();
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
-      {/* Top Navigation Bar */}
-      <header className="bg-white h-16 border-b border-gray-200 flex items-center justify-between px-4 fixed w-full z-10">
-        <div className="flex items-center">
-          <button className="text-gray-600 hover:text-[#4E4528] mr-4" onClick={toggleSidebar}>
-            {sidebarOpen ? <FaTimes size={18} /> : <FaBars size={18} />}
-          </button>
-          <select className="border-none bg-transparent text-blue-500">
-            <option>QUICK ACTIONS</option>
-          </select>
-        </div>
-        <div className="flex items-center space-x-4">
-          <FaBell className="text-gray-600" />
-          <select className="border-none bg-transparent">
-            <option>English</option>
-            <option>Swahili</option>
-          </select>
-          <div className="flex items-center">
-            <img src={user?.avatar || "/default-avatar.png"} alt="User" className="h-8 w-8 rounded-full" />
-            <span className="ml-2 text-gray-700">{user?.name || "User"}</span>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex pt-16 h-full">
-        {/* Sidebar */}
-        <aside className={`${sidebarOpen ? "w-64" : "w-20"} bg-white text-gray-800 border-r border-gray-200 flex flex-col transition-all duration-300 fixed h-full`}>
-          {/* Logo and Toggle */}
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            {sidebarOpen ? (
-              <div className="flex items-center">
-                <img src="/logo.png" alt="Logo" className="h-8 mr-2" />
-                <span className="text-xl font-bold text-[#4E4528]">Chamasoft</span>
-              </div>
-            ) : (
-              <img src="/logo-icon.png" alt="Icon" className="h-8 mx-auto" />
-            )}
-            <button className="text-gray-600 hover:text-[#4E4528]" onClick={toggleSidebar}>
-              {sidebarOpen ? <FaTimes size={18} /> : <FaBars size={18} />}
-            </button>
-          </div>
-
-          {/* Group Info */}
+    <div className="flex h-screen bg-[#f8fafc]">
+      {/* Sidebar */}
+      <aside 
+        className={`${
+          sidebarOpen ? "w-64" : "w-20"
+        } bg-white border-r border-gray-200 transition-all duration-300 h-screen fixed`}
+      >
+        {/* Logo Section */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
           {sidebarOpen && (
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
-              <h3 className="font-semibold text-lg">{user?.currentChama?.name || "My Group"}</h3>
-              <p className="text-sm text-gray-500">
-                {user?.currentChama?.type || "Hybrid"}
-              </p>
-              <div className="mt-2">
-                <p className="text-xs text-gray-500">Current Balance:</p>
-                <p className="font-bold text-[#4E4528]">
-                  KES {user?.currentChama?.balance?.toLocaleString() || "0.00"}
-                </p>
-              </div>
+            <div className="flex items-center">
+              <img src={logo} alt="Logo" className="h-8 w-8" />
+              <span className="ml-2 text-xl font-semibold text-[#4E4528]">TESSIE</span>
             </div>
           )}
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+          </button>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            <NavItem to="" icon={<FaHome />} label="Dashboard" sidebarOpen={sidebarOpen} />
-            <NavItem to="wallet" icon={<FaWallet />} label="E-Wallet" sidebarOpen={sidebarOpen} />
-            <NavItem to="contributions" icon={<FaMoneyCheck />} label="Contributions" sidebarOpen={sidebarOpen} />
-            <NavItem to="withdrawals" icon={<FaHandshake />} label="Withdrawals" sidebarOpen={sidebarOpen} />
-            <NavItem to="loans" icon={<FaFileAlt />} label="Loans" sidebarOpen={sidebarOpen} />
-            <NavItem to="members" icon={<FaUsers />} label="Members" sidebarOpen={sidebarOpen} />
-            <NavItem to="reports" icon={<FaChartLine />} label="Reports" sidebarOpen={sidebarOpen} />
-            <NavItem to="messages" icon={<FaEnvelope />} label="Messages" sidebarOpen={sidebarOpen} />
-            
-            {['admin', 'chairperson'].includes(user?.role) && (
-              <NavItem to="settings" icon={<FaCog />} label="Settings" sidebarOpen={sidebarOpen} />
-            )}
-          </nav>
-        </aside>
+        {/* Navigation Menu */}
+        <nav className="mt-6 px-4">
+          {navigationItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) => `
+                flex items-center px-4 py-3 mb-2 rounded-lg transition-colors
+                ${isActive 
+                  ? 'bg-blue-50 text-blue-600' 
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+              `}
+            >
+              <span className="text-xl">{item.icon}</span>
+              {sidebarOpen && <span className="ml-3 text-sm">{item.label}</span>}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className={`flex-1 ${sidebarOpen ? "ml-64" : "ml-20"} transition-all duration-300`}>
+        {/* Top Bar */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed w-full z-10">
+          <div className="flex items-center">
+            <h1 className="text-xl font-semibold text-gray-800">
+              Good Afternoon {user?.name} - {user?.chamaId || 'TES1100'}
+            </h1>
+          </div>
+          <div className="flex items-center space-x-6">
+            <button className="text-gray-500 hover:text-gray-700 relative">
+              <FaBell size={20} />
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                3
+              </span>
+            </button>
+            <div className="flex items-center space-x-3">
+              <img
+                src={user?.avatar || "/default-avatar.png"}
+                alt="Profile"
+                className="h-8 w-8 rounded-full border-2 border-gray-200"
+              />
+              {user?.role === 'admin' && (
+                <button className="text-gray-500 hover:text-gray-700">
+                  <FaCog size={20} />
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
 
         {/* Main Content */}
-        <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
-          <div className="p-6 bg-gray-100 min-h-full">
-            <div className="max-w-7xl mx-auto">
-              <Outlet />
-            </div>
+        <main className="pt-16 h-screen overflow-y-auto">
+          <div className="p-6 max-w-7xl mx-auto">
+            <Outlet />
           </div>
         </main>
       </div>
     </div>
-  );
-}
-
-function NavItem({ to, icon, label, sidebarOpen }) {
-  return (
-    <NavLink
-      to={to}
-      end
-      className={({ isActive }) =>
-        `flex items-center p-3 rounded-lg transition ${
-          isActive 
-            ? "bg-[#4E4528] text-white font-semibold" 
-            : "text-gray-600 hover:bg-gray-100 hover:text-[#4E4528]"
-        }`
-      }
-    >
-      <span className={`${sidebarOpen ? "mr-3" : "mx-auto"}`}>
-        {icon}
-      </span>
-      {sidebarOpen && <span className="whitespace-nowrap">{label}</span>}
-    </NavLink>
   );
 }
