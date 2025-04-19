@@ -8,17 +8,17 @@
   flex: 1;
   padding: 2rem;
   background-color: var(--primary-brown);
-  min-width: 1024px; /* Ensure minimum width for desktop */
+  min-width: 0; /* Remove hard min-width */
 }
 
 .dashboard-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
-  max-width: 1600px;
+  max-width: 1200px; /* Reduced from 1600px */
   margin: 0 auto;
   padding: 1rem;
-  min-width: 1000px; /* Prevent shrinking below desktop size */
+  width: 100%;
 }
 
 .dashboard-card {
