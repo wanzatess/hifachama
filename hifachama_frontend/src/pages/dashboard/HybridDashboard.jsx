@@ -19,6 +19,8 @@ const HybridDashboard = () => {
   const [userData, setUserData] = useState(null);
   const [chamaData, setChamaData] = useState(null);
 
+  const [activeForm, setActiveForm] = useState(null); // <- form toggle state
+
   // Fetch current user and chama
   useEffect(() => {
     const fetchUserData = async () => {
@@ -49,9 +51,7 @@ const HybridDashboard = () => {
   // Fetch Supabase data
   const fetchData = async () => {
     const { data: membersData } = await supabase.from('HIFACHAMA_customuser').select('*');
-    const { data: transactionsData } = await supabase
-      .from('HIFACHAMA_transaction')
-      .select('*');
+    const { data: transactionsData } = await supabase.from('HIFACHAMA_transaction').select('*');
     const { data: meetingsData } = await supabase.from('HIFACHAMA_meeting').select('*');
     const { data: loansData } = await supabase.from('HIFACHAMA_loan').select('*');
 
@@ -75,14 +75,34 @@ const HybridDashboard = () => {
 
   return (
     <main className="dashboard-content">
-      {/* Full‑width header banner */}
+      {/* Header */}
       <div className="dashboard-header">
-        <div>
-          Welcome, {userData?.username || userData?.email}
-        </div>
-        <div>
-          {chamaData?.name} (ID: {chamaData?.id})
-        </div>
+        <div>Welcome, {userData?.username || userData?.email}</div>
+        <div>{chamaData?.name} (ID: {chamaData?.id})</div>
+      </div>
+
+      {/* Trigger buttons */}
+      <div className="dashboard-buttons mb-4">
+        <button
+          onClick={() => setActiveForm('contribution')}
+          className="bg-[#9C8F5F] hover:bg-[#8A7B50] text-white py-2 px-4 rounded-2xl shadow mr-2"
+        >
+          Add Contribution
+        </button>
+        <button
+          onClick={() => setActiveForm('withdrawal')}
+          className="bg-[#9C8F5F] hover:bg-[#8A7B50] text-white py-2 px-4 rounded-2xl shadow mr-2"
+        >
+          Request Withdrawal
+        </button>
+        {activeForm && (
+          <button
+            onClick={() => setActiveForm(null)}
+            className="bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded-2xl shadow"
+          >
+            Close Form
+          </button>
+        )}
       </div>
 
       {/* Dashboard cards */}
@@ -98,15 +118,16 @@ const HybridDashboard = () => {
         />
       </div>
 
-      {userData && chamaData && (
-        <>
-          <div className="dashboard-card">
-            <ContributionForm chamaId={chamaData.id} userId={userData.id} />
-          </div>
-          <div className="dashboard-card">
-            <WithdrawalForm chamaId={chamaData.id} userId={userData.id} />
-          </div>
-        </>
+      {/* Conditional Forms as cards */}
+      {userData && chamaData && activeForm === 'contribution' && (
+        <div className="dashboard-card bg-white rounded-2xl p-6 shadow">
+          <ContributionForm chamaId={chamaData.id} userId={userData.id} />
+        </div>
+      )}
+      {userData && chamaData && activeForm === 'withdrawal' && (
+        <div className="dashboard-card bg-white rounded-2xl p-6 shadow">
+          <WithdrawalForm chamaId={chamaData.id} userId={userData.id} />
+        </div>
       )}
 
       <div className="dashboard-card">
