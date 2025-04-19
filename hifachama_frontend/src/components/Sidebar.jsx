@@ -34,14 +34,16 @@ const Sidebar = () => {
   }
 
   return (
-    <div className={`sidebar-container transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+    <div className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200 z-50 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
       {/* Logo and Toggle */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        {!isCollapsed && (
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between h-16">
+        {!isCollapsed ? (
           <div className="flex items-center">
             <img src={logo} alt="Logo" className="h-8 mr-2" />
             <span className="text-xl font-bold text-[#4E4528]">HIFACHAMA</span>
           </div>
+        ) : (
+          <img src={logo} alt="Logo" className="h-8 mx-auto" />
         )}
         <button 
           className="text-gray-600 hover:text-[#4E4528]" 
@@ -60,13 +62,13 @@ const Sidebar = () => {
       )}
 
       {/* Navigation */}
-      <nav className="p-4">
+      <nav className="flex-1 p-4 overflow-y-auto">
         {navigationLinks.map((link) => (
           <Link
             key={link.path}
             to={link.path}
             className={`flex items-center p-3 mb-2 rounded-lg transition
-              ${pathname === link.path 
+              ${pathname.startsWith(link.path) 
                 ? "bg-[#4E4528] text-white" 
                 : "text-gray-600 hover:bg-gray-100"}`}
           >
