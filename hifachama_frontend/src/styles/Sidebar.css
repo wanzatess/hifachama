@@ -106,3 +106,10 @@
 .sidebar-tool-btn:hover {
   background-color: #3d371f;
 }
+.sidebar-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.75rem;
+  display: flex;
+  align-items: center;
+}
