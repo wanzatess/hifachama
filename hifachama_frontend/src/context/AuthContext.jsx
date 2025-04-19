@@ -1,7 +1,7 @@
 import { createContext, useState, useEffect, useCallback, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/axiosConfig';
-import { getAuthToken, setAuthTokens, clearAuthTokens } from '../utils/auth';
+import { getAuthToken, setAuthToken, clearAuthToken } from '../utils/auth';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
@@ -33,12 +33,12 @@ const initializeAuth = useCallback(async () => {
         error: null
       });
     } else {
-      clearAuthTokens();
+      clearAuthToken();
       setAuthState({ user: null, loading: false, error: null });
     }
   } catch (error) {
     console.error('Token verification failed:', error);
-    clearAuthTokens();
+    clearAuthToken();
     setAuthState({ user: null, loading: false, error: 'Session expired' });
   }
 }, []);
@@ -83,7 +83,7 @@ const initializeAuth = useCallback(async () => {
         role
       };
   
-      setAuthTokens(token);
+      setAuthToken(token);
       setAuthState({ 
         user, 
         loading: false, 
@@ -112,7 +112,7 @@ const initializeAuth = useCallback(async () => {
 
 
   const logout = useCallback(() => {
-    clearAuthTokens();
+    clearAuthToken();
     setAuthState({ user: null, loading: false, error: null });
     navigate('/login', { replace: true });
     toast.info('You have been logged out');

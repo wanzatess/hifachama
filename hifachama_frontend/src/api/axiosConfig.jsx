@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAuthToken, getRefreshToken, clearAuthTokenss, setAuthTokenss } from '../utils/auth';
+import { getAuthToken, getRefreshToken, clearAuthTokens, setAuthTokens } from '../utils/auth';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://hifachama-backend.onrender.com',
@@ -33,7 +33,7 @@ api.interceptors.response.use(
             refresh: refreshToken
           });
           
-          setAuthTokenss({
+          setAuthTokens({
             access: data.access,
             refresh: data.refresh || refreshToken
           });
@@ -45,7 +45,7 @@ api.interceptors.response.use(
         console.error('Token refresh failed:', refreshError);
       }
       
-      clearAuthTokenss();
+      clearAuthTokens();
       window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
     }
     

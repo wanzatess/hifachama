@@ -16,14 +16,14 @@ export const getRefreshToken = () => {
   return localStorage.getItem(REFRESH_KEY);
 };
 
-export const setAuthTokenss = ({ access, refresh }) => {
+export const setAuthTokens = ({ access, refresh }) => {
   localStorage.setItem(TOKEN_KEY, access);
   if (refresh) {
     localStorage.setItem(REFRESH_KEY, refresh);
   }
 };
 
-export const clearAuthTokenss = () => {
+export const clearAuthTokens = () => {
   [TOKEN_KEY, REFRESH_KEY, 'authToken'].forEach(key => {
     localStorage.removeItem(key);
   });
@@ -39,7 +39,7 @@ export const verifyToken = async () => {
     return response.data.valid;
   } catch (error) {
     if (error.response?.status === 401) {
-      clearAuthTokenss();
+      clearAuthTokens();
     }
     return false;
   }
@@ -54,13 +54,13 @@ export const refreshAuthToken = async () => {
     const response = await api.post('/auth/refresh/', {
       refresh: refreshToken
     });
-    setAuthTokenss({
+    setAuthTokens({
       access: response.data.access,
       refresh: response.data.refresh || refreshToken // Fallback to existing refresh token
     });
     return true;
   } catch (error) {
-    clearAuthTokenss();
+    clearAuthTokens();
     return false;
   }
 };
