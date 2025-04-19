@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import DashboardCards from "./DashboardCards";
+import Sidebar from "../../components/Sidebar";  // Update this line
 import { 
   FaHome, 
   FaUsers, 
