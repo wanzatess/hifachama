@@ -27,7 +27,7 @@ const HybridDashboard = () => {
       if (!token) return;
       try {
         const { data: user } = await axios.get(
-          'https://hifachama-backend.onrender.com/api/current_user/',
+          'https://hifachama-backend.onrender.com/api/users/me/',
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUserData(user);
@@ -82,7 +82,7 @@ const HybridDashboard = () => {
     <main className="dashboard-content">
       {/* ——— Full‑width Header Banner ——— */}
       <div className="dashboard-header">
-        <div>Welcome, {userData?.username || userData?.email || '…'}</div>
+        <div>Welcome, {userData?.username || userData?.email}</div>
         <div>
           {chamaData?.name
             ? `${chamaData.name} (ID: ${chamaData.id})`

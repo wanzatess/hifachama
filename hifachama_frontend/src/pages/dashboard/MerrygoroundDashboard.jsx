@@ -38,7 +38,7 @@ const MerryGoRoundDashboard = () => {
 
         // Fetch user data
         const userResponse = await axios.get(
-          'https://hifachama-backend.onrender.com/api/current_user/',
+          'https://hifachama-backend.onrender.com/api/users/me/',
           {
             headers: {
               Authorization: `Bearer ${token}`,
