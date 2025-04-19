@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getAuthToken } from '../../utils/auth';
 import { supabase } from '../../utils/supabaseClient';
 import {
   MemberManager,
@@ -22,7 +23,7 @@ const HybridDashboard = () => {
   // Fetch current user and chama
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) return;
       try {
         const { data: user } = await axios.get(
