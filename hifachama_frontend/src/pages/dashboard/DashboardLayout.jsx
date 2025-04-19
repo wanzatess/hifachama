@@ -10,10 +10,10 @@ const DashboardLayout = () => {
   return (
     <div className="dashboard-layout">
       <Sidebar />
-
       <div className="dashboard-main-container">
-        {/* Main content area: cards will be rendered here */}
+        {/* Remove any top navigation/header here */}
         <main className="dashboard-content">
+          {/* Page content cards/components */}
           <Outlet />
         </main>
       </div>

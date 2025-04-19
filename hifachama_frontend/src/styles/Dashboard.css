@@ -1,15 +1,16 @@
-/* Layout */
+/* Root flex container: sidebar + main content */
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
 }
 
-/* Sidebar: fixed on left, 25% width */
+/* Sidebar: fixed on left, 25% width of viewport */
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 25%;
+  width: 25vw;
+  max-width: 300px;
   height: 100vh;
   background-color: var(--primary-brown);
   padding: 1rem;
@@ -18,23 +19,24 @@
   z-index: 1000;
 }
 
-/* Main area: offset by sidebar width */
+/* Main content: offset by sidebar, occupies remaining width */
 .dashboard-main-container {
-  margin-left: 25%;
-  width: 75%;
+  margin-left: 25vw;
+  width: 75vw;
   display: flex;
   flex-direction: column;
   overflow: auto;
 }
 
-/* Card layout: vertical stack */
+/* Content area: vertical stack of cards */
 .dashboard-content {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
+/* Individual card styling */
 .dashboard-card {
   background-color: var(--light-gold);
   border-radius: 8px;
@@ -48,6 +50,7 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
+/* Card header inside cards */
 .card-header {
   display: flex;
   align-items: center;
@@ -57,6 +60,7 @@
   padding-bottom: 0.5rem;
 }
 
+/* Statistic values */
 .stat-value {
   font-size: 1.75rem;
   font-weight: 700;
@@ -64,7 +68,7 @@
   margin: 0.5rem 0;
 }
 
-/* Status Indicators */
+/* Status badges */
 .status {
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
@@ -74,21 +78,22 @@
 
 .status-active { background: var(--success-green); color: #fff; }
 .status-pending { background: var(--rich-gold); color: #fff; }
-.status-closed  { background: var(--error-red); color: #fff; }
+.status-closed { background: var(--error-red); color: #fff; }
 
-/* Responsive at 1024px */
+/* Responsive breakpoints */
 @media (max-width: 1024px) {
   .sidebar {
-    width: 30%;
+    width: 30vw;
+    max-width: none;
   }
   .dashboard-main-container {
-    margin-left: 30%;
-    width: 70%;
+    margin-left: 30vw;
+    width: 70vw;
   }
 }
 
-/* Responsive at 768px */
 @media (max-width: 768px) {
+  /* Sidebar becomes relative and full width */
   .sidebar {
     position: relative;
     width: 100%;
@@ -101,6 +106,6 @@
   }
   .dashboard-content {
     gap: 1rem;
-    padding: 0.75rem;
+    padding: 1rem;
   }
 }
