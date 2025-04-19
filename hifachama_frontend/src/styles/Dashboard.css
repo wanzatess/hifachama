@@ -364,6 +364,7 @@ canvas {
     gap: 5px;
   }
 }
+
 /* ================ ROTATION SPECIFIC STYLES ================ */
 .rotation-status {
   background-color: rgba(240, 234, 214, 0.8);
@@ -412,6 +413,7 @@ canvas {
   border: 1px solid #9C8F5F;
   background-color: white;
 }
+
 /* Hybrid Specific Styles */
 .contribution-type-tabs {
   display: flex;
@@ -453,6 +455,7 @@ canvas {
   background: #dc3545;
   color: white;
 }
+
 .dashboard-wrapper {
   display: flex;
 }

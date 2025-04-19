@@ -1,4 +1,6 @@
 import { Outlet, NavLink } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import DashboardCards from "../pages/dashboard/DashboardCards";
 import { 
   FaHome, 
   FaUsers, 
@@ -40,19 +42,8 @@ export default function DashboardLayout() {
     <div className="flex h-screen bg-[#f8fafc]">
       <aside className={`${sidebarOpen ? "w-64" : "w-20"} bg-white border-r border-gray-200 transition-all duration-300 h-screen fixed`}>
         {/* Logo Section */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
-          {sidebarOpen && (
-            <div className="flex items-center">
-              <img src={logo} alt="Logo" className="h-8 w-8" />
-              <span className="ml-2 text-xl font-semibold text-[#4E4528]">TESSIE</span>
-            </div>
-          )}
-          <button 
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
-          </button>
+        <div className="h-16 flex items-center justify-center px-4 border-b border-gray-200">
+          <img src={logo} alt="Logo" className="h-8 w-8" />
         </div>
 
         {/* Navigation Menu */}
@@ -64,8 +55,8 @@ export default function DashboardLayout() {
               className={({ isActive }) => `
                 flex items-center px-4 py-3 mb-2 rounded-lg transition-colors
                 ${isActive 
-                  ? 'bg-blue-50 text-blue-600' 
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                  ? 'bg-blue-100 text-blue-700 border-l-4 border-blue-600' 
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
               `}
             >
               <span className="text-xl">{item.icon}</span>
@@ -77,39 +68,20 @@ export default function DashboardLayout() {
 
       {/* Main Content Area */}
       <div className={`flex-1 ${sidebarOpen ? "ml-64" : "ml-20"} transition-all duration-300`}>
-        {/* Top Bar */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 fixed w-full z-10">
-          <div className="flex items-center">
-            <h1 className="text-xl font-semibold text-gray-800">
-              Good Afternoon {user?.name} - {user?.chamaId || 'TES1100'}
-            </h1>
-          </div>
-          <div className="flex items-center space-x-6">
-            <button className="text-gray-500 hover:text-gray-700 relative">
-              <FaBell size={20} />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                3
-              </span>
-            </button>
-            <div className="flex items-center space-x-3">
-              <img
-                src={user?.avatar || "/default-avatar.png"}
-                alt="Profile"
-                className="h-8 w-8 rounded-full border-2 border-gray-200"
-              />
-              {user?.role === 'admin' && (
-                <button className="text-gray-500 hover:text-gray-700">
-                  <FaCog size={20} />
-                </button>
-              )}
-            </div>
-          </div>
+        {/* ✅ Top Bar (Minimal Welcome) */}
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center px-6 fixed w-full z-10 ml-64">
+          <h1 className="text-xl font-semibold text-gray-800">
+            Welcome, {user?.name} – {user?.chamaName} (ID: {user?.chamaId})
+          </h1>
         </header>
 
         {/* Main Content */}
         <main className="pt-16 h-screen overflow-y-auto">
           <div className="p-6 max-w-7xl mx-auto">
-            <Outlet />
+          <Routes>
+            <Route index element={<DashboardCards />} />
+            <Route path="*" element={<Outlet />} />
+          </Routes>
           </div>
         </main>
       </div>
