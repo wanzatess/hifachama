@@ -10,13 +10,29 @@
   background-color: var(--primary-brown);
   min-width: 0; /* Remove hard min-width */
 }
+.dashboard-header {
+  /* span full width of the auto‑fit grid */
+  grid-column: 1 / -1;
+
+  /* banner styling */
+  background-color: var(--light-gold);
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--dark-brown);
+}
+
 
 .dashboard-content {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
-  max-width: 1200px; /* Reduced from 1600px */
-  margin: 0 auto;
   padding: 1rem;
   width: 100%;
 }
