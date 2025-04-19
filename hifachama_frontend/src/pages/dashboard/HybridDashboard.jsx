@@ -8,6 +8,7 @@ import {
   HybridReports 
 } from '../../components/Hybrid';
 import ContributionForm from '../../components/ContributionForm';
+import ContributionHistory from '../../components/ContributionHistory';
 import WithdrawalForm from '../../components/WithdrawalForm';
 import { useParams } from 'react-router-dom';
 
@@ -94,6 +95,10 @@ const HybridDashboard = () => {
 
         <DashboardCard title="Contribution Form">
           {userData && chamaData && <ContributionForm chamaId={chamaData.id} userId={userData.id} />}
+        </DashboardCard>
+
+        <DashboardCard title="Contribution History">
+          <ContributionHistory />
         </DashboardCard>
 
         <DashboardCard title="Withdrawal Form">

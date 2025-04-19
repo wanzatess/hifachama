@@ -670,7 +670,7 @@ def contributions_data(request):
     user = request.user
     try:
         contributions = Transaction.objects.filter(
-            member=user,
+            member__user=user,
             transaction_type='contribution'
         ).order_by('-date')
         serializer = TransactionSerializer(contributions, many=True)

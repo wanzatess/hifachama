@@ -12,6 +12,7 @@ import {
   AssetRegister
 } from '../../components/Investment';
 import ContributionForm from "../../components/ContributionForm";
+import ContributionHistory from '../../components/ContributionHistory';
 import WithdrawalForm from "../../components/WithdrawalForm";
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -171,6 +172,12 @@ const InvestmentDashboard = () => {
               userId={userData.id} 
             />
           )}
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <ContributionHistory 
+            contributions={contributions} 
+            setContributions={setContributions} 
+          />
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           {userData && chamaData && (

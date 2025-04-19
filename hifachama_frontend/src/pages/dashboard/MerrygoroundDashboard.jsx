@@ -6,6 +6,7 @@ import {
   MemberManager 
 } from '../../components/Merrygoround';
 import ContributionForm from "../../components/ContributionForm";
+import ContributionHistory from '../../components/ContributionHistory';
 import WithdrawalForm from "../../components/WithdrawalForm";
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -128,6 +129,11 @@ const MerryGoRoundDashboard = () => {
               userId={userData.id} 
             />
           )}
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+        <DashboardCard title="Contribution History">
+          <ContributionHistory />
+        </DashboardCard>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           {userData && chamaData && (

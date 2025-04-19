@@ -8,7 +8,8 @@ const ContributionForm = ({ chamaId, userId }) => {
     description: "",
     transaction_type: "contribution",
     chama: chamaId,
-    member: userId
+    member: userId,
+    purpose: ""
   });
   const [loading, setLoading] = useState(false);
 
@@ -23,10 +24,10 @@ const ContributionForm = ({ chamaId, userId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (formData.amount <= 0) {
-      toast.error("Amount must be greater than zero.");
+    if (formData.amount <= 0 || !formData.purpose) {
+      toast.error("Amount and purpose are required.");
       return;
-    }
+    }    
 
     setLoading(true);
 
@@ -49,7 +50,8 @@ const ContributionForm = ({ chamaId, userId }) => {
         description: "",
         transaction_type: "contribution",
         chama: chamaId,
-        member: userId
+        member: userId,
+        purpose: ""
       });
     } catch (error) {
       if (error.response && error.response.status === 400) {
@@ -89,6 +91,23 @@ const ContributionForm = ({ chamaId, userId }) => {
             rows="3"
           />
         </div>
+        <div className="mb-4">
+          <label className="block text-gray-700">Purpose</label>
+          <select
+           name="purpose"
+           value={formData.purpose}
+           onChange={handleChange}
+           className="w-full border rounded p-2"
+           required
+          >
+           <option value="">-- Select Purpose --</option>
+           <option value="monthly_dues">Monthly Dues</option>
+           <option value="emergency_fund">Emergency Fund</option>
+           <option value="project_fund">Project Fund</option>
+           <option value="other">Other</option>
+          </select>
+        </div>
+
         <button
           type="submit"
           className="bg-blue-500 text-white p-2 rounded w-full"

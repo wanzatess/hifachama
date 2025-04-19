@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -11,6 +11,29 @@ const WithdrawalForm = ({ chamaId, userId }) => {
     member: userId
   });
   const [loading, setLoading] = useState(false);
+  const [currentBalance, setCurrentBalance] = useState(0);
+
+  useEffect(() => {
+    // Fetch the current balance for the chama when the component mounts
+    const fetchBalance = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          `https://hifachama-backend.onrender.com/api/chamas/${chamaId}/balance/`, 
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setCurrentBalance(response.data.balance);
+      } catch (error) {
+        toast.error("Failed to fetch Chama balance.");
+      }
+    };
+
+    fetchBalance();
+  }, [chamaId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,9 +45,14 @@ const WithdrawalForm = ({ chamaId, userId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (formData.amount <= 0) {
       toast.error("Amount must be greater than zero.");
+      return;
+    }
+
+    if (parseFloat(formData.amount) > currentBalance) {
+      toast.error("Withdrawal amount exceeds the current balance.");
       return;
     }
 

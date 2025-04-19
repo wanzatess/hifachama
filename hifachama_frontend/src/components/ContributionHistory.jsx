@@ -36,7 +36,6 @@ const ContributionHistory = () => {
           <thead>
             <tr className="border-b">
               <th className="p-2">Amount</th>
-              <th className="p-2">Payment Method</th>
               <th className="p-2">Status</th>
             </tr>
           </thead>
@@ -44,7 +43,6 @@ const ContributionHistory = () => {
             {contributions.map((contribution) => (
               <tr key={contribution.id} className="border-b">
                 <td className="p-2">{contribution.amount}</td>
-                <td className="p-2">{contribution.payment_method}</td>
                 <td className="p-2">{contribution.status}</td>
               </tr>
             ))}
