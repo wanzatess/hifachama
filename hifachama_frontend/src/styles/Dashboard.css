@@ -8,6 +8,7 @@
   flex: 1;
   padding: 2rem;
   background-color: var(--primary-brown);
+  min-width: 1024px; /* Ensure minimum width for desktop */
 }
 
 .dashboard-content {
@@ -17,6 +18,7 @@
   max-width: 1600px;
   margin: 0 auto;
   padding: 1rem;
+  min-width: 1000px; /* Prevent shrinking below desktop size */
 }
 
 .dashboard-card {
@@ -62,22 +64,12 @@
 .status-pending { background: var(--rich-gold); color: white; }
 .status-closed { background: var(--error-red); color: white; }
 
-@media (max-width: 1200px) {
-  .dashboard-content {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 900px) {
-  .dashboard-content {
-    grid-template-columns: 1fr;
-  }
-}
 /* Form Styles */
 .form-container {
   padding: 1.5rem;
   background-color: var(--light-gold);
   border-radius: 12px;
+  min-width: 500px; /* Ensure forms don't get too narrow */
 }
 
 .form-title {
@@ -105,6 +97,7 @@
   border: 1px solid var(--gold-accent);
   border-radius: 6px;
   background-color: white;
+  min-width: 300px; /* Prevent inputs from getting too narrow */
 }
 
 .form-button {
