@@ -1,115 +1,121 @@
 /* Color Variables */
 :root {
-    --primary-brown: #6F623E;
-    --dark-brown: #4E4528;
-    --light-gold: #F0EAD6;
-    --gold-accent: #9C8F5F;
-    --rich-gold: #B39534;
-    --light-border: #CDBE96;
-    --error-red: #D32F2F;
-    --success-green: #155724;
-  }
-  
-  /* Base Reset */
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  body {
-    font-family: 'Inter', Arial, sans-serif;
-    background-color: var(--primary-brown);
-    color: var(--light-gold);
-    line-height: 1.6;
-  }
-  
-  /* Shared Components */
-  .container {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
-  }
-  
-  /* Form Styles (used in both Login and Register) */
-  .auth-card {
-    background-color: var(--light-gold);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    width: 100%;
-    max-width: 450px;
-    padding: 2rem;
-    margin: 2rem auto;
-  }
-  
-  .auth-header {
-    text-align: center;
-    margin-bottom: 1.5rem;
-  }
-  
-  .auth-logo {
-    height: 50px;
-    margin-bottom: 1rem;
-  }
-  
-  .form-group {
-    margin-bottom: 1.25rem;
-  }
-  
-  .input-field {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--light-border);
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-  }
-  
-  .input-field:focus {
-    outline: none;
-    border-color: var(--gold-accent);
-    box-shadow: 0 0 0 3px rgba(156, 143, 95, 0.2);
-  }
-  
-  .btn {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: none;
-  }
-  
-  .btn-primary {
-    background-color: var(--gold-accent);
-    color: white;
-  }
-  
-  .btn-primary:hover {
-    background-color: #8A7B50;
-    transform: translateY(-2px);
-  }
-  
-  /* Error/Success Messages */
-  .alert {
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-  }
-  
-  .alert-error {
-    background-color: rgba(211, 47, 47, 0.1);
-    color: var(--error-red);
-  }
-  
-  .alert-success {
-    background-color: rgba(21, 87, 36, 0.1);
-    color: var(--success-green);
-  }
-  /* Add these styles to your main CSS file */
+  --primary-brown: #6F623E;
+  --dark-brown: #4E4528;
+  --light-gold: #F0EAD6;
+  --gold-accent: #9C8F5F;
+  --rich-gold: #B39534;
+  --light-border: #CDBE96;
+  --error-red: #D32F2F;
+  --success-green: #155724;
+  --success-light: #4CAF50;
+  --success-dark: #45a049;
+}
+
+/* Base Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background-color: var(--primary-brown);
+  color: var(--light-gold);
+  line-height: 1.6;
+}
+
+/* Shared Components */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Card Styles */
+.auth-card, .simple-card {
+  background-color: var(--light-gold);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 2rem;
+  margin: 2rem auto;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 450px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-logo {
+  height: 50px;
+  margin-bottom: 1rem;
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.input-field,
+input[type="number"], 
+input[type="text"],
+textarea,
+select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--light-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--gold-accent);
+  box-shadow: 0 0 0 3px rgba(156, 143, 95, 0.2);
+}
+
+/* Button Styles */
+.btn, .simple-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--gold-accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #8A7B50;
+  transform: translateY(-2px);
+}
+
+.simple-button {
+  background: var(--success-light);
+  color: white;
+  padding: 8px 16px;
+  margin-top: 10px;
+}
+
+.simple-button:hover {
+  background: var(--success-dark);
+}
+
+/* Grid Layouts */
 .dashboard-grid {
   padding: 20px;
   max-width: 1200px;
@@ -123,43 +129,19 @@
   margin-top: 20px;
 }
 
-.simple-card {
-  background: white;
+/* Alert Messages */
+.alert {
+  padding: 0.75rem 1rem;
   border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  border: 1px solid #eee;
+  margin-bottom: 1rem;
 }
 
-.simple-card h3 {
-  margin-top: 0;
-  color: #333;
+.alert-error {
+  background-color: rgba(211, 47, 47, 0.1);
+  color: var(--error-red);
 }
 
-.simple-button {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  margin-top: 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.simple-button:hover {
-  background: #45a049;
-}
-
-/* Form elements */
-input[type="number"], 
-input[type="text"],
-textarea,
-select {
-  width: 100%;
-  padding: 8px;
-  margin: 8px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-sizing: border-box;
+.alert-success {
+  background-color: rgba(21, 87, 36, 0.1);
+  color: var(--success-green);
 }

@@ -98,21 +98,21 @@ const HybridDashboard = () => {
   }, []);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-6">Hybrid Chama Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+    <div className="dashboard-container">
+      <h1 className="dashboard-title">Hybrid Chama Dashboard</h1>
+      <div className="dashboard-grid">
+        <div className="dashboard-card">
           <MemberManager members={members} setMembers={setMembers} />
         </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
+  
+        <div className="dashboard-card">
           <ContributionTracker
             members={members}
             contributions={contributions}
             setContributions={setContributions}
           />
         </div>
-
+  
         {userData && chamaData && (
           <>
             <div className="dashboard-card">
@@ -123,11 +123,11 @@ const HybridDashboard = () => {
             </div>
           </>
         )}
-
+  
         <div className="dashboard-card">
           <MemberRotation members={members} contributions={contributions} />
         </div>
-
+  
         <div className="dashboard-card">
           <HybridReports members={members} contributions={contributions} loans={loans} />
         </div>
