@@ -1,6 +1,6 @@
 import { Outlet, NavLink } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
-import DashboardCards from "../pages/dashboard/DashboardCards";
+import DashboardCards from "./DashboardCards";
 import { 
   FaHome, 
   FaUsers, 
