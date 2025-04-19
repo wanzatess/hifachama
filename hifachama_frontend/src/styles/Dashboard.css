@@ -18,7 +18,13 @@
   margin-bottom: 1.5rem;
 }
 
-/* Dashboard Cards */
+/* Dashboard Grid */
+.dashboard-grid {
+  display: grid; /* Enables grid layout */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Flexible columns */
+  gap: 20px; /* Space between grid items */
+}
+
 .dashboard-card {
   background-color: var(--light-gold);
   border-radius: 8px;
@@ -32,6 +38,7 @@
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
+/* Card Header */
 .card-header {
   display: flex;
   align-items: center;
@@ -102,5 +109,10 @@
 
   .stat-value {
     font-size: 1.5rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr; /* Stack cards vertically on small screens */
+    gap: 10px; /* Reduced space between cards on smaller screens */
   }
 }

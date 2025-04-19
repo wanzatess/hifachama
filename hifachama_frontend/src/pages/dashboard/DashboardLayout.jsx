@@ -8,18 +8,20 @@ const DashboardLayout = () => {
   const { currentUser } = useAuth();
 
   return (
-    <div className="dashboard-container">
-      <header className="header">
-        <img src={logo} alt="Logo" className="h-8 w-8 mr-3" />
-        <h1>Welcome, {currentUser?.name} {currentUser?.chamaId && `(${currentUser.chamaId})`}</h1>
-      </header>
-
+    <div className="dashboard-layout">
       <Sidebar />
+      
+      <div className="dashboard-main-container">
+        <header className="dashboard-header">
+          <div className="header-content">
+            <img src={logo} alt="Logo" className="logo" />
+            <h1>Welcome, {currentUser?.name} {currentUser?.chamaId && `(${currentUser.chamaId})`}</h1>
+          </div>
+        </header>
 
-      <div className="main-content">
-        <div className="card-grid">
+        <main className="dashboard-content">
           <Outlet />
-        </div>
+        </main>
       </div>
     </div>
   );

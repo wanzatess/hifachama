@@ -98,13 +98,13 @@ const HybridDashboard = () => {
   }, []);
 
   return (
-    <div className="dashboard-container">
+    <>
       <h1 className="dashboard-title">Hybrid Chama Dashboard</h1>
       <div className="dashboard-grid">
         <div className="dashboard-card">
           <MemberManager members={members} setMembers={setMembers} />
         </div>
-  
+        
         <div className="dashboard-card">
           <ContributionTracker
             members={members}
@@ -112,7 +112,7 @@ const HybridDashboard = () => {
             setContributions={setContributions}
           />
         </div>
-  
+        
         {userData && chamaData && (
           <>
             <div className="dashboard-card">
@@ -123,16 +123,16 @@ const HybridDashboard = () => {
             </div>
           </>
         )}
-  
+        
         <div className="dashboard-card">
           <MemberRotation members={members} contributions={contributions} />
         </div>
-  
+        
         <div className="dashboard-card">
           <HybridReports members={members} contributions={contributions} loans={loans} />
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
