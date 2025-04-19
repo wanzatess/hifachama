@@ -36,6 +36,7 @@ const navigationItems = [
 ];
 
 export default function DashboardLayout() {
+  const { user } = useAuth();
   return (
     <div className="flex h-screen bg-[#f8fafc]">
       {/* Sidebar is now a separate component */}
