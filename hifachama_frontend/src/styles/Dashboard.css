@@ -1,10 +1,10 @@
-/* Base container */
+/* Layout */
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
 }
 
-/* Sidebar - fixed 25% width */
+/* Sidebar: fixed on left, 25% width */
 .sidebar {
   position: fixed;
   top: 0;
@@ -18,7 +18,7 @@
   z-index: 1000;
 }
 
-/* Main content area - 75% width */
+/* Main area: offset by sidebar width */
 .dashboard-main-container {
   margin-left: 25%;
   width: 75%;
@@ -27,42 +27,12 @@
   overflow: auto;
 }
 
-/* Sticky header within main content */
-.dashboard-header {
-  position: sticky;
-  top: 0;
-  background-color: var(--light-gold);
-  padding: 1rem 1.5rem;
+/* Card layout: vertical stack */
+.dashboard-content {
   display: flex;
-  align-items: center;
-  border-bottom: 1px solid var(--gold-accent);
-  z-index: 900;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.logo {
-  height: 40px;
-  width: auto;
-}
-
-.dashboard-title {
-  font-size: 2rem;
-  color: var(--dark-brown);
-  margin: 0;
-}
-
-/* Grid for dashboard cards */
-.dashboard-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  flex-direction: column;
   gap: 1.5rem;
   padding: 1rem;
-  margin-top: 1rem;
 }
 
 .dashboard-card {
@@ -71,7 +41,6 @@
   padding: 1rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  min-height: 200px;
 }
 
 .dashboard-card:hover {
@@ -95,6 +64,7 @@
   margin: 0.5rem 0;
 }
 
+/* Status Indicators */
 .status {
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
@@ -117,15 +87,20 @@
   }
 }
 
-/* Responsive at 768px (keep sidebar left) */
+/* Responsive at 768px */
 @media (max-width: 768px) {
-  .dashboard-header {
-    padding: 0.75rem 1rem;
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    box-shadow: none;
   }
-  .dashboard-title {
-    font-size: 1.5rem;
+  .dashboard-main-container {
+    margin-left: 0;
+    width: 100%;
   }
-  .dashboard-cards-grid {
+  .dashboard-content {
     gap: 1rem;
+    padding: 0.75rem;
   }
 }
