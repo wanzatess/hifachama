@@ -38,12 +38,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex h-screen bg-[#f8fafc]">
-      {/* Sidebar */}
-      <aside 
-        className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } bg-white border-r border-gray-200 transition-all duration-300 h-screen fixed`}
-      >
+      <aside className={`${sidebarOpen ? "w-64" : "w-20"} bg-white border-r border-gray-200 transition-all duration-300 h-screen fixed`}>
         {/* Logo Section */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
           {sidebarOpen && (
