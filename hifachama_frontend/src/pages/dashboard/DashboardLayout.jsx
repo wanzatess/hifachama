@@ -17,7 +17,7 @@ import {
 } from "react-icons/fa";
 import { useState } from "react";
 import { useAuth } from '../../context/AuthContext';
-import logo from "../../assets/images/logo.png";
+import logo from "../../static/images/logo.png";
 
 const navigationItems = [
   { to: "", icon: <FaHome />, label: "Home" },
