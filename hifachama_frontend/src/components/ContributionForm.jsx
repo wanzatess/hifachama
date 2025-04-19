@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 const ContributionForm = ({ chamaId, userId }) => {
   const [formData, setFormData] = useState({
     amount: "",
-    description: "",
+    description: "", 
     transaction_type: "contribution",
     chama: chamaId,
     member: userId,
@@ -65,52 +65,51 @@ const ContributionForm = ({ chamaId, userId }) => {
   };
 
   return (
-    <div className="p-4 bg-white shadow rounded-lg">
-      <h2 className="text-xl font-bold mb-4">Make a Contribution</h2>
+    <div className="form-container">
+      <h2 className="form-title">Make a Contribution</h2>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700">Amount</label>
+        <div className="form-group">
+          <label className="form-label">Amount</label>
           <input
             type="number"
             name="amount"
             value={formData.amount}
             onChange={handleChange}
-            className="w-full border rounded p-2"
+            className="form-input"
             required
             min="0.01"
             step="0.01"
           />
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Description</label>
+        <div className="form-group">
+          <label className="form-label">Description</label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
-            className="w-full border rounded p-2"
+            className="form-textarea"
             rows="3"
           />
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Purpose</label>
+        <div className="form-group">
+          <label className="form-label">Purpose</label>
           <select
-           name="purpose"
-           value={formData.purpose}
-           onChange={handleChange}
-           className="w-full border rounded p-2"
-           required
+            name="purpose"
+            value={formData.purpose}
+            onChange={handleChange}
+            className="form-select"
+            required
           >
-           <option value="">-- Select Purpose --</option>
-           <option value="monthly_dues">Monthly Dues</option>
-           <option value="emergency_fund">Emergency Fund</option>
-           <option value="project_fund">Project Fund</option>
-           <option value="other">Other</option>
+            <option value="">-- Select Purpose --</option>
+            <option value="monthly_dues">Monthly Dues</option>
+            <option value="emergency_fund">Emergency Fund</option>
+            <option value="project_fund">Project Fund</option>
+            <option value="other">Other</option>
           </select>
         </div>
-
         <button
           type="submit"
-          className="bg-blue-500 text-white p-2 rounded w-full"
+          className="form-button"
           disabled={loading}
         >
           {loading ? "Processing..." : "Submit Contribution"}
