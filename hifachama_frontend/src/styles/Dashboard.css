@@ -1,22 +1,21 @@
-.dashboard-layout {
-  display: flex;
-  min-height: 100vh;
-  padding-top: 80px;
-}
+/* dashboard.css */
 
+/* Main container that holds the entire dashboard */
 .dashboard-main-container {
-  margin-left: 240px;
+  margin-left: 240px; /* Space for the sidebar */
   flex: 1;
   padding: 2rem;
   background-color: var(--primary-brown);
   min-width: 0;
   transition: margin-left 0.3s ease;
+  padding-top: 80px; /* Adjust for fixed header */
 }
 
 .dashboard-main-container.sidebar-collapsed {
   margin-left: 80px;
 }
 
+/* Grid for dashboard content */
 .dashboard-content {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -24,6 +23,7 @@
   padding: 1rem;
 }
 
+/* Header for each dashboard page */
 .dashboard-header {
   grid-column: 1 / -1;
   background-color: var(--light-gold);
@@ -38,6 +38,7 @@
   margin-bottom: 1.5rem;
 }
 
+/* Cards inside the dashboard */
 .dashboard-card {
   background-color: var(--light-gold);
   border-radius: 12px;
@@ -52,6 +53,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
+/* Loading state for the dashboard */
 .dashboard-loading {
   display: flex;
   justify-content: center;
@@ -61,6 +63,7 @@
   color: var(--gold-accent);
 }
 
+/* Card header styling */
 .card-header {
   display: flex;
   align-items: center;
@@ -70,11 +73,12 @@
   padding-bottom: 0.75rem;
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .dashboard-main-container {
-    margin-left: 80px;
+    margin-left: 80px; /* Adjust for smaller sidebar */
   }
-  
+
   .dashboard-content {
     grid-template-columns: 1fr;
   }
