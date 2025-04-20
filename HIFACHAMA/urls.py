@@ -10,6 +10,7 @@ from .views import (
     RegisterView, ChamaListCreateView, verify_token, dashboard_data, contributions_data, chama_detail, current_user
 )
 from .reports import generate_pdf_report, generate_excel_report
+from .views import initiate_stk_push
 
 # Function to return JSON response instead of index.html
 def api_home(request):
@@ -49,6 +50,7 @@ urlpatterns = [
     # M-Pesa Integration
     path("api/mpesa/callback/", mpesa_callback, name="mpesa_callback"),
     path("api/mpesa/c2b/confirmation/", mpesa_c2b_confirmation, name="mpesa_c2b_confirmation"),
+    path("api/mpesa/stkpush/", initiate_stk_push, name="initiate_stk_push"),
 
     # Reports
     path("api/reports/pdf/", generate_pdf_report, name="generate_pdf_report"),

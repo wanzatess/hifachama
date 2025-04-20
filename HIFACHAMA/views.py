@@ -15,6 +15,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import generics, permissions
 from django.core.exceptions import ValidationError
 from HIFACHAMA.authentication import EmailBackend
+from HIFACHAMA.utils.mpesa import stk_push_request 
 import pyotp
 import os
 from HIFACHAMA.utils.emails import send_email_notification
@@ -450,6 +451,24 @@ def mpesa_c2b_confirmation(request):
             return JsonResponse({"error": "Invalid data"}, status=400)
 
     return JsonResponse({"error": "Invalid request"}, status=400)
+@csrf_exempt
+def initiate_stk_push(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            phone = data.get("phone")
+            amount = data.get("amount")
+
+            if not phone or not amount:
+                return JsonResponse({"error": "Missing phone or amount"}, status=400)
+
+            # Call STK Push function
+            response = stk_push_request(phone, amount)
+            return JsonResponse(response, status=200)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 @api_view(['GET'])
  
 def transaction_history(request):
