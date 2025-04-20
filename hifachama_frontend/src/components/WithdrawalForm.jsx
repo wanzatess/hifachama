@@ -2,37 +2,39 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const WithdrawalForm = ({ chamaId, userId }) => {
+const WithdrawalForm = () => {
   const [formData, setFormData] = useState({
     amount: "", 
     description: "",
     transaction_type: "withdrawal",
-    chama: chamaId,
-    member: userId
+    chama: "",
+    member: ""
   });
   const [loading, setLoading] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(0);
 
-  useEffect(() => {
-    const fetchBalance = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(
-          `https://hifachama-backend.onrender.com/api/chamas/${chamaId}/balance/`, 
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setCurrentBalance(response.data.balance);
-      } catch (error) {
-        toast.error("Failed to fetch Chama balance.");
-      }
-    };
+  const fetchBalance = async () => {
+    if (!formData.chama) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `https://hifachama-backend.onrender.com/api/chamas/${formData.chama}/balance/`, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setCurrentBalance(response.data.balance);
+    } catch (error) {
+      toast.error("Failed to fetch Chama balance.");
+    }
+  };
 
+  useEffect(() => {
     fetchBalance();
-  }, [chamaId]);
+  }, [formData.chama]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,6 +46,11 @@ const WithdrawalForm = ({ chamaId, userId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.chama || !formData.member) {
+      toast.error("Chama ID and Member ID are required.");
+      return;
+    }
 
     if (formData.amount <= 0) {
       toast.error("Amount must be greater than zero.");
@@ -75,8 +82,8 @@ const WithdrawalForm = ({ chamaId, userId }) => {
         amount: "",
         description: "",
         transaction_type: "withdrawal",
-        chama: chamaId,
-        member: userId
+        chama: formData.chama,
+        member: formData.member
       });
     } catch (error) {
       if (error.response) {
@@ -100,6 +107,28 @@ const WithdrawalForm = ({ chamaId, userId }) => {
       <h2 className="form-title">Request Withdrawal</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
+          <label className="form-label">Chama ID</label>
+          <input
+            type="text"
+            name="chama"
+            value={formData.chama}
+            onChange={handleChange}
+            className="form-input"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Member ID</label>
+          <input
+            type="text"
+            name="member"
+            value={formData.member}
+            onChange={handleChange}
+            className="form-input"
+            required
+          />
+        </div>
+        <div className="form-group">
           <label className="form-label">Amount</label>
           <input
             type="number"
@@ -111,6 +140,9 @@ const WithdrawalForm = ({ chamaId, userId }) => {
             min="0.01"
             step="0.01"
           />
+          {formData.chama && (
+            <p className="balance-info">Current Balance: {currentBalance}</p>
+          )}
         </div>
         <div className="form-group">
           <label className="form-label">Reason/Description</label>

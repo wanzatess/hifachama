@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const ContributionForm = ({ chamaId, userId }) => {
+const ContributionForm = () => {
   const [formData, setFormData] = useState({
     amount: "",
     description: "", 
     transaction_type: "contribution",
-    chama: chamaId,
-    member: userId,
+    chama: "",
+    member: "",
     purpose: ""
   });
   const [loading, setLoading] = useState(false);
@@ -24,8 +24,8 @@ const ContributionForm = ({ chamaId, userId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (formData.amount <= 0 || !formData.purpose) {
-      toast.error("Amount and purpose are required.");
+    if (formData.amount <= 0 || !formData.purpose || !formData.chama || !formData.member) {
+      toast.error("All fields are required.");
       return;
     }    
 
@@ -49,8 +49,8 @@ const ContributionForm = ({ chamaId, userId }) => {
         amount: "",
         description: "",
         transaction_type: "contribution",
-        chama: chamaId,
-        member: userId,
+        chama: "",
+        member: "",
         purpose: ""
       });
     } catch (error) {
@@ -68,6 +68,28 @@ const ContributionForm = ({ chamaId, userId }) => {
     <div className="form-container">
       <h2 className="form-title">Make a Contribution</h2>
       <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label className="form-label">Chama ID</label>
+          <input
+            type="text"
+            name="chama"
+            value={formData.chama}
+            onChange={handleChange}
+            className="form-input"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Member ID</label>
+          <input
+            type="text"
+            name="member"
+            value={formData.member}
+            onChange={handleChange}
+            className="form-input"
+            required
+          />
+        </div>
         <div className="form-group">
           <label className="form-label">Amount</label>
           <input

@@ -103,21 +103,13 @@ const HybridDashboard = () => {
         />
       </div>
 
-      {/* Forms now always get rendered so you can see the card itself */}
+      {/* Always show the forms */}
       <div className="dashboard-card">
-        {chamaData && userData ? (
-          <ContributionForm chamaId={chamaData.id} userId={userData.id} />
-        ) : (
-          <p>Loading Contribution Form…</p>
-        )}
+        <ContributionForm />
       </div>
 
       <div className="dashboard-card">
-        {chamaData && userData ? (
-          <WithdrawalForm chamaId={chamaData.id} userId={userData.id} />
-        ) : (
-          <p>Loading Withdrawal Form…</p>
-        )}
+        <WithdrawalForm />
       </div>
 
       <div className="dashboard-card">
