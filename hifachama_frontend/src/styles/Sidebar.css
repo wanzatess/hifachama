@@ -4,10 +4,10 @@
   left: 0;
   right: 0;
   height: 70px;
-  background-color: #2d2016;
-  color: var(--light-gold);
+  background-color: #4E4528; /* Header/Footer Background */
+  color: #F0EAD6; /* Primary Text */
   z-index: 1100;
-  border-bottom: 2px solid var(--gold-accent);
+  border-bottom: 2px solid #9C8F5F; /* Gold Accent */
 }
 
 .header-content {
@@ -35,10 +35,10 @@
   left: 0;
   width: 220px;
   height: calc(100vh - 70px);
-  background-color: #382a1e;
+  background-color: #6F623E; /* Sidebar Background */
   padding-top: 1rem;
   z-index: 1000;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(240, 234, 214, 0.1); /* Soft light-gold */
 }
 
 .sidebar-nav {
@@ -54,7 +54,7 @@
   border-radius: 6px;
   border: none;
   background: none;
-  color: var(--light-gold);
+  color: #F0EAD6; /* Primary Text */
   cursor: pointer;
   width: 100%;
   text-align: left;
@@ -63,11 +63,12 @@
 }
 
 .sidebar-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #CDBE96; /* Hover Effect */
+  color: #4E4528;
 }
 
 .sidebar-link.active {
-  background-color: var(--gold-accent);
+  background-color: #9C8F5F; /* Gold Accent */
   color: #2d2016;
   font-weight: 500;
 }
@@ -78,7 +79,7 @@
 }
 
 .sidebar-toggle {
-  color: var(--light-gold);
+  color: #F0EAD6; /* Primary Text */
   background: none;
   border: none;
   cursor: pointer;

@@ -2,14 +2,14 @@
   display: flex;
   min-height: 100vh;
   padding-top: 70px;
-  background-color: #f8f9fa;
+  background-color: #6F623E; /* Match overall background */
 }
 
 .dashboard-main-container {
   margin-left: 220px;
   flex: 1;
   padding: 1.5rem;
-  background-color: #ffffff;
+  background-color: #F0EAD6; /* Primary Text Background */
   min-width: 0;
   transition: margin-left 0.3s ease;
   max-width: 1200px;
