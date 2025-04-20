@@ -10,21 +10,27 @@ import {
 } from '../../components/Hybrid';
 import ContributionForm from '../../components/ContributionForm';
 import WithdrawalForm from '../../components/WithdrawalForm';
+import Sidebar from '../../components/Sidebar';
 import '../../styles/Dashboard.css';
 
 const HybridDashboard = () => {
+  const [activeSection, setActiveSection] = useState('overview');
   const [members, setMembers] = useState([]);
   const [contributions, setContributions] = useState([]);
   const [meetings, setMeetings] = useState([]);
   const [loans, setLoans] = useState([]);
   const [userData, setUserData] = useState(null);
   const [chamaData, setChamaData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch user and chama info
   useEffect(() => {
     const fetchUser = async () => {
+      setIsLoading(true);
       const token = getAuthToken();
-      if (!token) return;
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const { data: user } = await axios.get(
           'https://hifachama-backend.onrender.com/api/users/me/',
@@ -41,12 +47,13 @@ const HybridDashboard = () => {
         }
       } catch (err) {
         console.error('Error fetching user/chama:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchUser();
   }, []);
 
-  // Fetch data from Supabase
   const fetchData = async () => {
     const [{ data: m }, { data: t }, { data: mt }, { data: l }] = await Promise.all([
       supabase.from('HIFACHAMA_customuser').select('*'),
@@ -77,54 +84,72 @@ const HybridDashboard = () => {
     return () => channels.forEach((ch) => supabase.removeChannel(ch));
   }, []);
 
+  const renderContent = () => {
+    switch(activeSection) {
+      case 'overview':
+        return (
+          <>
+            <div className="dashboard-header">
+              <div>Welcome, {userData?.username || userData?.email}</div>
+              <div>{chamaData?.name || 'Loading Chama…'}</div>
+            </div>
+            <div className="dashboard-card">
+              <MemberList members={members} title="Member Directory" />
+            </div>
+          </>
+        );
+      case 'contributions':
+        return (
+          <>
+            <div className="dashboard-card">
+              <ContributionDisplay contributions={contributions} />
+            </div>
+            <div className="dashboard-card">
+              <ContributionForm />
+            </div>
+          </>
+        );
+      case 'withdrawals':
+        return (
+          <div className="dashboard-card">
+            <WithdrawalForm />
+          </div>
+        );
+      case 'rotation':
+        return (
+          <div className="dashboard-card">
+            <RotationSchedule members={members} contributions={contributions} />
+          </div>
+        );
+      case 'reports':
+        return (
+          <div className="dashboard-card">
+            <ReportDisplay members={members} contributions={contributions} loans={loans} />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  if (isLoading) {
+    return <div className="dashboard-loading">Loading...</div>;
+  }
+
   return (
-    <main className="dashboard-content">
-      <div className="dashboard-header">
-        <div>Welcome, {userData?.username || userData?.email}</div>
-        <div>
-          {chamaData?.name
-            ? `${chamaData.name} (ID: ${chamaData.id})`
-            : 'Loading Chama…'}
-        </div>
-      </div>
-
-      <div className="dashboard-card">
-        <MemberList members={members} title="Member Directory" />
-      </div>
-
-      <div className="dashboard-card">
-        <ContributionDisplay
-          members={members}
-          contributions={contributions}
-          title="Contribution History"
-        />
-      </div>
-
-      <div className="dashboard-card">
-        <ContributionForm />
-      </div>
-
-      <div className="dashboard-card">
-        <WithdrawalForm />
-      </div>
-
-      <div className="dashboard-card">
-        <RotationSchedule
-          members={members}
-          contributions={contributions}
-          title="Current Rotation Schedule"
-        />
-      </div>
-
-      <div className="dashboard-card">
-        <ReportDisplay
-          members={members}
-          contributions={contributions}
-          loans={loans}
-          title="Financial Reports"
-        />
-      </div>
-    </main>
+    <div className="dashboard-layout">
+      <Sidebar 
+        role={userData?.role}
+        chamaType={chamaData?.type}
+        chamaName={chamaData?.name}
+        balance={chamaData?.balance}
+        setActiveSection={setActiveSection}
+        activeSection={activeSection}
+      />
+      <main className="dashboard-main-container">
+        {renderContent()}
+      </main>
+    </div>
   );
 };
 

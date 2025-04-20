@@ -1,58 +1,38 @@
-import { Link, useLocation } from "react-router-dom";
+import React, { useState } from 'react';
 import logo from "../static/images/logo.png";
-import { useState } from "react";
 import {
-  FaHome, FaMoneyBill, FaHandHoldingUsd, FaUsers,
-  FaChartBar, FaCog, FaBars, FaTimes, FaWallet
+  FaHome,
+  FaMoneyBill,
+  FaHandHoldingUsd,
+  FaUsers,
+  FaChartBar,
+  FaBars,
+  FaTimes
 } from "react-icons/fa";
 import '../styles/Sidebar.css';
 
-const Sidebar = ({ role, chamaType, chamaName, balance }) => {
+const Sidebar = ({ role, chamaType, chamaName, balance, setActiveSection, activeSection }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { pathname } = useLocation();
 
-  const baseLinks = [
-    { path: "/dashboard", label: "Dashboard", icon: <FaHome /> },
-    { path: "/wallet", label: "E-Wallet", icon: <FaWallet /> },
+  const navigationLinks = [
+    { id: 'overview', label: 'Overview', icon: <FaHome /> },
+    { id: 'contributions', label: 'Contributions', icon: <FaMoneyBill /> },
+    { id: 'withdrawals', label: 'Withdrawals', icon: <FaHandHoldingUsd /> },
+    { id: 'rotation', label: 'Rotation', icon: <FaUsers /> },
+    { id: 'reports', label: 'Reports', icon: <FaChartBar /> },
   ];
-
-  const roleBasedLinks = [];
-
-  if (["chairperson", "treasurer", "member"].includes(role)) {
-    roleBasedLinks.push({ path: "/contributions", label: "Contributions", icon: <FaMoneyBill /> });
-  }
-
-  if (["treasurer", "member"].includes(role)) {
-    roleBasedLinks.push({ path: "/withdrawals", label: "Withdrawals", icon: <FaHandHoldingUsd /> });
-  }
-
-  if (["chairperson", "secretary"].includes(role)) {
-    roleBasedLinks.push({ path: "/members", label: "Members", icon: <FaUsers /> });
-  }
-
-  if (["Hybrid", "Investment"].includes(chamaType)) {
-    roleBasedLinks.push({ path: "/reports", label: "Reports", icon: <FaChartBar /> });
-  }
-
-  if (role === "chairperson") {
-    roleBasedLinks.push({ path: "/settings", label: "Settings", icon: <FaCog /> });
-  }
-
-  const navigationLinks = [...baseLinks, ...roleBasedLinks];
 
   return (
     <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        {!isCollapsed ? (
+        {!isCollapsed && (
           <div className="sidebar-brand">
             <img src={logo} alt="Logo" className="sidebar-logo" />
             <span>HIFACHAMA</span>
           </div>
-        ) : (
-          <img src={logo} alt="Logo" className="sidebar-logo" />
         )}
         <button
-          className="sidebar-tool-btn"
+          className="sidebar-toggle"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {isCollapsed ? <FaBars /> : <FaTimes />}
@@ -61,21 +41,21 @@ const Sidebar = ({ role, chamaType, chamaName, balance }) => {
 
       {!isCollapsed && (
         <div className="sidebar-profile">
-          <h3>{chamaName || "My Group"}</h3>
-          <p>Balance: KES {balance || "0.00"}</p>
+          <h3>{chamaName || "My Chama"}</h3>
+          <p>Balance: KES {balance?.toLocaleString() || "0.00"}</p>
         </div>
       )}
 
-      <nav className="sidebar-list">
+      <nav className="sidebar-nav">
         {navigationLinks.map((link) => (
-          <Link
-            key={link.path}
-            to={link.path}
-            className={`sidebar-link ${pathname.startsWith(link.path) ? 'active' : ''}`}
+          <button
+            key={link.id}
+            onClick={() => setActiveSection(link.id)}
+            className={`sidebar-link ${activeSection === link.id ? 'active' : ''}`}
           >
             <span className="sidebar-icon">{link.icon}</span>
-            {!isCollapsed && <span>{link.label}</span>}
-          </Link>
+            {!isCollapsed && <span className="sidebar-label">{link.label}</span>}
+          </button>
         ))}
       </nav>
     </div>

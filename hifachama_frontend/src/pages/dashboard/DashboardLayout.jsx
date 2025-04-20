@@ -1,4 +1,3 @@
-// DashboardLayout.jsx
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/Sidebar";
@@ -11,9 +10,7 @@ const DashboardLayout = () => {
     <div className="dashboard-layout">
       <Sidebar />
       <div className="dashboard-main-container">
-        {/* Remove any top navigation/header here */}
         <main className="dashboard-content">
-          {/* Page content cards/components */}
           <Outlet />
         </main>
       </div>
