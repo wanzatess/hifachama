@@ -54,83 +54,116 @@ const HybridDashboard = () => {
     fetchUser();
   }, []);
 
+// Fetch Supabase data only when chamaData is loaded
+useEffect(() => {
+  if (!chamaData?.id) return;
+
   const fetchData = async () => {
-    const [{ data: m }, { data: t }, { data: mt }, { data: l }] = await Promise.all([
-      supabase.from('HIFACHAMA_customuser').select('*'),
-      supabase.from('HIFACHAMA_transaction').select('*'),
-      supabase.from('HIFACHAMA_meeting').select('*'),
-      supabase.from('HIFACHAMA_loan').select('*'),
-    ]);
-    setMembers(m || []);
-    setContributions(t || []);
-    setMeetings(mt || []);
-    setLoans(l || []);
+    try {
+      const chamaId = chamaData.id;
+      const [
+        { data: m, error: mErr },
+        { data: t, error: tErr },
+        { data: mt, error: mtErr },
+        { data: l, error: lErr },
+      ] = await Promise.all([
+        supabase.from('HIFACHAMA_customuser').select('*').eq('chama_id', chamaId),
+        supabase.from('HIFACHAMA_transaction').select('*').eq('chama_id', chamaId),
+        supabase.from('HIFACHAMA_meeting').select('*').eq('chama_id', chamaId),
+        supabase.from('HIFACHAMA_loan').select('*').eq('chama_id', chamaId),
+      ]);
+
+      if (mErr || tErr || mtErr || lErr) {
+        console.error("🛑 Supabase errors:", { mErr, tErr, mtErr, lErr });
+      }
+
+      setMembers(m || []);
+      setContributions(t || []);
+      setMeetings(mt || []);
+      setLoans(l || []);
+    } catch (error) {
+      console.error("❌ Error fetching Supabase data:", error);
+    }
   };
 
-  useEffect(() => {
-    fetchData();
-    const tables = [
-      'HIFACHAMA_customuser',
-      'HIFACHAMA_transaction',
-      'HIFACHAMA_meeting',
-      'HIFACHAMA_loan',
-    ];
-    const channels = tables.map((table) =>
-      supabase
-        .channel(`realtime:${table}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table }, fetchData)
-        .subscribe()
-    );
-    return () => channels.forEach((ch) => supabase.removeChannel(ch));
-  }, []);
+  fetchData();
 
-  const renderContent = () => {
-    switch(activeSection) {
-      case 'overview':
-        return (
-          <>
-            <div className="dashboard-header">
-              <div>Welcome, {userData?.username || userData?.email}</div>
-              <div>{chamaData?.name || 'Loading Chama…'}</div>
-            </div>
-            <div className="dashboard-card">
-              <MemberList members={members} title="Member Directory" />
-            </div>
-          </>
-        );
-      case 'contributions':
-        return (
-          <>
-            <div className="dashboard-card">
-              <ContributionDisplay contributions={contributions} />
-            </div>
-            <div className="dashboard-card">
-              <ContributionForm />
-            </div>
-          </>
-        );
-      case 'withdrawals':
-        return (
+  const tables = [
+    'HIFACHAMA_customuser',
+    'HIFACHAMA_transaction',
+    'HIFACHAMA_meeting',
+    'HIFACHAMA_loan',
+  ];
+  const channels = tables.map((table) =>
+    supabase
+      .channel(`realtime:${table}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table }, fetchData)
+      .subscribe()
+  );
+
+  return () => channels.forEach((ch) => supabase.removeChannel(ch));
+}, [chamaData?.id]);
+
+
+const renderContent = () => {
+  switch (activeSection) {
+    case 'overview':
+      return (
+        <div className="dashboard-content">
+          <div className="dashboard-header">
+            <div>Welcome, {userData?.username || userData?.email}</div>
+            <div>{chamaData?.name || 'Loading Chama…'}</div>
+          </div>
+          <div className="dashboard-card">
+            <MemberList members={members} title="Member Directory" />
+          </div>
+        </div>
+      );
+
+    case 'contributions':
+      return (
+        <div className="dashboard-content">
+          <div className="dashboard-card">
+            <ContributionDisplay contributions={contributions} />
+          </div>
+          <div className="dashboard-card">
+            <ContributionForm />
+          </div>
+        </div>
+      );
+
+    case 'withdrawals':
+      return (
+        <div className="dashboard-content">
           <div className="dashboard-card">
             <WithdrawalForm />
           </div>
-        );
-      case 'rotation':
-        return (
+        </div>
+      );
+
+    case 'rotation':
+      return (
+        <div className="dashboard-content">
           <div className="dashboard-card">
             <RotationSchedule members={members} contributions={contributions} />
           </div>
-        );
-      case 'reports':
-        return (
+        </div>
+      );
+
+    case 'reports':
+      return (
+        <div className="dashboard-content">
           <div className="dashboard-card">
             <ReportDisplay members={members} contributions={contributions} loans={loans} />
           </div>
-        );
-      default:
-        return null;
-    }
-  };
+        </div>
+      );
+
+    default:
+      return null;
+  }
+};
+
 
   if (isLoading) {
     return <div className="dashboard-loading">Loading...</div>;

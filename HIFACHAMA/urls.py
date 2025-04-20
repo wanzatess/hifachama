@@ -1,68 +1,99 @@
 from django.urls import path, include
-from django.http import JsonResponse  # <-- Add this import
-from django.shortcuts import render  # <-- Add this import
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.conf import settings  # <-- Add this import
+from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from rest_framework.routers import DefaultRouter
-from .models import Transaction, Loan, Notification
-from .serializers import UserSerializer, TransactionSerializer, LoanSerializer, NotificationSerializer
 from .views import (
-    home, test_email, UserLoginView, verify_otp,
-    mpesa_callback, mpesa_c2b_confirmation, transaction_history,
-    RegisterView, ChamaListCreateView, verify_token, dashboard_data, contributions_data, chama_detail, current_user
+    home,
+    test_email,
+    UserLoginView,
+    verify_otp,
+    mpesa_callback,
+    mpesa_c2b_confirmation,
+    transaction_history,
+    RegisterView,
+    ChamaListCreateView,
+    dashboard_data,
+    contributions_data,
+    chama_detail,
+    current_user,
+    initiate_stk_push,
+    generate_pdf_report,
+    generate_excel_report
 )
-from .reports import generate_pdf_report, generate_excel_report
-from .views import initiate_stk_push
-
-# Function to return JSON response instead of index.html
-def api_home(request):
-    return JsonResponse({"message": "Welcome to HIFACHAMA API"}, status=200)
-
-# Set up router for transactions
-router = DefaultRouter()
-
-# Automatically create routes for transactions
 from .views import TransactionViewSet
+
+# API Home
+def api_home(request):
+    return JsonResponse({
+        "message": "Welcome to HIFACHAMA API",
+        "documentation": "/docs/",
+        "authentication": {
+            "login": "/api/login/",
+            "refresh": "/api/auth/refresh/",
+            "verify": "/api/auth/verify/"
+        }
+    }, status=200)
+
+# Router setup
+router = DefaultRouter()
 router.register(r'transactions', TransactionViewSet, basename='transaction')
 
 urlpatterns = [
-    # Homepage: Serve JSON response
-    path("", api_home, name="homepage"),
-
-    # Other routes
+    # Core API Routes
+    path("", api_home, name="api-root"),
     path("home/", home, name="home"),
 
-    # Authentication Routes
-    path("register/", lambda request: render(request, "register.html"), name="register"),  # Web registration page
-    path("api/register/", RegisterView.as_view(), name="api-register"),  # API registration
-    path("api/login/", UserLoginView.as_view(), name="api-login"),  # API login
-    path("api/auth/", include("authentication.urls")),  # Ensure no duplicates inside authentication.urls
-    
-    path('api/verify-token/', verify_token, name='verify-token'),
-    path('users/me/', current_user, name='current_user'),
-    
-    # Dashboard Routes
-    path('api/dashboard/', dashboard_data, name='dashboard-data'),
-    path('api/contributions/', contributions_data, name='contributions-data'),
-    path('api/stats/', dashboard_data, name='stats-data'),  # Reuses dashboard_data
+    # Authentication Endpoints
+    path("api/auth/", include([
+        path("login/", UserLoginView.as_view(), name="login"),
+        path("refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+        path("verify/", TokenVerifyView.as_view(), name="token-verify"),
+        path("register/", RegisterView.as_view(), name="register"),
+        path("verify-otp/", verify_otp, name="verify-otp"),
+    ])),
 
-    # Chama Management
-    path("api/chamas/", ChamaListCreateView.as_view(), name="chama-list-create"),
+    # User Endpoints
+    path("api/users/", include([
+        path("me/", current_user, name="current-user"),
+    ])),
+
+    # Chama Endpoints
+    path("api/chamas/", include([
+        path("", ChamaListCreateView.as_view(), name="chama-list"),
+        path("<int:id>/", chama_detail, name="chama-detail"),
+    ])),
+
+    # Dashboard Endpoints
+    path("api/dashboard/", include([
+        path("", dashboard_data, name="dashboard"),
+        path("contributions/", contributions_data, name="contributions"),
+        path("stats/", dashboard_data, name="stats"),
+    ])),
 
     # M-Pesa Integration
-    path("api/mpesa/callback/", mpesa_callback, name="mpesa_callback"),
-    path("api/mpesa/c2b/confirmation/", mpesa_c2b_confirmation, name="mpesa_c2b_confirmation"),
-    path("api/mpesa/stkpush/", initiate_stk_push, name="initiate_stk_push"),
+    path("api/payments/", include([
+        path("mpesa/callback/", mpesa_callback, name="mpesa-callback"),
+        path("mpesa/c2b/", mpesa_c2b_confirmation, name="mpesa-c2b"),
+        path("stk-push/", initiate_stk_push, name="stk-push"),
+    ])),
 
     # Reports
-    path("api/reports/pdf/", generate_pdf_report, name="generate_pdf_report"),
-    path("api/reports/excel/", generate_excel_report, name="generate_excel_report"),
+    path("api/reports/", include([
+        path("pdf/", generate_pdf_report, name="pdf-report"),
+        path("excel/", generate_excel_report, name="excel-report"),
+    ])),
+
+    # Transactions (from router)
+    path("api/", include(router.urls)),
 
     # Miscellaneous
-    path("api/test-email/", test_email, name="test_email"),
-    path("api/verify/", verify_otp, name="verify_otp"),
-
-    # Transactions Routes (from the router)
-    path('api/', include(router.urls)),
-
-    # Chama Details
-    path('api/chamas/<int:id>/', chama_detail),
+    path("api/utils/test-email/", test_email, name="test-email"),
 ]
+
+# Only add debug routes in development
+if settings.DEBUG:
+    urlpatterns += [
+        path("api/debug/register-form/", lambda r: render(r, "register.html")),  # Added missing parenthesis
+    ]  # This bracket was properly closed

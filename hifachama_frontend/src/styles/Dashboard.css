@@ -14,10 +14,11 @@
 
 .dashboard-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 1.5rem;
-  padding: 1rem;
+  width: 100%;
 }
+
 
 .dashboard-header {
   grid-column: 1 / -1;
@@ -32,6 +33,7 @@
   color: var(--dark-brown);
   margin-bottom: 1.5rem;
 }
+
 
 .dashboard-card {
   background-color: var(--light-gold);

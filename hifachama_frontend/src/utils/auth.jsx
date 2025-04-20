@@ -1,41 +1,46 @@
-import api from '../api/axiosConfig';
+// JWT Token Management Utilities
+export const ACCESS_TOKEN_KEY = 'jwt_access';
+export const REFRESH_TOKEN_KEY = 'jwt_refresh';
 
-// Unified token management
-export const TOKEN_KEY = 'accessToken'; // Standardizing to 'accessToken'
-export const REFRESH_KEY = 'refreshToken';
-
+// Check if user is logged in (has valid access token)
 export const isLoggedIn = () => {
-  return !!localStorage.getItem(TOKEN_KEY);
+  return !!localStorage.getItem(ACCESS_TOKEN_KEY);
 };
 
+// Get current access token
 export const getAuthToken = () => {
-  return localStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
 };
 
+// Get current refresh token
 export const getRefreshToken = () => {
-  return localStorage.getItem(REFRESH_KEY);
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
 };
 
+// Store both tokens
 export const setAuthTokens = ({ access, refresh }) => {
-  localStorage.setItem(TOKEN_KEY, access);
-  if (refresh) {
-    localStorage.setItem(REFRESH_KEY, refresh);
-  }
+  if (access) localStorage.setItem(ACCESS_TOKEN_KEY, access);
+  if (refresh) localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
 };
 
+// Clear all authentication tokens
 export const clearAuthTokens = () => {
-  [TOKEN_KEY, REFRESH_KEY, 'authToken'].forEach(key => {
-    localStorage.removeItem(key);
-  });
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  // Clean up any legacy tokens
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('token');
 };
 
+// Verify token validity with backend
 export const verifyToken = async () => {
   const token = getAuthToken();
   if (!token) return false;
   
   try {
-    // Use your existing api instance that includes interceptors
-    const response = await api.get('/auth/verify-token/');
+    const response = await axios.get('/api/auth/verify/', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data.valid;
   } catch (error) {
     if (error.response?.status === 401) {
@@ -45,19 +50,21 @@ export const verifyToken = async () => {
   }
 };
 
-// Optional: Token auto-refresh utility
+// Automated token refresh
 export const refreshAuthToken = async () => {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return false;
 
   try {
-    const response = await api.post('/auth/refresh/', {
+    const response = await axios.post('/api/auth/refresh/', {
       refresh: refreshToken
     });
+    
     setAuthTokens({
       access: response.data.access,
-      refresh: response.data.refresh || refreshToken // Fallback to existing refresh token
+      refresh: response.data.refresh || refreshToken
     });
+    
     return true;
   } catch (error) {
     clearAuthTokens();

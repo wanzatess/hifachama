@@ -32,6 +32,8 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
 import json
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from .models import OTP, Chama, ChamaMember, Transaction, Loan, Meeting, Notification, CustomUser
@@ -161,6 +163,10 @@ class RegisterView(APIView):
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
+
 class UserLoginView(APIView):
     permission_classes = [AllowAny]
     
@@ -180,7 +186,7 @@ class UserLoginView(APIView):
         
         if not user:
             return Response(
-                {"error": "Invalid email or password"},
+                {"error": "Invalid credentials"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
             
@@ -189,20 +195,16 @@ class UserLoginView(APIView):
                 {"error": "Account is inactive"},
                 status=status.HTTP_403_FORBIDDEN
             )
-            
-        # Get or create token
-        token, created = Token.objects.get_or_create(user=user)
         
-        # Initialize chama_data with default None
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+        
+        # Get chama data (your existing logic)
         chama_data = None
-        
         try:
-            # Check for admin chamas first
-            administered_chama = Chama.objects.filter(
-                admin=user, 
-                is_active=True
-            ).first()
-            
+            administered_chama = Chama.objects.filter(admin=user, is_active=True).first()
             if administered_chama:
                 chama_data = {
                     'id': administered_chama.id,
@@ -211,12 +213,10 @@ class UserLoginView(APIView):
                     'role': 'admin'
                 }
             else:
-                # Check for regular memberships
                 chama_membership = ChamaMember.objects.filter(
                     user=user, 
                     is_active=True
                 ).select_related('chama').first()
-                
                 if chama_membership:
                     chama_data = {
                         'id': chama_membership.chama.id,
@@ -224,39 +224,35 @@ class UserLoginView(APIView):
                         'type': chama_membership.chama.chama_type,
                         'role': chama_membership.role
                     }
-                    
         except Exception as e:
             print(f"Error fetching chama data: {str(e)}")
         
-        # Prepare response - now chama_data is always defined
+        # Prepare response
         response_data = {
-            "token": token.key,
-            "user_id": user.pk,
-            "email": user.email,
-            "role": user.role,
-            "username": user.username,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "chama": chama_data,  # Will be None if no chama found
+            "access": access_token,
+            "refresh": refresh_token,
+            "access_expires_in": int(timedelta(minutes=30).total_seconds()),
+            "refresh_expires_in": int(timedelta(days=7).total_seconds()),
+            "user": {
+                "id": user.pk,
+                "email": user.email,
+                "role": user.role,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name
+            },
+            "chama": chama_data,
             "redirectTo": f"/api/chamas/{chama_data['id']}" if chama_data else (
                 "/dashboard/create-chama" if user.role == 'chairperson' 
                 else "/dashboard/join-chama"
             )
         }
         
-        # Update last login
         user.last_login = timezone.now()
         user.save()
         
         return Response(response_data, status=status.HTTP_200_OK)
 
-class CustomAuthToken(ObtainAuthToken):
-    def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({"token": token.key})
 
 def send_otp(user):
     """Generate and send OTP via email"""

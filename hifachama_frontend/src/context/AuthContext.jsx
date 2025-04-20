@@ -1,7 +1,7 @@
 import { createContext, useState, useEffect, useCallback, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/axiosConfig';
-import { getAuthToken, setAuthTokens, clearAuthTokens } from '../utils/auth';
+import { getAuthToken, getRefreshToken, setAuthTokens, clearAuthTokens } from '../utils/auth';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
@@ -15,113 +15,128 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Initialize auth state - runs once on mount
-// Replace initializeAuth function in AuthContext.jsx
-const initializeAuth = useCallback(async () => {
-  const token = getAuthToken();
-  if (!token) {
-    setAuthState(prev => ({ ...prev, loading: false }));
-    return;
-  }
+  // Initialize auth state
+  const initializeAuth = useCallback(async () => {
+    const token = getAuthToken();
+    if (!token) {
+      setAuthState(prev => ({ ...prev, loading: false }));
+      return;
+    }
 
-  try {
-    const response = await api.get('/api/verify-token/');
-    if (response.data.valid) {
+    try {
+      // Verify token and get user data
+      const { data: user } = await api.get('/api/users/me/');
       setAuthState({
-        user: response.data.user,
+        user,
         loading: false,
         error: null
       });
-    } else {
+    } catch (error) {
+      console.error('Authentication check failed:', error);
       clearAuthTokens();
-      setAuthState({ user: null, loading: false, error: null });
+      setAuthState({
+        user: null,
+        loading: false,
+        error: error.response?.data?.detail || 'Session expired'
+      });
+      
+      // Redirect to login if not already there
+      if (!location.pathname.startsWith('/login')) {
+        navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+      }
     }
-  } catch (error) {
-    console.error('Token verification failed:', error);
-    clearAuthTokens();
-    setAuthState({ user: null, loading: false, error: 'Session expired' });
-  }
-}, []);
+  }, [navigate, location.pathname]);
 
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
-  const resolveFrontendPath = (redirectTo, chama) => {
-    if (!redirectTo) return '/'; // Fallback to home
 
-    // Handle API-style redirects (e.g., "/api/chamas/26")
+  const resolveFrontendPath = (redirectTo, chama) => {
+    if (!redirectTo) return '/';
+
+    // Handle API-style redirects
     if (redirectTo.startsWith('/api/chamas/')) {
       const chamaId = redirectTo.split('/')[3];
-
-      // Map chama.type to frontend dashboard routes
       switch (chama?.type) {
-        case 'hybrid':
-          return `/dashboard/hybrid/${chamaId}`;
-        case 'investment':
-          return `/dashboard/investment/${chamaId}`;
-        case 'merry_go_round':
-          return `/dashboard/merry_go_round/${chamaId}`;
-        default:
-          return `/chamas/${chamaId}`; // Generic fallback
+        case 'hybrid': return `/dashboard/hybrid/${chamaId}`;
+        case 'investment': return `/dashboard/investment/${chamaId}`;
+        case 'merry_go_round': return `/dashboard/merry_go_round/${chamaId}`;
+        default: return `/chamas/${chamaId}`;
       }
     }
-
-    return redirectTo; // Use as-is if not an API path
+    return redirectTo;
   };
 
   const login = async (email, password) => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
   
     try {
-      const response = await api.post('/api/login/', { email, password });
-      const { token, chama, redirectTo, role, ...userData } = response.data;
-  
-      const user = {
-        ...userData,
-        token,
-        chamaId: chama?.id || null,
-        role
-      };
-  
-      setAuthTokens(token);
-      setAuthState({ 
-        user, 
-        loading: false, 
-        error: null 
+      const { data } = await api.post('/api/login/', { email, password });
+      
+      // Store JWT tokens
+      setAuthTokens({
+        access: data.access,
+        refresh: data.refresh
       });
-  
-      const frontendRedirectTo = resolveFrontendPath(redirectTo, chama);
+
+      const user = {
+        ...data.user,
+        chamaId: data.chama?.id || null
+      };
+
+      setAuthState({ 
+        user,
+        loading: false,
+        error: null
+      });
+
+      const frontendRedirectTo = resolveFrontendPath(data.redirectTo, data.chama);
       navigate(frontendRedirectTo, { replace: true });
-  
+
       return { 
-        success: true, 
-        role, 
-        chama,
+        success: true,
+        user,
         redirectTo: frontendRedirectTo
       };
-  
     } catch (error) {
-      const errorMessage = error.response?.data?.detail || 
-                           error.message || 
-                           'Login failed';
-  
-      setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
-      return { success: false, error: errorMessage };
+      const errorMessage = error.response?.data?.error || 
+                         error.message || 
+                         'Login failed';
+      
+      setAuthState(prev => ({
+        ...prev,
+        loading: false,
+        error: errorMessage
+      }));
+      
+      return { 
+        success: false, 
+        error: errorMessage 
+      };
     }
   };
 
-
   const logout = useCallback(() => {
+    // Optional: Call backend logout endpoint if needed
+    // await api.post('/api/auth/logout/');
+    
     clearAuthTokens();
-    setAuthState({ user: null, loading: false, error: null });
+    setAuthState({ 
+      user: null, 
+      loading: false, 
+      error: null 
+    });
+    
     navigate('/login', { replace: true });
     toast.info('You have been logged out');
   }, [navigate]);
 
-  // Debugging - log auth state changes
+  // Auto-logout on 401 errors (handled in axios interceptor)
   useEffect(() => {
-    console.log('Auth state changed:', authState);
-  }, [authState]);
+    if (authState.error?.includes('Session expired')) {
+      logout();
+    }
+  }, [authState.error, logout]);
 
   const value = {
     ...authState,
@@ -136,7 +151,11 @@ const initializeAuth = useCallback(async () => {
 
   return (
     <AuthContext.Provider value={value}>
-      {authState.loading ? <div className="loading-spinner" /> : children}
+      {authState.loading ? (
+        <div className="loading-overlay">
+          <div className="loading-spinner" />
+        </div>
+      ) : children}
     </AuthContext.Provider>
   );
 };
