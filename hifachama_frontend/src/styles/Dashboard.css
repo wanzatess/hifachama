@@ -1,85 +1,33 @@
-/* dashboard.css */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  padding-top: 70px;
+  background-color: #f8f9fa;
+}
 
-/* Main container that holds the entire dashboard */
 .dashboard-main-container {
-  margin-left: 240px; /* Space for the sidebar */
+  margin-left: 220px;
   flex: 1;
-  padding: 2rem;
-  background-color: var(--primary-brown);
+  padding: 1.5rem;
+  background-color: #ffffff;
   min-width: 0;
   transition: margin-left 0.3s ease;
-  padding-top: 80px; /* Adjust for fixed header */
+  max-width: 1200px;
+  margin-right: auto;
+  min-height: calc(100vh - 70px);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
 }
 
-.dashboard-main-container.sidebar-collapsed {
-  margin-left: 80px;
-}
-
-/* Grid for dashboard content */
 .dashboard-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
 }
 
-/* Header for each dashboard page */
-.dashboard-header {
-  grid-column: 1 / -1;
-  background-color: var(--light-gold);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--dark-brown);
-  margin-bottom: 1.5rem;
-}
-
-/* Cards inside the dashboard */
 .dashboard-card {
-  background-color: var(--light-gold);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  color: var(--dark-brown);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.dashboard-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-/* Loading state for the dashboard */
-.dashboard-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: calc(100vh - 80px);
-  font-size: 1.2rem;
-  color: var(--gold-accent);
-}
-
-/* Card header styling */
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--gold-accent);
-  padding-bottom: 0.75rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .dashboard-main-container {
-    margin-left: 80px; /* Adjust for smaller sidebar */
-  }
-
-  .dashboard-content {
-    grid-template-columns: 1fr;
-  }
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
 }
