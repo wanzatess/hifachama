@@ -4,16 +4,12 @@
 }
 
 .dashboard-main-container {
-  margin-left: 240px;
+  margin-left: 240px; /* Ensure the main content is pushed to the right of the sidebar */
   flex: 1;
   padding: 2rem;
   background-color: var(--primary-brown);
   min-width: 0;
-  transition: margin-left 0.3s ease;
-}
-
-.dashboard-main-container.sidebar-collapsed {
-  margin-left: 80px;
+  transition: margin-left 0.3s ease; /* Optional smooth transition */
 }
 
 .dashboard-content {
@@ -67,4 +63,62 @@
   margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--gold-accent);
   padding-bottom: 0.75rem;
+}
+
+/* Static sidebar adjustments */
+.sidebar-container {
+  position: fixed; /* Fix the sidebar on the left */
+  top: 0;
+  left: 0;
+  width: 240px; /* Set fixed width for the sidebar */
+  height: 100vh;
+  background-color: var(--dark-brown);
+  color: var(--light-gold);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem 0;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000; /* Make sure the sidebar is always on top */
+}
+
+.sidebar-header,
+.sidebar-profile {
+  padding: 1rem;
+  text-align: center;
+}
+
+.sidebar-nav {
+  margin-top: 2rem;
+}
+
+.sidebar-logo {
+  max-width: 150px;
+}
+
+.sidebar-nav button {
+  width: 100%;
+  padding: 1rem;
+  background-color: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  color: var(--light-gold);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-nav button:hover,
+.sidebar-nav button.active {
+  background-color: var(--gold-accent);
+}
+
+.sidebar-icon {
+  margin-right: 1rem;
+}
+
+/* Ensure main content is not hidden behind the sidebar */
+.dashboard-main-container {
+  margin-left: 240px; /* Ensure this matches the sidebar width */
 }
