@@ -23,42 +23,41 @@ const Sidebar = ({ role, chamaType, chamaName, balance, setActiveSection, active
   ];
 
   return (
-    <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-header">
-        {!isCollapsed && (
-          <div className="sidebar-brand">
-            <img src={logo} alt="Logo" className="sidebar-logo" />
-            <span>HIFACHAMA</span>
+    <>
+      <div className="top-header">
+        <div className="header-content">
+          <div className="header-brand">
+            <img src={logo} alt="Logo" className="header-logo" />
+            <span className="header-title">HIFACHAMA</span>
           </div>
-        )}
-        <button
-          className="sidebar-toggle"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? <FaBars /> : <FaTimes />}
-        </button>
+          <div className="header-info">
+            <h3>{chamaName || "My Chama"}</h3>
+            <p>Balance: KES {balance?.toLocaleString() || "0.00"}</p>
+          </div>
+          <button
+            className="sidebar-toggle"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            {isCollapsed ? <FaBars /> : <FaTimes />}
+          </button>
+        </div>
       </div>
 
-      {!isCollapsed && (
-        <div className="sidebar-profile">
-          <h3>{chamaName || "My Chama"}</h3>
-          <p>Balance: KES {balance?.toLocaleString() || "0.00"}</p>
-        </div>
-      )}
-
-      <nav className="sidebar-nav">
-        {navigationLinks.map((link) => (
-          <button
-            key={link.id}
-            onClick={() => setActiveSection(link.id)}
-            className={`sidebar-link ${activeSection === link.id ? 'active' : ''}`}
-          >
-            <span className="sidebar-icon">{link.icon}</span>
-            {!isCollapsed && <span className="sidebar-label">{link.label}</span>}
-          </button>
-        ))}
-      </nav>
-    </div>
+      <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}>
+        <nav className="sidebar-nav">
+          {navigationLinks.map((link) => (
+            <button
+              key={link.id}
+              onClick={() => setActiveSection(link.id)}
+              className={`sidebar-link ${activeSection === link.id ? 'active' : ''}`}
+            >
+              <span className="sidebar-icon">{link.icon}</span>
+              {!isCollapsed && <span className="sidebar-label">{link.label}</span>}
+            </button>
+          ))}
+        </nav>
+      </div>
+    </>
   );
 };
 
