@@ -2,14 +2,14 @@
   display: flex;
   min-height: 100vh;
   padding-top: 70px;
-  background-color: #6F623E; /* Match overall background */
+  background-color: #ffffff; /* Changed to white */
 }
 
 .dashboard-main-container {
   margin-left: 220px;
   flex: 1;
   padding: 1.5rem;
-  background-color: #F0EAD6; /* Primary Text Background */
+  background-color: #F0EAD6; /* Primary Text Background (kept same) */
   min-width: 0;
   transition: margin-left 0.3s ease;
   max-width: 1200px;
@@ -25,9 +25,10 @@
 }
 
 .dashboard-card {
-  background-color: #ffffff;
+  background-color: #6F623E; /* Changed to light brown */
   border-radius: 8px;
   padding: 1.25rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   border: 1px solid #e9ecef;
+  color: #ffffff; /* Added white text for cards */
 }
