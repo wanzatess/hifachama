@@ -35,14 +35,14 @@ api.interceptors.response.use(
         if (refreshToken) {
           // Attempt to refresh tokens
           const { data } = await axios.post(
-            `${originalRequest.baseURL}/api/auth/refresh/`, 
+            `${originalRequest.baseURL}/api/token/refresh/`, 
             { refresh: refreshToken }
           );
           
           // Update stored tokens
           setAuthTokens({
-            access: data.access,
-            refresh: data.refresh || refreshToken // Fallback to existing refresh token
+            access: data.token,
+            refresh: data.token || refreshToken // Fallback to existing refresh token
           });
           
           // Retry original request with new token

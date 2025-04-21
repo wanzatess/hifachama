@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../api/axiosConfig"; // or the correct path
 import { toast } from "react-toastify";
+import { getAuthToken } from "../utils/auth";
 
 const ContributionForm = () => {
   const [formData, setFormData] = useState({
@@ -23,6 +24,7 @@ const ContributionForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form submitted");
     
     if (formData.amount <= 0 || !formData.purpose || !formData.chama || !formData.member) {
       toast.error("All fields are required.");
@@ -32,17 +34,18 @@ const ContributionForm = () => {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "https://hifachama-backend.onrender.com/api/transactions/",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Check if token exists before making the request
+      console.log("Raw token in localStorage:", localStorage.getItem("token"));
+      const token = getAuthToken();
+      if (!token) {
+        toast.error("No token found. Please log in again.");
+        setLoading(false);
+        return;
+      }      
+
+      // Debug: Log the token (remove in production)
+      console.log("About to send request with:", formData);
+      const response = await api.post("/api/transactions/", formData);
 
       toast.success("Contribution submitted successfully!");
       setFormData({

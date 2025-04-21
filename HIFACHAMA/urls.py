@@ -31,7 +31,7 @@ def api_home(request):
         "documentation": "/docs/",
         "authentication": {
             "login": "/api/login/",
-            "refresh": "/api/auth/refresh/",
+            "refresh": "/api/token/refresh/",
             "verify": "/api/auth/verify/"
         }
     }, status=200)

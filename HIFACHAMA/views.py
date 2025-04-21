@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import generics, permissions
 from django.core.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied
 from HIFACHAMA.authentication import EmailBackend
 from HIFACHAMA.utils.mpesa import stk_push_request 
 import pyotp
@@ -88,6 +89,8 @@ class ChamaMemberViewSet(viewsets.ModelViewSet):
             raise ValidationError("You are already a member of this Chama")
         serializer.save(user=self.request.user)
 
+
+
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-date')
     serializer_class = TransactionSerializer
@@ -96,12 +99,92 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Get the ChamaMember instance for the current user and chama
         chama_id = serializer.validated_data.get('chama').id
-        chama_member = get_object_or_404(
-            ChamaMember, 
-            user=self.request.user, 
-            chama_id=chama_id
-        )
-        serializer.save(member=chama_member)
+        try:
+            chama_member = ChamaMember.objects.get(user=self.request.user, chama_id=chama_id)
+        except ChamaMember.DoesNotExist:
+            raise PermissionDenied("You are not a member of this chama.")
+        
+        serializer.save(member=chama_member, created_by=self.request.user)
+
+
+
+class ContributionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data.copy()
+
+        # Check if the user has a ChamaMember profile
+        try:
+            chama_member = ChamaMember.objects.get(user=request.user)
+            data['member'] = chama_member.id
+        except ChamaMember.DoesNotExist:
+            return Response({"error": "You are not an active member of any chama."}, status=400)
+
+        # Set transaction type
+        data['transaction_type'] = 'contribution'
+
+        # Serialize the data and save it
+        serializer = TransactionSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(created_by=request.user)
+            return Response({"message": "Contribution made successfully", "data": serializer.data}, status=201)
+        return Response(serializer.errors, status=400)
+
+
+class WithdrawalRequestView(APIView):
+    """Member can request a withdrawal"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Check if the user is part of a Chama
+        try:
+            chama_member = ChamaMember.objects.get(user=request.user)
+        except ChamaMember.DoesNotExist:
+            return Response({"error": "You are not an active member of any chama."}, status=400)
+
+        data = request.data.copy()
+        data['transaction_type'] = 'withdrawal'
+        data['member'] = chama_member.id
+        data['status'] = 'pending'  # Initial status for withdrawal
+
+        # Serialize the data and create the withdrawal request
+        serializer = TransactionSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(created_by=request.user)
+            return Response({"message": "Withdrawal requested successfully", "data": serializer.data}, status=201)
+        return Response(serializer.errors, status=400)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def contributions_data(request):
+    user = request.user
+    try:
+        # Filter contributions by the current user
+        contributions = Transaction.objects.filter(
+            member__user=user,
+            transaction_type='contribution'
+        ).order_by('-date')
+        
+        # Serialize the contributions
+        serializer = TransactionSerializer(contributions, many=True)
+        return Response(serializer.data)
+    
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(['GET'])
+def transaction_history(request):
+    """API to fetch all transactions"""
+    transactions = Transaction.objects.all().order_by('-date')  # Get transactions sorted by date
+    serializer = TransactionSerializer(transactions, many=True)
+    return Response(serializer.data)
+
+
+
+
 
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
@@ -465,13 +548,7 @@ def initiate_stk_push(request):
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
-@api_view(['GET'])
- 
-def transaction_history(request):
-    """API to fetch all transactions"""
-    transactions = Transaction.objects.all().order_by('-date')  # Get transactions sorted by date
-    serializer = TransactionSerializer(transactions, many=True)
-    return Response(serializer.data)
+
 class ChamaManagementView(APIView):
     """Chairperson can create and delete Chama"""
     permission_classes = [IsAuthenticated, IsChairperson]
@@ -587,25 +664,7 @@ class ChamaDetailView(APIView):
         chama = get_object_or_404(Chama, id=chama_id)
         return Response({"chama_name": chama.name, "created_by": chama.created_by.username})
 
-class ContributionView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        data = request.data.copy()
-
-        # Check if the user has a ChamaMember profile
-        try:
-            data['member'] = request.user.chamamember.id
-        except AttributeError:
-            return Response({"error": "You are not an active member of any chama."}, status=400)
-
-        data['transaction_type'] = 'contribution'
-
-        serializer = TransactionSerializer(data=data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save(created_by=request.user)
-            return Response({"message": "Contribution made successfully", "data": serializer.data}, status=201)
-        return Response(serializer.errors, status=400)
 
 
 class LoanRequestView(APIView):
@@ -619,17 +678,7 @@ class LoanRequestView(APIView):
         )
         return Response({"message": "Loan requested successfully"}, status=201)
 
-class WithdrawalRequestView(APIView):
-    """Member can request a withdrawal"""
-    permission_classes = [IsAuthenticated, IsMember]
 
-    def post(self, request):
-        withdrawal = Transaction.objects.create(
-            transaction_type="withdrawal",
-            amount=request.data["amount"],
-            requested_by=request.user
-        )
-        return Response({"message": "Withdrawal requested successfully"}, status=201)
 
 
 def homepage_view(request):
@@ -679,19 +728,6 @@ def dashboard_data(request):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def contributions_data(request):
-    user = request.user
-    try:
-        contributions = Transaction.objects.filter(
-            member__user=user,
-            transaction_type='contribution'
-        ).order_by('-date')
-        serializer = TransactionSerializer(contributions, many=True)
-        return Response(serializer.data)
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
     # Example Django View (adjust for your backend)
 @api_view(['GET'])
 def chama_detail(request, id):

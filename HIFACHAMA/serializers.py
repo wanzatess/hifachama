@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Chama, ChamaMember, Transaction, Loan, Meeting, Notification, MemberRole, Contribution
+from .models import Chama, ChamaMember, Transaction, Loan, Meeting, Notification, MemberRole, Contribution, Withdrawal
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
@@ -50,18 +50,36 @@ class ChamaMemberSerializer(serializers.ModelSerializer):
         # Automatically set the user to current user
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+
+
 class ContributionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contribution
         fields = ['purpose']
 
+class WithdrawalDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Withdrawal
+        fields = ['reason', 'approval_status']
+        read_only_fields = ['approval_status']
+
 class TransactionSerializer(serializers.ModelSerializer):
     member_username = serializers.CharField(source='member.user.username', read_only=True)
-    contribution_details = ContributionDetailSerializer(required=False, allow_null=True)
+    
+    # Nested detail serializers (read-only)
+    contribution_details = ContributionDetailSerializer(read_only=True)
+    withdrawal_details = WithdrawalDetailSerializer(read_only=True)
+
+    # Write-only fields for extra transaction data
     purpose = serializers.CharField(
         write_only=True, 
         required=False,
         help_text="Required for contributions. One of: monthly_dues, emergency_fund, project_fund, other"
+    )
+    reason = serializers.CharField(
+        write_only=True,
+        required=False,
+        help_text="Required for withdrawals. One of: personal, medical, emergency, investment, other"
     )
 
     class Meta:
@@ -69,40 +87,52 @@ class TransactionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'chama', 'member', 'amount', 'transaction_type', 'status',
             'date', 'description', 'receipt_number', 'created_by',
-            'member_username', 'contribution_details', 'purpose'
+            'member_username', 'contribution_details', 'withdrawal_details',
+            'purpose', 'reason'
         ]
-        read_only_fields = ['status', 'date', 'id', 'member_username', 'contribution_details']
+        read_only_fields = [
+            'id', 'date', 'status', 'member_username', 
+            'contribution_details', 'withdrawal_details'
+        ]
         extra_kwargs = {
-            'member': {'required': False},  # Will be set automatically
-            'chama': {'required': False},  # Will be set from URL or form
+            'member': {'required': False},  # Will be set automatically from request
+            'chama': {'required': False},   # Can be set from the request or context
         }
 
     def validate(self, data):
-        # Ensure purpose is provided for contributions
-        if data.get('transaction_type') == 'contribution' and not data.get('purpose'):
-            raise serializers.ValidationError({
-                'purpose': 'Purpose is required for contributions'
-            })
-        
-        # Ensure purpose is not provided for non-contributions
-        if data.get('transaction_type') != 'contribution' and data.get('purpose'):
-            raise serializers.ValidationError({
-                'purpose': 'Purpose should only be specified for contributions'
-            })
-        
+        tx_type = data.get('transaction_type')
+        purpose = data.get('purpose')
+        reason = data.get('reason')
+
+        if tx_type == 'contribution':
+            if not purpose:
+                raise serializers.ValidationError({'purpose': 'Purpose is required for contributions'})
+            if reason:
+                raise serializers.ValidationError({'reason': 'Reason should not be provided for contributions'})
+
+        elif tx_type == 'withdrawal':
+            if not reason:
+                raise serializers.ValidationError({'reason': 'Reason is required for withdrawals'})
+            if purpose:
+                raise serializers.ValidationError({'purpose': 'Purpose should not be provided for withdrawals'})
+
+        else:
+            if purpose or reason:
+                raise serializers.ValidationError({'detail': 'Purpose or reason should not be provided for this transaction type'})
+
         return data
 
     def create(self, validated_data):
-        # Extract purpose if it exists
         purpose = validated_data.pop('purpose', None)
+        reason = validated_data.pop('reason', None)
         transaction_type = validated_data.get('transaction_type')
 
-        # Auto-set the member from the request user
+        # Set member based on user
         user = self.context['request'].user
-        chama_id = validated_data.get('chama').id
-        validated_data['member'] = ChamaMember.objects.get(user=user, chama_id=chama_id)
+        chama = validated_data.get('chama')
+        validated_data['member'] = ChamaMember.objects.get(user=user, chama=chama)
 
-        # Auto-approve contributions
+        # Set status depending on type
         if transaction_type == 'contribution':
             validated_data['status'] = 'approved'
         else:
@@ -110,14 +140,15 @@ class TransactionSerializer(serializers.ModelSerializer):
 
         transaction = super().create(validated_data)
 
-        # Create contribution details if it's a contribution
+        # Create subtype record
         if transaction_type == 'contribution' and purpose:
-            Contribution.objects.create(
-                transaction=transaction,
-                purpose=purpose
-            )
+            Contribution.objects.create(transaction=transaction, purpose=purpose)
+
+        elif transaction_type == 'withdrawal' and reason:
+            Withdrawal.objects.create(transaction=transaction, reason=reason)
 
         return transaction
+
 
 class LoanSerializer(serializers.ModelSerializer):
     member = UserSerializer(read_only=True)

@@ -75,8 +75,8 @@ export const AuthProvider = ({ children }) => {
       
       // Store JWT tokens
       setAuthTokens({
-        access: data.access,
-        refresh: data.refresh
+        access: data.token,
+        refresh: data.token
       });
 
       const user = {

@@ -19,17 +19,26 @@ export const getRefreshToken = () => {
 
 // Store both tokens
 export const setAuthTokens = ({ access, refresh }) => {
-  if (access) localStorage.setItem(ACCESS_TOKEN_KEY, access);
-  if (refresh) localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
+  console.log("Setting tokens:", { access, refresh }); // Ensure tokens are passed correctly
+  if (typeof window !== 'undefined' && window.localStorage) {
+    if (access) {
+      console.log("Storing access token in localStorage");
+      localStorage.setItem(ACCESS_TOKEN_KEY, access);
+    }
+    if (refresh) {
+      console.log("Storing refresh token in localStorage");
+      localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
+    }
+  } else {
+    console.log("localStorage is not available or window is undefined.");
+  }
 };
+
 
 // Clear all authentication tokens
 export const clearAuthTokens = () => {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
-  // Clean up any legacy tokens
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('token');
 };
 
 // Verify token validity with backend
@@ -56,13 +65,13 @@ export const refreshAuthToken = async () => {
   if (!refreshToken) return false;
 
   try {
-    const response = await axios.post('/api/auth/refresh/', {
+    const response = await axios.post('/api/token/refresh/', {
       refresh: refreshToken
     });
     
     setAuthTokens({
-      access: response.data.access,
-      refresh: response.data.refresh || refreshToken
+      access: response.data.token,
+      refresh: response.data.token || refreshToken
     });
     
     return true;
