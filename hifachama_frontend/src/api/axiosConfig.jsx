@@ -41,8 +41,8 @@ api.interceptors.response.use(
           
           // Update stored tokens
           setAuthTokens({
-            access: data.token,
-            refresh: data.token || refreshToken // Fallback to existing refresh token
+            access: data.access,
+            refresh: data.refresh || refreshToken // Fallback to existing refresh token
           });
           
           // Retry original request with new token

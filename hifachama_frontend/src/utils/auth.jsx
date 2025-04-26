@@ -70,8 +70,8 @@ export const refreshAuthToken = async () => {
     });
     
     setAuthTokens({
-      access: response.data.token,
-      refresh: response.data.token || refreshToken
+      access: response.data.access,
+      refresh: response.data.refresh || refreshToken
     });
     
     return true;
