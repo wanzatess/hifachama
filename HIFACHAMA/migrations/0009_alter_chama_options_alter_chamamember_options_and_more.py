@@ -78,11 +78,6 @@ class Migration(migrations.Migration):
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='customuser',
-            name='profile_picture',
-            field=models.ImageField(blank=True, null=True, upload_to='profile_pics/'),
-        ),
-        migrations.AddField(
             model_name='loan',
             name='date_due',
             field=models.DateTimeField(blank=True, null=True),
