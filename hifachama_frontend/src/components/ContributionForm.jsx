@@ -8,8 +8,6 @@ const ContributionForm = () => {
     amount: "",
     description: "", 
     transaction_type: "contribution",
-    chama: "",
-    member: "",
     purpose: ""
   });
   const [loading, setLoading] = useState(false);
@@ -24,43 +22,52 @@ const ContributionForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted");
     
-    if (formData.amount <= 0 || !formData.purpose || !formData.chama || !formData.member) {
+    if (formData.amount <= 0 || !formData.purpose) {
       toast.error("All fields are required.");
       return;
-    }    
-
+    }
+  
     setLoading(true);
-
+  
     try {
-      // Check if token exists before making the request
-      console.log("Raw token in localStorage:", localStorage.getItem("token"));
-      const token = getAuthToken();
+      const token = localStorage.getItem('accessToken'); // Match the key used in login
       if (!token) {
-        toast.error("No token found. Please log in again.");
-        setLoading(false);
+        toast.error("Please log in again.");
+        // Redirect to login
+        window.location.href = '/login';
         return;
-      }      
-
-      // Debug: Log the token (remove in production)
-      console.log("About to send request with:", formData);
-      const response = await api.post("/api/transactions/", formData);
-
-      toast.success("Contribution submitted successfully!");
-      setFormData({
-        amount: "",
-        description: "",
-        transaction_type: "contribution",
-        chama: "",
-        member: "",
-        purpose: ""
-      });
+      }
+  
+      const response = await api.post("/api/transactions/", 
+        {
+          ...formData,
+          transaction_type: "contribution"
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+  
+      if (response.data) {
+        toast.success("Contribution submitted successfully!");
+        setFormData({
+          amount: "",
+          description: "",
+          transaction_type: "contribution",
+          purpose: ""
+        });
+      }
     } catch (error) {
-      if (error.response && error.response.status === 400) {
-        toast.error(error.response.data.error || "Invalid contribution details.");
+      console.error('Contribution error:', error.response?.data || error.message);
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        window.location.href = '/login';
       } else {
-        toast.error("Failed to submit contribution.");
+        toast.error(error.response?.data?.error || "Failed to submit contribution.");
       }
     } finally {
       setLoading(false);
@@ -71,28 +78,7 @@ const ContributionForm = () => {
     <div className="form-container">
       <h2 className="form-title">Make a Contribution</h2>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label className="form-label">Chama ID</label>
-          <input
-            type="text"
-            name="chama"
-            value={formData.chama}
-            onChange={handleChange}
-            className="form-input"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Member ID</label>
-          <input
-            type="text"
-            name="member"
-            value={formData.member}
-            onChange={handleChange}
-            className="form-input"
-            required
-          />
-        </div>
+        {/* Removed the 'member' input */}
         <div className="form-group">
           <label className="form-label">Amount</label>
           <input

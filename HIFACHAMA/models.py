@@ -156,7 +156,7 @@ class Transaction(models.Model):
         related_name='transactions'
     )
     member = models.ForeignKey(
-        ChamaMember,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='transactions'
     )
@@ -192,7 +192,7 @@ class Transaction(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.member.user.username} - {self.get_transaction_type_display()} - KES {self.amount}"
+        return f"{self.member.username} - {self.get_transaction_type_display()} - KES {self.amount}"
 
     def clean(self):
         if self.transaction_type == 'withdrawal' and self.amount > self.chama.current_balance:
@@ -241,7 +241,7 @@ class Loan(models.Model):
         related_name='loans'
     )
     member = models.ForeignKey(
-        ChamaMember,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='loans'
     )

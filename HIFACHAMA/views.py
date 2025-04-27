@@ -40,6 +40,7 @@ from rest_framework.authtoken.models import Token
 from .models import OTP, Chama, ChamaMember, Transaction, Loan, Meeting, Notification, CustomUser
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from django.db import models
 from .permissions import IsChairperson, IsMember, IsSecretary, IsTreasurer
 from .serializers import (
     UserSerializer, ChamaSerializer, ChamaMemberSerializer,
@@ -91,20 +92,26 @@ class ChamaMemberViewSet(viewsets.ModelViewSet):
 
 
 
+
+
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all().order_by('-date')
     serializer_class = TransactionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+        return self.queryset.filter(
+            models.Q(member=user) |
+            models.Q(chama__admin=user) |
+            models.Q(chama__members__user=user, chama__members__role__in=['chairperson', 'treasurer'])
+        ).distinct().order_by('-date')
+
     def perform_create(self, serializer):
-        # Get the ChamaMember instance for the current user and chama
-        chama_id = serializer.validated_data.get('chama').id
-        try:
-            chama_member = ChamaMember.objects.get(user=self.request.user, chama_id=chama_id)
-        except ChamaMember.DoesNotExist:
-            raise PermissionDenied("You are not a member of this chama.")
-        
-        serializer.save(member=chama_member, created_by=self.request.user)
+        # The actual creation is handled in the serializer
+        serializer.save()
+
+
 
 
 
@@ -112,48 +119,42 @@ class ContributionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        data = request.data.copy()
-
-        # Check if the user has a ChamaMember profile
         try:
-            chama_member = ChamaMember.objects.get(user=request.user)
-            data['member'] = chama_member.id
+            chama_member = ChamaMember.objects.get(user=request.user, is_active=True)
         except ChamaMember.DoesNotExist:
-            return Response({"error": "You are not an active member of any chama."}, status=400)
+            return Response({"error": "You are not part of any active chama."}, status=400)
 
-        # Set transaction type
+        data = request.data.copy()
+        data['chama'] = chama_member.chama.id  # Set chama from membership
         data['transaction_type'] = 'contribution'
 
-        # Serialize the data and save it
         serializer = TransactionSerializer(data=data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(created_by=request.user)
-            return Response({"message": "Contribution made successfully", "data": serializer.data}, status=201)
+            serializer.save()
+            return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
-
 class WithdrawalRequestView(APIView):
-    """Member can request a withdrawal"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        # Check if the user is part of a Chama
         try:
-            chama_member = ChamaMember.objects.get(user=request.user)
+            chama_member = ChamaMember.objects.get(user=request.user, is_active=True)
         except ChamaMember.DoesNotExist:
             return Response({"error": "You are not an active member of any chama."}, status=400)
 
         data = request.data.copy()
+        data['chama'] = chama_member.chama.id  # Set chama from membership
         data['transaction_type'] = 'withdrawal'
-        data['member'] = chama_member.id
-        data['status'] = 'pending'  # Initial status for withdrawal
+        data['status'] = 'pending'  # Withdrawals need approval
 
-        # Serialize the data and create the withdrawal request
         serializer = TransactionSerializer(data=data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(created_by=request.user)
+            serializer.save()
             return Response({"message": "Withdrawal requested successfully", "data": serializer.data}, status=201)
         return Response(serializer.errors, status=400)
+
+
 
 
 @api_view(['GET'])

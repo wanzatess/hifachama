@@ -64,7 +64,7 @@ class WithdrawalDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['approval_status']
 
 class TransactionSerializer(serializers.ModelSerializer):
-    member_username = serializers.CharField(source='member.user.username', read_only=True)
+    member_username = serializers.CharField(source='member.username', read_only=True)
     
     # Nested detail serializers (read-only)
     contribution_details = ContributionDetailSerializer(read_only=True)
@@ -85,19 +85,11 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
-            'id', 'chama', 'member', 'amount', 'transaction_type', 'status',
-            'date', 'description', 'receipt_number', 'created_by',
-            'member_username', 'contribution_details', 'withdrawal_details',
-            'purpose', 'reason'
-        ]
-        read_only_fields = [
-            'id', 'date', 'status', 'member_username', 
+            'id', 'amount', 'transaction_type', 'description', 'purpose', 'reason', 'status', 'date',
+            'member', 'created_by', 'receipt_number', 'member_username',
             'contribution_details', 'withdrawal_details'
         ]
-        extra_kwargs = {
-            'member': {'required': False},  # Will be set automatically from request
-            'chama': {'required': False},   # Can be set from the request or context
-        }
+        read_only_fields = ['id', 'date', 'member', 'chama', 'created_by', 'receipt_number', 'status']
 
     def validate(self, data):
         tx_type = data.get('transaction_type')
@@ -123,31 +115,39 @@ class TransactionSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        user = self.context['request'].user
+        try:
+            chama_member = ChamaMember.objects.get(user=user, is_active=True)
+            
+
+
+
+        except ChamaMember.DoesNotExist:
+            raise serializers.ValidationError("You are not an active member of any chama.")
+
+        # Remove purpose/reason before creating transaction
         purpose = validated_data.pop('purpose', None)
         reason = validated_data.pop('reason', None)
         transaction_type = validated_data.get('transaction_type')
 
-        # Set member based on user
-        user = self.context['request'].user
-        chama = validated_data.get('chama')
-        validated_data['member'] = ChamaMember.objects.get(user=user, chama=chama)
+        # Now safe to create
+        transaction = Transaction.objects.create(
+            **validated_data,
+            member=user,
+            
+            created_by=user
+        )
 
-        # Set status depending on type
-        if transaction_type == 'contribution':
-            validated_data['status'] = 'approved'
-        else:
-            validated_data['status'] = 'pending'
-
-        transaction = super().create(validated_data)
-
-        # Create subtype record
+        # Create the related contribution/withdrawal if needed
         if transaction_type == 'contribution' and purpose:
             Contribution.objects.create(transaction=transaction, purpose=purpose)
-
         elif transaction_type == 'withdrawal' and reason:
             Withdrawal.objects.create(transaction=transaction, reason=reason)
 
         return transaction
+
+
+
 
 
 class LoanSerializer(serializers.ModelSerializer):
