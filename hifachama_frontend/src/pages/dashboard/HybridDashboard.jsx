@@ -10,6 +10,8 @@ import {
 } from '../../components/Hybrid';
 import ContributionForm from '../../components/ContributionForm';
 import WithdrawalForm from '../../components/WithdrawalForm';
+import LoanRequestForm from '../../components/LoanRequestForm';
+import LoanList from '../../components/LoanList';  // Import LoanList
 import AddPaymentDetailsForm from '../../components/AddPaymentDetailsForm';
 import Sidebar from '../../components/Sidebar';
 import '../../styles/Dashboard.css';
@@ -206,22 +208,20 @@ const HybridDashboard = () => {
             </div>
           </div>
         );
-        case 'loans':
-          return (
-            <div className="dashboard-content">
-              <div className="dashboard-card">
-                {/* Display Loans info here */}
-                <h2>Loans</h2>
-                <ul>
-                  {loans.map((loan) => (
-                    <li key={loan.id}>
-                      Loan to {loan.member_name} - Amount: {loan.amount} - Status: {loan.status}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+      case 'loans':
+        return (
+          <div className="dashboard-content">
+            <div className="dashboard-card">
+              {/* Display LoanRequestForm for loan requests */}
+              <h2>Loan Requests</h2>
+              <LoanRequestForm />
             </div>
-          );
+            <div className="dashboard-card">
+              {/* Display LoanList for viewing loans */}
+              <LoanList loans={loans} />
+            </div>
+          </div>
+        );
       default:
         return null;
     }
