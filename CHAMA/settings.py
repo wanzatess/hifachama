@@ -183,7 +183,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SECURE_SSL_REDIRECT = False
 
 # Email configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
@@ -191,13 +191,6 @@ EMAIL_HOST_USER = 'hifachama@gmail.com'
 EMAIL_HOST_PASSWORD = 'szli uvgw kinj tkjx'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# M-Pesa API configuration
-MPESA_CONSUMER_KEY = config('MPESA_CONSUMER_KEY')
-MPESA_CONSUMER_SECRET = config('MPESA_CONSUMER_SECRET')
-MPESA_SHORTCODE = config('MPESA_SHORTCODE')
-MPESA_PASSKEY = config('MPESA_PASSKEY')
-MPESA_ENV = config('MPESA_ENV', default='sandbox')
-MPESA_CALLBACK_URL = config('MPESA_CALLBACK_URL')
 
 # Custom user model
 AUTH_USER_MODEL = 'HIFACHAMA.CustomUser'

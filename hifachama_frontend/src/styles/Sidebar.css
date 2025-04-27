@@ -1,41 +1,5 @@
 /* Sidebar styling */
 .sidebar-container {
-  position: fixed; /* Makes the sidebar static */
-  top: 0;
-  left: 0;
-  width: 240px;
-  height: 100%;
-  background-color: var(--dark-brown);
-  color: var(--light-gold);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 2rem 0;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.sidebar-container.collapsed {
-  width: 80px; /* Sidebar width when collapsed (if needed) */
-}
-
-.sidebar-main {
-  flex-grow: 1;
-  padding: 1rem;
-  overflow-y: auto;
-}
-
-.sidebar-header,
-.sidebar-profile {
-  padding: 1rem;
-  text-align: center;
-}
-
-.sidebar-nav {
-  margin-top: 2rem;
-}
-
-/* Ensure main content is not hidden behind the sidebara/* Sidebar styling */
-.sidebar-container {
   position: fixed;
   top: 0;
   left: 0;
@@ -55,20 +19,18 @@
   width: 80px;
 }
 
-/* Navigation section - now at the top */
 .sidebar-nav {
   margin-top: 2rem;
   flex-grow: 1;
+  overflow-y: auto;
 }
 
-/* Profile section - now in the middle */
 .sidebar-profile {
   padding: 1rem;
   text-align: center;
   margin-bottom: auto;
 }
 
-/* Header section - now at the bottom */
 .sidebar-header {
   padding: 1rem;
   text-align: center;
@@ -96,7 +58,7 @@
   color: var(--light-gold);
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .sidebar-nav button:hover,
@@ -115,8 +77,55 @@
   font-size: 1.2rem;
   cursor: pointer;
   padding: 0.5rem;
-} */
+}
+
+/* Dropdown styles */
+.sidebar-dropdown {
+  position: relative;
+}
+
+.sidebar-dropdown-menu {
+  position: relative;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 0 0 5px 5px;
+  overflow: hidden;
+  margin-top: -5px;
+}
+
+.sidebar-dropdown-menu .sidebar-link {
+  padding-left: 3rem;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-dropdown-menu .sidebar-link:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-icon {
+  margin-left: auto;
+  transition: transform 0.3s;
+}
+
+.dropdown-icon.open {
+  transform: rotate(180deg);
+}
+
+/* Collapsed state styles */
+.sidebar-container.collapsed .sidebar-label,
+.sidebar-container.collapsed .sidebar-profile,
+.sidebar-container.collapsed .sidebar-brand span {
+  display: none;
+}
+
+.sidebar-container.collapsed .sidebar-logo {
+  max-width: 40px;
+}
+
 .dashboard-main-container {
-  margin-left: 240px; /* Adjust based on sidebar width */
+  margin-left: 240px;
   transition: margin-left 0.3s ease;
+}
+
+.sidebar-container.collapsed ~ .dashboard-main-container {
+  margin-left: 80px;
 }

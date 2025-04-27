@@ -8,6 +8,7 @@ from django.contrib.auth import login, authenticate, get_user_model
 from django.http import HttpResponse
 from django.core.mail import send_mail
 from django.contrib.auth.hashers import check_password
+from django.contrib.auth.decorators import login_required
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -37,7 +38,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
-from .models import OTP, Chama, ChamaMember, Transaction, Loan, Meeting, Notification, CustomUser
+from .models import OTP, Chama, ChamaMember, Transaction, Loan, Meeting, Notification, CustomUser, PaymentDetails
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db import models
@@ -401,12 +402,6 @@ def notify_user():
     recipient_list = ["user@example.com"]
 
     send_email_notification(subject, message, recipient_list)
-def notify_user_via_push(request):
-    user_id = request.user.id
-    title = "Loan Approval"
-    message = "Your loan application has been approved!"
-
-    send_push_notification(user_id, title, message)
 def get_transaction_data():
     transactions = Transaction.objects.all().values('member__username', 'amount', 'transaction_type', 'timestamp')
     df = pd.DataFrame(list(transactions))
@@ -456,99 +451,7 @@ def some_function():
     generate_excel_report()
 token = get_mpesa_oauth_token()
 print(token)  # Should return an access token
-@csrf_exempt
-def mpesa_callback(request):
-    """Handles M-Pesa STK Push callback response from Safaricom."""
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            print("M-Pesa Callback Data:", data)  # Debugging
 
-            # Extract response details
-            body = data.get('Body', {}).get('stkCallback', {})
-            result_code = body.get('ResultCode')
-            result_desc = body.get('ResultDesc')
-            callback_metadata = body.get('CallbackMetadata', {}).get('Item', [])
-
-            # Extract transaction details
-            mpesa_receipt_number = None
-            phone_number = None
-            amount = None
-
-            for item in callback_metadata:
-                if item.get('Name') == 'MpesaReceiptNumber':
-                    mpesa_receipt_number = item.get('Value')
-                elif item.get('Name') == 'PhoneNumber':
-                    phone_number = str(item.get('Value'))
-                elif item.get('Name') == 'Amount':
-                    amount = float(item.get('Value'))
-
-            # Find the transaction in the database
-            transaction = Transaction.objects.filter(
-                phone_number=phone_number, 
-                status="pending",
-                amount=amount
-            ).first()
-
-            if transaction:
-                # Update transaction status based on the result code
-                if result_code == 0:
-                    transaction.status = "completed"
-                    transaction.mpesa_receipt_number = mpesa_receipt_number
-                else:
-                    transaction.status = "failed"
-
-                transaction.mpesa_response_code = result_code
-                transaction.mpesa_response_description = result_desc
-                transaction.save()
-
-                return JsonResponse({"message": "Transaction updated successfully"}, status=200)
-
-            return JsonResponse({"error": "Transaction not found"}, status=404)
-
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-
-    return JsonResponse({"error": "Invalid request method"}, status=405)
-@csrf_exempt
-def mpesa_c2b_confirmation(request):
-    """Handle C2B Payment Notifications from Safaricom"""
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            print("C2B Payment Received:", data)  # Debugging
-            
-            # Extract important details
-            amount = data['TransAmount']
-            phone = data['MSISDN']
-            reference = data['BillRefNumber']
-
-            # Process payment (e.g., update database)
-            return JsonResponse({"message": "Payment processed!"}, status=200)
-
-        except Exception as e:
-            print("Error:", str(e))
-            return JsonResponse({"error": "Invalid data"}, status=400)
-
-    return JsonResponse({"error": "Invalid request"}, status=400)
-@csrf_exempt
-def initiate_stk_push(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            phone = data.get("phone")
-            amount = data.get("amount")
-
-            if not phone or not amount:
-                return JsonResponse({"error": "Missing phone or amount"}, status=400)
-
-            # Call STK Push function
-            response = stk_push_request(phone, amount)
-            return JsonResponse(response, status=200)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-
-    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 class ChamaManagementView(APIView):
     """Chairperson can create and delete Chama"""
@@ -744,3 +647,25 @@ def chama_detail(request, id):
 def current_user(request):
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
+@csrf_exempt
+@login_required
+def add_payment_details(request, chama_id):
+    chama = Chama.objects.get(id=chama_id)
+    if request.user != chama.chairperson:
+        return JsonResponse({"error": "Only the chairperson can add payment details"}, status=403)
+
+    if request.method == 'POST':
+        paybill_number = request.POST.get('paybill_number')
+        till_number = request.POST.get('till_number')
+        phone_number = request.POST.get('phone_number')
+
+        # Save or update payment details for the chama
+        payment_details, created = PaymentDetails.objects.get_or_create(chama=chama)
+        payment_details.paybill_number = paybill_number
+        payment_details.till_number = till_number
+        payment_details.phone_number = phone_number
+        payment_details.save()
+
+        return JsonResponse({"message": "Payment details added successfully!"})
+
+    return JsonResponse({"error": "Invalid request method"}, status=400)

@@ -9,8 +9,6 @@ from .views import (
     test_email,
     UserLoginView,
     verify_otp,
-    mpesa_callback,
-    mpesa_c2b_confirmation,
     transaction_history,
     RegisterView,
     ChamaListCreateView,
@@ -18,9 +16,9 @@ from .views import (
     contributions_data,
     chama_detail,
     current_user,
-    initiate_stk_push,
     generate_pdf_report,
-    generate_excel_report
+    generate_excel_report,
+    add_payment_details
 )
 from .views import TransactionViewSet
 
@@ -46,7 +44,7 @@ urlpatterns = [
     path("home/", home, name="home"),
 
     # Authentication Endpoints
-    path("api/auth/", include([
+    path("api/", include([
         path("login/", UserLoginView.as_view(), name="login"),
         path("refresh/", TokenRefreshView.as_view(), name="token-refresh"),
         path("verify/", TokenVerifyView.as_view(), name="token-verify"),
@@ -72,12 +70,7 @@ urlpatterns = [
         path("stats/", dashboard_data, name="stats"),
     ])),
 
-    # M-Pesa Integration
-    path("api/payments/", include([
-        path("mpesa/callback/", mpesa_callback, name="mpesa-callback"),
-        path("mpesa/c2b/", mpesa_c2b_confirmation, name="mpesa-c2b"),
-        path("stk-push/", initiate_stk_push, name="stk-push"),
-    ])),
+
 
     # Reports
     path("api/reports/", include([
@@ -90,10 +83,6 @@ urlpatterns = [
 
     # Miscellaneous
     path("api/utils/test-email/", test_email, name="test-email"),
+    path('chamas/<int:chama_id>/add-payment-details/', add_payment_details, name='add_payment_details'),
 ]
 
-# Only add debug routes in development
-if settings.DEBUG:
-    urlpatterns += [
-        path("api/debug/register-form/", lambda r: render(r, "register.html")),  # Added missing parenthesis
-    ]  # This bracket was properly closed

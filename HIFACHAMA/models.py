@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
@@ -100,8 +101,29 @@ class Chama(models.Model):
         
         today = timezone.now().date()
         target_weekday = weekday_map[self.meeting_day]
-        days_until_meeting = (target_weekday - today.weekday()) % 14
-        return today + timedelta(days=days_until_meeting)
+        days_ahead = target_weekday - today.weekday()
+        if days_ahead < 0:
+            days_ahead += 7
+        next_meeting = today + timedelta(days=days_ahead)
+
+        # If the next meeting is in the past (today), add 14 days
+        if next_meeting <= today:
+            next_meeting += timedelta(days=14)
+
+        return next_meeting
+class PaymentDetails(models.Model):
+    chama = models.OneToOneField(Chama, on_delete=models.CASCADE)
+    paybill_number = models.CharField(max_length=20, blank=True, null=True)
+    till_number = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment Details for {self.chama.name}"
 
 class MemberRole(models.TextChoices):
     MEMBER = 'member', 'Member'
