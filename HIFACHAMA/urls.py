@@ -18,7 +18,8 @@ from .views import (
     current_user,
     generate_pdf_report,
     generate_excel_report,
-    add_payment_details
+    add_payment_details,
+    MeetingView
 )
 from .views import TransactionViewSet
 
@@ -84,5 +85,6 @@ urlpatterns = [
     # Miscellaneous
     path("api/utils/test-email/", test_email, name="test-email"),
     path('chamas/<int:chama_id>/add-payment-details/', add_payment_details, name='add_payment_details'),
+    path('meetings/', MeetingView.as_view(), name='schedule-meeting'),
 ]
 

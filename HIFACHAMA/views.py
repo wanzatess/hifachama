@@ -513,12 +513,11 @@ class MeetingView(APIView):
     permission_classes = [IsAuthenticated, IsSecretary]
 
     def post(self, request):
-        meeting = Meeting.objects.create(
-            title=request.data["title"],
-            date=request.data["date"],
-            scheduled_by=request.user
-        )
-        return Response({"message": "Meeting scheduled successfully"}, status=201)
+        serializer = MeetingSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Meeting scheduled successfully"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class NotificationView(APIView):
     """Secretary can send notifications"""

@@ -159,11 +159,11 @@ class LoanSerializer(serializers.ModelSerializer):
         fields = ['id', 'chama', 'member', 'amount', 'interest_rate', 'status', 'date_requested', 'date_approved', 'date_repaid']
 
 class MeetingSerializer(serializers.ModelSerializer):
-    chama = serializers.StringRelatedField(read_only=True)
-
     class Meta:
         model = Meeting
-        fields = ['id', 'chama', 'date', 'location', 'agenda']
+        fields = ['id', 'chama', 'title', 'date', 'location', 'agenda', 'is_completed']
+        read_only_fields = ['id', 'is_completed']
+
 
 class NotificationSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
