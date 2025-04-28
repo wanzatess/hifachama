@@ -14,6 +14,7 @@ import LoanRequestForm from '../../components/LoanRequestForm';
 import LoanList from '../../components/LoanList';  // Import LoanList
 import AddPaymentDetailsForm from '../../components/AddPaymentDetailsForm';
 import Sidebar from '../../components/Sidebar';
+import ScheduleMeetingForm from './components/ScheduleMeetingForm';
 import '../../styles/Dashboard.css';
 
 const HybridDashboard = () => {
@@ -154,25 +155,15 @@ const HybridDashboard = () => {
             </div>
           </div>
         );
-      case 'meetings':
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <h3>Upcoming Meetings</h3>
-              {meetings.length > 0 ? (
-                meetings.map((meeting, index) => (
-                  <div key={index} className="meeting-card">
-                    <p><strong>Title:</strong> {meeting.title}</p>
-                    <p><strong>Date:</strong> {meeting.date}</p>
-                    <p><strong>Status:</strong> {meeting.status}</p>
-                  </div>
-                ))
-              ) : (
-                <p>No upcoming meetings</p>
-              )}
+        case 'meetings':
+          return (
+            <div className="dashboard-content">
+              <div className="dashboard-card">
+                <h3>Upcoming Meetings</h3>
+                <MeetingScheduleAndForm /> {/* Insert the MeetingScheduleAndForm component here */}
+              </div>
             </div>
-          </div>
-        );
+          );        
       case 'contributions':
         return (
           <div className="dashboard-content">
