@@ -14,7 +14,7 @@ import LoanRequestForm from '../../components/LoanRequestForm';
 import LoanList from '../../components/LoanList';  // Import LoanList
 import AddPaymentDetailsForm from '../../components/AddPaymentDetailsForm';
 import Sidebar from '../../components/Sidebar';
-import ScheduleMeetingForm from './components/ScheduleMeetingForm';
+import MeetingSchedule from '../../components/MeetingSchedule';
 import '../../styles/Dashboard.css';
 
 const HybridDashboard = () => {
@@ -160,7 +160,7 @@ const HybridDashboard = () => {
             <div className="dashboard-content">
               <div className="dashboard-card">
                 <h3>Upcoming Meetings</h3>
-                <MeetingScheduleAndForm /> {/* Insert the MeetingScheduleAndForm component here */}
+                <MeetingSchedule /> {/* Insert the MeetingScheduleAndForm component here */}
               </div>
             </div>
           );        
