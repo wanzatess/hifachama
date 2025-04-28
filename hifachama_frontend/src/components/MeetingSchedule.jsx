@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-export const MeetingScheduleAndForm = () => {
+export const MeetingSchedule = () => {
   // States for fetching meeting details
   const [meeting, setMeeting] = useState(null);
   const [loading, setLoading] = useState(true);
