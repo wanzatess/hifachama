@@ -57,7 +57,7 @@ def meeting_scheduled_notification(sender, instance, created, **kwargs):
         message = (
             f"Hello,\n\n"
             f"A new meeting has been scheduled for {instance.date.strftime('%B %d, %Y')}.\n"
-            f"Time: {instance.time}\n"
+            f"Time: {instance.date}\n"
             f"Location: {instance.location}\n\n"
             "Please check the details and make arrangements to attend.\n\n"
             "Best regards,\nThe HIFACHAMA Team"
