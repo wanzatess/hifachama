@@ -508,16 +508,28 @@ class WithdrawalApprovalView(APIView):
         withdrawal.status = "approved"
         withdrawal.save()
         return Response({"message": "Withdrawal approved"}, status=200)
+
+
 class MeetingView(APIView):
-    """Secretary can schedule meetings"""
+    """Only the Secretary can schedule meetings."""
     permission_classes = [IsAuthenticated, IsSecretary]
 
     def post(self, request):
+        # Ensure that only a secretary can create meetings
+        if request.user.role != 'Secretary':
+            return Response(
+                {"detail": "You do not have permission to schedule meetings."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = MeetingSerializer(data=request.data)
         if serializer.is_valid():
+            # Save the new meeting
             serializer.save()
             return Response({"message": "Meeting scheduled successfully"}, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class NotificationView(APIView):
     """Secretary can send notifications"""
