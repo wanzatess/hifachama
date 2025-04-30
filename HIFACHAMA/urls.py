@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from rest_framework.routers import DefaultRouter
 from .views import (
     home,
+    MyChamasView,
     test_email,
     UserLoginView,
     verify_otp,
@@ -86,5 +87,6 @@ urlpatterns = [
     path("api/utils/test-email/", test_email, name="test-email"),
     path('chamas/<int:chama_id>/add-payment-details/', add_payment_details, name='add_payment_details'),
     path('meetings/', MeetingView.as_view(), name='schedule-meeting'),
+    path('api/chamas/my-chamas/', MyChamasView.as_view(), name='my-chamas'),
 ]
 

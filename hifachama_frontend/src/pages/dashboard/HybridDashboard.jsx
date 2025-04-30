@@ -43,7 +43,7 @@ const HybridDashboard = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUserData(user);
-        const chamaId = user?.chama_memberships?.[0]?.chama?.id;
+        const chamaId = user?.chamas?.[0]; // Assuming there's only one chama in the array
         if (chamaId) {
           const { data: chama } = await axios.get(
             `https://hifachama-backend.onrender.com/api/chamas/${chamaId}/`,
@@ -252,7 +252,11 @@ const HybridDashboard = () => {
               <ContributionDisplay contributions={contributions} />
             </div>
             <div className="dashboard-card">
-              <ContributionForm />
+            <ContributionForm
+              chamaId={chamaData?.id}
+              userId={userData?.id}
+            />
+
             </div>
           </div>
         );
@@ -260,7 +264,10 @@ const HybridDashboard = () => {
         return (
           <div className="dashboard-content">
             <div className="dashboard-card">
-              <WithdrawalForm />
+              <WithdrawalForm
+                chamaId={chamaData?.id}
+                userId={userData?.id}
+              />
             </div>
           </div>
         );
@@ -290,7 +297,11 @@ const HybridDashboard = () => {
         return (
           <div className="dashboard-content">
             <div className="dashboard-card">
-              <LoanRequestForm />
+            <LoanRequestForm
+              chamaId={chamaData?.id}
+              userId={userData?.id}
+              onSuccess={() => setRefreshLoans(prev => !prev)}  // Optional: Refresh loan list
+            />
             </div>
             <div className="dashboard-card">
               <LoanList loans={loans} />

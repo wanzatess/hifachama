@@ -21,9 +21,15 @@ class Chama(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     admin = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
         related_name='administered_chamas'
+    )
+    # A member can also be linked to the Chama via a ManyToMany relationship
+    members = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='chamas',
+        blank=True  # Optional, can be empty until users are added to chamas
     )
     current_balance = models.DecimalField(
         max_digits=12,
@@ -135,7 +141,7 @@ class ChamaMember(models.Model):
     chama = models.ForeignKey(
         Chama, 
         on_delete=models.CASCADE, 
-        related_name='members'
+        related_name='chamamember_chamas'
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -259,13 +265,17 @@ class Loan(models.Model):
 
     chama = models.ForeignKey(
         Chama, 
-        on_delete=models.CASCADE, 
-        related_name='loans'
+        on_delete=models.CASCADE,
+        related_name='loans',
+        null=False,  # Ensure chama is required
+        blank=False
     )
     member = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='loans'
+        related_name='loans',
+        null=False,  # Ensure member is required
+        blank=False
     )
     amount = models.DecimalField(
         max_digits=10, 
@@ -296,7 +306,8 @@ class Loan(models.Model):
         ]
 
     def __str__(self):
-        return f"Loan #{self.id} - {self.member.user.username} ({self.get_status_display()})"
+        return f"Loan #{self.id} - {self.member.username} ({self.get_status_display()})"
+
 
     def total_repayment(self):
         return self.amount * (1 + self.interest_rate / 100)
@@ -365,8 +376,16 @@ class CustomUser(AbstractUser):
     role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,
-        default='member',
-        blank=True)
+        null=False,
+        blank=False
+    )
+    chama = models.ForeignKey(
+        Chama,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='customuser_chamas'
+    )
 
     # Authentication
     USERNAME_FIELD = 'email'

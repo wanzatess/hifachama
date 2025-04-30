@@ -188,10 +188,63 @@ def transaction_history(request):
 
 
 
+
+
+
+
+
+
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        # Get user's first active chama membership
+        chama_membership = ChamaMember.objects.filter(
+            user=user, 
+            is_active=True
+        ).first()
+        
+        if not chama_membership:
+            raise ValidationError("You must be a member of a chama to request a loan")
+            
+        serializer.save(
+            member=user, 
+            chama=chama_membership.chama, 
+            status='pending'
+        )
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_chamas(request):
+    chamas = Chama.objects.filter(
+        models.Q(admin=request.user) |
+        models.Q(members__user=request.user)
+    ).distinct()
+    serializer = ChamaSerializer(chamas, many=True)
+    return Response(serializer.data)
+
+
+class MyChamasView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Get chamas where user is either admin or member
+        chamas = Chama.objects.filter(
+            models.Q(admin=request.user) |
+            models.Q(members__user=request.user)
+        ).distinct()
+        serializer = ChamaSerializer(chamas, many=True)
+        return Response(serializer.data)
+
+
+
+
+
+
+
+
 
 class MeetingViewSet(viewsets.ModelViewSet):
     queryset = Meeting.objects.all()
@@ -548,8 +601,18 @@ from rest_framework.views import APIView
 from .models import Chama
 from .serializers import ChamaSerializer
 
+
+
 class ChamaListCreateView(APIView):
     permission_classes = [IsAuthenticated]
+
+    # GET method to retrieve a list of chamas
+    def get(self, request, *args, **kwargs):
+        chamas = Chama.objects.all()  # Get all chamas
+        serializer = ChamaSerializer(chamas, many=True)  # Serialize the list of chamas
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # POST method to create a new chama
     def post(self, request, *args, **kwargs):
         serializer = ChamaSerializer(data=request.data)
         if serializer.is_valid():
@@ -560,11 +623,12 @@ class ChamaListCreateView(APIView):
             return Response({
                 'id': chama.id,
                 'name': chama.name,
-                'chama_type': chama.chama_type, # Return chama_type for frontend redirection
+                'chama_type': chama.chama_type,  # Return chama_type for frontend redirection
                 'admin_id': chama.admin.id
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class ChamaDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -582,16 +646,7 @@ class ChamaDetailView(APIView):
 
 
 
-class LoanRequestView(APIView):
-    """Member can request a loan"""
-    permission_classes = [IsAuthenticated, IsMember]
 
-    def post(self, request):
-        loan = Loan.objects.create(
-            amount=request.data["amount"],
-            requested_by=request.user
-        )
-        return Response({"message": "Loan requested successfully"}, status=201)
 
 
 
@@ -656,6 +711,7 @@ def chama_detail(request, id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def current_user(request):
+    user = request.user
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
 @csrf_exempt

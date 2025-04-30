@@ -14,9 +14,17 @@ from django.utils.translation import gettext_lazy as _
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+    chamas = serializers.StringRelatedField(many=True)
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'username', 'role', 'phone_number', 'first_name', 'last_name']
+        fields = ['id', 'email', 'username', 'role', 'phone_number', 'first_name', 'last_name', 'chamas']
+    def get_chama(self, obj):
+        if obj.chama:
+            return {
+                "id": obj.chama.id,
+                "name": obj.chama.name,
+            }
+        return None
 
 class ChamaSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=True)
@@ -150,13 +158,39 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
 
+
+
 class LoanSerializer(serializers.ModelSerializer):
-    member = UserSerializer(read_only=True)
-    chama = serializers.StringRelatedField(read_only=True)
+    member = serializers.StringRelatedField(read_only=True)
+    chama_name = serializers.CharField(source='chama.name', read_only=True)
+    chama_id = serializers.PrimaryKeyRelatedField(
+        queryset=Chama.objects.all(),
+        write_only=True,
+        required=True,  # Enforce chama_id in request
+        source='chama'  # Map to the chama field in the model
+    )
 
     class Meta:
         model = Loan
-        fields = ['id', 'chama', 'member', 'amount', 'interest_rate', 'status', 'date_requested', 'date_approved', 'date_repaid']
+        fields = [
+            'id', 'chama', 'chama_id', 'chama_name', 'member', 
+            'amount', 'interest_rate', 'purpose', 'status',
+            'date_requested', 'date_approved', 'date_repaid'
+        ]
+        read_only_fields = ['chama', 'member', 'status', 'date_requested']
+
+    def validate(self, data):
+        if not data.get('chama'):
+            raise serializers.ValidationError({"chama_id": "This field is required."})
+        return data
+
+    def create(self, validated_data):
+        validated_data['member'] = self.context['request'].user
+        return super().create(validated_data)
+
+
+
+
 
 class MeetingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -313,5 +347,5 @@ class LoginSerializer(serializers.Serializer):
             "username": user.username,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "chama_id": user.chama.id if hasattr(user, 'chama') else None
+            "chama_id": user.chama_id if hasattr(user, 'chama') else None
         }

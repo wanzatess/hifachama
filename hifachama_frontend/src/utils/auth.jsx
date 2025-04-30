@@ -39,6 +39,7 @@ export const setAuthTokens = ({ access, refresh }) => {
 export const clearAuthTokens = () => {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem("user");
 };
 
 // Verify token validity with backend

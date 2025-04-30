@@ -31,6 +31,8 @@ export const AuthProvider = ({ children }) => {
         loading: false,
         error: null
       });
+      localStorage.setItem("user", JSON.stringify(user));
+
     } catch (error) {
       console.error('Authentication check failed:', error);
       clearAuthTokens();
@@ -83,6 +85,7 @@ export const AuthProvider = ({ children }) => {
         ...data.user,
         chamaId: data.chama?.id || null
       };
+      localStorage.setItem("user", JSON.stringify(user));
 
       setAuthState({ 
         user,
