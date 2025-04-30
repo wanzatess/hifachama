@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import api from "../api/axiosConfig";
 import { toast } from "react-toastify";
 
-const ContributionForm = ({ onSuccess }) => {
+const ContributionForm = ({ onSuccess, chamaId, userId }) => {
   const [formData, setFormData] = useState({
     amount: "",
     description: "",
@@ -14,7 +14,7 @@ const ContributionForm = ({ onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -37,15 +37,21 @@ const ContributionForm = ({ onSuccess }) => {
         return;
       }
 
-      const response = await api.post("/api/transactions/", {
-        ...formData,
-        transaction_type: "contribution"
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+      const response = await api.post(
+        "/api/transactions/",
+        {
+          ...formData,
+          transaction_type: "contribution",
+          chama: chamaId,
+          member: userId
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
         }
-      });
+      );
 
       if (response.data) {
         toast.success("Contribution submitted successfully!");
