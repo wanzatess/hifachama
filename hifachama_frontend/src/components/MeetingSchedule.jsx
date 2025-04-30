@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/axiosConfig';
+ // ✅ Use your customized axios instance
 
 export const MeetingSchedule = () => {
   // States for fetching meeting details
@@ -13,21 +14,21 @@ export const MeetingSchedule = () => {
   const [location, setLocation] = useState('');
   const [agenda, setAgenda] = useState('');
   const [success, setSuccess] = useState(false);
-  
-  // Fetch the latest meeting data when the component mounts
-  useEffect(() => {
-    const fetchMeetingData = async () => {
-      try {
-        const response = await axios.get('https://hifachama-backend.onrender.com/api/meetings/');
-        const upcomingMeeting = response.data[0]; // Assuming the latest meeting is the first in the list
-        setMeeting(upcomingMeeting);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch meeting details');
-        setLoading(false);
-      }
-    };
 
+  // Fetch the latest meeting data when the component mounts
+  const fetchMeetingData = async () => {
+    try {
+      const response = await api.get('/api/meetings/');
+      const upcomingMeeting = response.data[0]; // Assuming the latest meeting is the first in the list
+      setMeeting(upcomingMeeting);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to fetch meeting details');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchMeetingData();
   }, []);
 
@@ -36,21 +37,12 @@ export const MeetingSchedule = () => {
     e.preventDefault();
 
     try {
-      // Make API request to create a meeting
-      const response = await axios.post(
-        'https://hifachama-backend.onrender.com/api/meetings/',
-        {
-          title,
-          date,
-          location,
-          agenda
-        },
-        {
-          headers: {
-            Authorization: `Token ${localStorage.getItem('authToken')}` // Ensure user is authenticated
-          }
-        }
-      );
+      await api.post('/api/meetings/', {
+        title,
+        date,
+        location,
+        agenda
+      });
 
       // If successful, reset the form and show success message
       setTitle('');
@@ -61,7 +53,6 @@ export const MeetingSchedule = () => {
       setError(null);
       fetchMeetingData();  // Refresh the meeting data after scheduling a new one
     } catch (err) {
-      // If there's an error, show the error message
       setError('Failed to schedule meeting');
       setSuccess(false);
     }
@@ -70,8 +61,8 @@ export const MeetingSchedule = () => {
   // Function to notify members
   const handleNotifyMembers = async () => {
     try {
-      await axios.post('https://hifachama-backend.onrender.com/api/notify-members/', {
-        meetingId: meeting.id, // Send meeting ID to notify relevant members
+      await api.post('/api/notify-members/', {
+        meetingId: meeting.id,
       });
       alert('Members notified successfully!');
     } catch (err) {
@@ -151,4 +142,5 @@ export const MeetingSchedule = () => {
     </div>
   );
 };
-export default MeetingSchedule; 
+
+export default MeetingSchedule;

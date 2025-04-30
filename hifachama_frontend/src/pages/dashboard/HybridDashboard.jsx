@@ -11,7 +11,7 @@ import {
 import ContributionForm from '../../components/ContributionForm';
 import WithdrawalForm from '../../components/WithdrawalForm';
 import LoanRequestForm from '../../components/LoanRequestForm';
-import LoanList from '../../components/LoanList';  // Import LoanList
+import LoanList from '../../components/LoanList';
 import AddPaymentDetailsForm from '../../components/AddPaymentDetailsForm';
 import Sidebar from '../../components/Sidebar';
 import MeetingSchedule from '../../components/MeetingSchedule';
@@ -59,13 +59,15 @@ const HybridDashboard = () => {
     fetchUser();
   }, []);
 
-  // Fetch Supabase data only when chamaData is loaded
+  // Supabase data fetch
   useEffect(() => {
     if (!chamaData?.id) return;
+    console.log("🟢 Setting up subscriptions for chama_id:", chamaData.id);
 
-    const fetchData = async () => {
+    const chamaId = chamaData.id;
+
+    const fetchAllData = async () => {
       try {
-        const chamaId = chamaData.id;
         const [
           { data: m, error: mErr },
           { data: t, error: tErr },
@@ -79,7 +81,7 @@ const HybridDashboard = () => {
         ]);
 
         if (mErr || tErr || mtErr || lErr) {
-          console.error("🛑 Supabase errors:", { mErr, tErr, mtErr, lErr });
+          console.error('🛑 Supabase errors:', { mErr, tErr, mtErr, lErr });
         }
 
         setMembers(m || []);
@@ -87,26 +89,143 @@ const HybridDashboard = () => {
         setMeetings(mt || []);
         setLoans(l || []);
       } catch (error) {
-        console.error("❌ Error fetching Supabase data:", error);
+        console.error('❌ Error fetching Supabase data:', error);
       }
     };
 
-    fetchData();
+    fetchAllData();
 
-    const tables = [
-      'HIFACHAMA_customuser',
-      'HIFACHAMA_transaction',
-      'HIFACHAMA_meeting',
-      'HIFACHAMA_loan',
+    // Subscribe to realtime changes per table
+    const channels = [
+      {
+        table: 'HIFACHAMA_customuser',
+        callback: async () => {
+          console.log('📡 Realtime update: users');
+          const { data } = await supabase.from('HIFACHAMA_customuser').select('*').eq('chama_id', chamaId);
+          setMembers(data || []);
+        },
+      },
+      {
+        table: 'HIFACHAMA_transaction',
+        callback: async () => {
+          console.log('📡 Realtime update: transactions');
+          const { data } = await supabase.from('HIFACHAMA_transaction').select('*').eq('chama_id', chamaId);
+          setContributions(data || []);
+        },
+      },
+      {
+        table: 'HIFACHAMA_meeting',
+        callback: async () => {
+          console.log('📡 Realtime update: meetings');
+          const { data } = await supabase.from('HIFACHAMA_meeting').select('*').eq('chama_id', chamaId);
+          setMeetings(data || []);
+        },
+      },
+      {
+        table: 'HIFACHAMA_loan',
+        callback: async () => {
+          console.log('📡 Realtime update: loans');
+          const { data } = await supabase.from('HIFACHAMA_loan').select('*').eq('chama_id', chamaId);
+          setLoans(data || []);
+        },
+      },
     ];
-    const channels = tables.map((table) =>
-      supabase
-        .channel(`realtime:${table}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table }, fetchData)
-        .subscribe()
-    );
 
-    return () => channels.forEach((ch) => supabase.removeChannel(ch));
+    const subscriptions = channels.map(({ table, callback }) => {
+      const channel = supabase.channel(`realtime:${table}`);
+    
+      if (table === 'HIFACHAMA_transaction') {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
+          console.log(`🔥 Received payload for ${table}:`, payload);
+          const { eventType, new: newRow, old: oldRow } = payload;
+    
+          setContributions((prev) => {
+            switch (eventType) {
+              case 'INSERT':
+                return [newRow, ...prev];
+              case 'UPDATE':
+                return prev.map((item) => (item.id === newRow.id ? newRow : item));
+              case 'DELETE':
+                return prev.filter((item) => item.id !== oldRow.id);
+              default:
+                return prev;
+            }
+          });
+        });
+      } else if (table === 'HIFACHAMA_loan') {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
+          console.log(`🔥 Received payload for ${table}:`, payload);
+          const { eventType, new: newRow, old: oldRow } = payload;
+    
+          setLoans((prev) => {
+            switch (eventType) {
+              case 'INSERT':
+                return [newRow, ...prev];
+              case 'UPDATE':
+                return prev.map((item) => (item.id === newRow.id ? newRow : item));
+              case 'DELETE':
+                return prev.filter((item) => item.id !== oldRow.id);
+              default:
+                return prev;
+            }
+          });
+        });
+      } else if (table === 'HIFACHAMA_meeting') {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
+          console.log(`🔥 Received payload for ${table}:`, payload);
+          const { eventType, new: newRow, old: oldRow } = payload;
+    
+          setMeetings((prev) => {
+            switch (eventType) {
+              case 'INSERT':
+                return [newRow, ...prev];
+              case 'UPDATE':
+                return prev.map((item) => (item.id === newRow.id ? newRow : item));
+              case 'DELETE':
+                return prev.filter((item) => item.id !== oldRow.id);
+              default:
+                return prev;
+            }
+          });
+        });
+      } else if (table === 'HIFACHAMA_customuser') {
+        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
+          console.log(`🔥 Received payload for ${table}:`, payload);
+          const { eventType, new: newRow, old: oldRow } = payload;
+    
+          setMembers((prev) => {
+            switch (eventType) {
+              case 'INSERT':
+                return [newRow, ...prev];
+              case 'UPDATE':
+                return prev.map((item) => (item.id === newRow.id ? newRow : item));
+              case 'DELETE':
+                return prev.filter((item) => item.id !== oldRow.id);
+              default:
+                return prev;
+            }
+          });
+        });
+      } else {
+        // Default: full table re-fetch for other tables
+        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
+          console.log(`📡 Change in ${table}:`, payload);
+          await callback();
+        });
+      }
+    
+      channel.subscribe((status) => {
+        console.log(`📡 Channel status for ${table}:`, status);
+      });
+    
+      return channel;
+    });
+    
+    
+
+    return () => {
+      subscriptions.forEach((sub) => supabase.removeChannel(sub));
+    };
   }, [chamaData?.id]);
 
   useEffect(() => {
@@ -140,7 +259,7 @@ const HybridDashboard = () => {
             </div>
             {userData?.role === 'Chairperson' && (
               <div className="dashboard-card">
-                <a href={`#`} onClick={() => setActiveSection('paymentDetails')}>
+                <a href="#" onClick={() => setActiveSection('paymentDetails')}>
                   Add Payment Details
                 </a>
               </div>
@@ -155,15 +274,15 @@ const HybridDashboard = () => {
             </div>
           </div>
         );
-        case 'meetings':
-          return (
-            <div className="dashboard-content">
-              <div className="dashboard-card">
-                <h3>Upcoming Meetings</h3>
-                <MeetingSchedule /> {/* Insert the MeetingScheduleAndForm component here */}
-              </div>
+      case 'meetings':
+        return (
+          <div className="dashboard-content">
+            <div className="dashboard-card">
+              <h3>Upcoming Meetings</h3>
+              <MeetingSchedule />
             </div>
-          );        
+          </div>
+        );
       case 'contributions':
         return (
           <div className="dashboard-content">
@@ -203,12 +322,10 @@ const HybridDashboard = () => {
         return (
           <div className="dashboard-content">
             <div className="dashboard-card">
-              {/* Display LoanRequestForm for loan requests */}
               <h2>Loan Requests</h2>
               <LoanRequestForm />
             </div>
             <div className="dashboard-card">
-              {/* Display LoanList for viewing loans */}
               <LoanList loans={loans} />
             </div>
           </div>
