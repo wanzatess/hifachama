@@ -22,6 +22,7 @@ const HybridDashboard = () => {
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [members, setMembers] = useState([]);
   const [contributions, setContributions] = useState([]);
+  const [refreshContributions, setRefreshContributions] = useState(false);
   const [meetings, setMeetings] = useState([]);
   const [loans, setLoans] = useState([]);
   const [userData, setUserData] = useState(null);
@@ -133,95 +134,56 @@ const HybridDashboard = () => {
 
     const subscriptions = channels.map(({ table, callback }) => {
       const channel = supabase.channel(`realtime:${table}`);
-    
-      if (table === 'HIFACHAMA_transaction') {
-        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
-          console.log(`🔥 Received payload for ${table}:`, payload);
-          const { eventType, new: newRow, old: oldRow } = payload;
-    
-          setContributions((prev) => {
-            switch (eventType) {
-              case 'INSERT':
-                return [newRow, ...prev];
-              case 'UPDATE':
-                return prev.map((item) => (item.id === newRow.id ? newRow : item));
-              case 'DELETE':
-                return prev.filter((item) => item.id !== oldRow.id);
-              default:
-                return prev;
+
+      channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
+        console.log(`🔥 Received payload for ${table}:`, payload);
+        const { eventType, new: newRow, old: oldRow } = payload;
+
+        switch (eventType) {
+          case 'INSERT':
+            if (table === 'HIFACHAMA_transaction') {
+              setContributions((prev) => [newRow, ...prev]);
+            } else if (table === 'HIFACHAMA_loan') {
+              setLoans((prev) => [newRow, ...prev]);
+            } else if (table === 'HIFACHAMA_customuser') {
+              setMembers((prev) => [newRow, ...prev]);
+            } else if (table === 'HIFACHAMA_meeting') {
+              setMeetings((prev) => [newRow, ...prev]);
             }
-          });
-        });
-      } else if (table === 'HIFACHAMA_loan') {
-        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
-          console.log(`🔥 Received payload for ${table}:`, payload);
-          const { eventType, new: newRow, old: oldRow } = payload;
-    
-          setLoans((prev) => {
-            switch (eventType) {
-              case 'INSERT':
-                return [newRow, ...prev];
-              case 'UPDATE':
-                return prev.map((item) => (item.id === newRow.id ? newRow : item));
-              case 'DELETE':
-                return prev.filter((item) => item.id !== oldRow.id);
-              default:
-                return prev;
+            break;
+          case 'UPDATE':
+            if (table === 'HIFACHAMA_transaction') {
+              setContributions((prev) => prev.map((item) => (item.id === newRow.id ? newRow : item)));
+            } else if (table === 'HIFACHAMA_loan') {
+              setLoans((prev) => prev.map((item) => (item.id === newRow.id ? newRow : item)));
+            } else if (table === 'HIFACHAMA_customuser') {
+              setMembers((prev) => prev.map((item) => (item.id === newRow.id ? newRow : item)));
+            } else if (table === 'HIFACHAMA_meeting') {
+              setMeetings((prev) => prev.map((item) => (item.id === newRow.id ? newRow : item)));
             }
-          });
-        });
-      } else if (table === 'HIFACHAMA_meeting') {
-        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
-          console.log(`🔥 Received payload for ${table}:`, payload);
-          const { eventType, new: newRow, old: oldRow } = payload;
-    
-          setMeetings((prev) => {
-            switch (eventType) {
-              case 'INSERT':
-                return [newRow, ...prev];
-              case 'UPDATE':
-                return prev.map((item) => (item.id === newRow.id ? newRow : item));
-              case 'DELETE':
-                return prev.filter((item) => item.id !== oldRow.id);
-              default:
-                return prev;
+            break;
+          case 'DELETE':
+            if (table === 'HIFACHAMA_transaction') {
+              setContributions((prev) => prev.filter((item) => item.id !== oldRow.id));
+            } else if (table === 'HIFACHAMA_loan') {
+              setLoans((prev) => prev.filter((item) => item.id !== oldRow.id));
+            } else if (table === 'HIFACHAMA_customuser') {
+              setMembers((prev) => prev.filter((item) => item.id !== oldRow.id));
+            } else if (table === 'HIFACHAMA_meeting') {
+              setMeetings((prev) => prev.filter((item) => item.id !== oldRow.id));
             }
-          });
-        });
-      } else if (table === 'HIFACHAMA_customuser') {
-        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
-          console.log(`🔥 Received payload for ${table}:`, payload);
-          const { eventType, new: newRow, old: oldRow } = payload;
-    
-          setMembers((prev) => {
-            switch (eventType) {
-              case 'INSERT':
-                return [newRow, ...prev];
-              case 'UPDATE':
-                return prev.map((item) => (item.id === newRow.id ? newRow : item));
-              case 'DELETE':
-                return prev.filter((item) => item.id !== oldRow.id);
-              default:
-                return prev;
-            }
-          });
-        });
-      } else {
-        // Default: full table re-fetch for other tables
-        channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
-          console.log(`📡 Change in ${table}:`, payload);
-          await callback();
-        });
-      }
-    
+            break;
+          default:
+            break;
+        }
+      });
+
       channel.subscribe((status) => {
         console.log(`📡 Channel status for ${table}:`, status);
       });
-    
+
       return channel;
     });
-    
-    
 
     return () => {
       subscriptions.forEach((sub) => supabase.removeChannel(sub));
@@ -314,7 +276,13 @@ const HybridDashboard = () => {
         return (
           <div className="dashboard-content">
             <div className="dashboard-card">
-              <ReportDisplay members={members} contributions={contributions} loans={loans} />
+            <ReportDisplay
+                contributions={contributions}
+                withdrawals={[]} // You can replace with actual withdrawals data if available
+                loans={loans}
+                members={members}
+                chama={chamaData}
+              />
             </div>
           </div>
         );
@@ -322,7 +290,6 @@ const HybridDashboard = () => {
         return (
           <div className="dashboard-content">
             <div className="dashboard-card">
-              <h2>Loan Requests</h2>
               <LoanRequestForm />
             </div>
             <div className="dashboard-card">
@@ -331,27 +298,25 @@ const HybridDashboard = () => {
           </div>
         );
       default:
-        return null;
+        return (
+          <div className="dashboard-content">
+            <div className="dashboard-card">
+              <p>Invalid section selected.</p>
+            </div>
+          </div>
+        );
     }
   };
 
-  if (isLoading) {
-    return <div className="dashboard-loading">Loading...</div>;
-  }
-
   return (
     <div className="dashboard-layout">
-      <Sidebar
-        role={userData?.role}
-        chamaType={chamaData?.type}
-        chamaName={chamaData?.name}
-        balance={chamaData?.balance}
-        paymentDetails={paymentDetails}
-        setActiveSection={setActiveSection}
-        activeSection={activeSection}
-      />
-      <main className="dashboard-main-container">
-        {renderContent()}
+      <Sidebar setActiveSection={setActiveSection} activeSection={activeSection} />
+      <main className="main-content">
+        {isLoading ? (
+          <div className="dashboard-loading">Loading...</div>
+        ) : (
+          renderContent()
+        )}
       </main>
     </div>
   );
