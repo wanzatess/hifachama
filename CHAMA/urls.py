@@ -1,44 +1,33 @@
 """
 URL configuration for CHAMA project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
+The `urlpatterns` list routes URLs to views.
+For more information, see:
     https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework.authtoken.views import obtain_auth_token
-from HIFACHAMA.views import (  
-    UserViewSet, ChamaViewSet, ChamaMemberViewSet, TransactionViewSet,
-    LoanViewSet, MeetingViewSet, NotificationViewSet, UserLoginView
-)
+from HIFACHAMA.views.userviews import UserViewSet, UserLoginView
+from HIFACHAMA.views.chamaviews import ChamaViewSet, ChamaMemberViewSet
+from HIFACHAMA.views.transactionviews import TransactionViewSet
+from HIFACHAMA.views.loansview import LoanViewSet
+from HIFACHAMA.views.meetingsview import MeetingViewSet
+from HIFACHAMA.views.notificationsview import NotificationViewSet
 
 # Register API routes using DefaultRouter
 router = DefaultRouter()
-router.register(r'users', UserViewSet)
-router.register(r'chamas', ChamaViewSet)
-router.register(r'chama-members', ChamaMemberViewSet)
-router.register(r'transactions', TransactionViewSet)
-router.register(r'loans', LoanViewSet)
-router.register(r'meetings', MeetingViewSet)
-router.register(r'notifications', NotificationViewSet)
-
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'chamas', ChamaViewSet, basename='chama')
+router.register(r'chama-members', ChamaMemberViewSet, basename='chama-member')
+router.register(r'transactions', TransactionViewSet, basename='transaction')
+router.register(r'loans', LoanViewSet, basename='loan')
+router.register(r'meetings', MeetingViewSet, basename='meeting')
+router.register(r'notifications', NotificationViewSet, basename='notification')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/login/', UserLoginView.as_view(), name='login'),
-    path('', include('HIFACHAMA.urls')),  # Include homepage route
-    path('api/', include(router.urls)),  # Include API endpoints
-    path('test-email/', include('HIFACHAMA.urls')),
+    path('api/', include(router.urls)),           # All DRF ViewSets
+    path('', include('HIFACHAMA.urls')),          # All other APIViews and React homepage
 ]
-
-

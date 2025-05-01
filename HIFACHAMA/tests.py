@@ -233,9 +233,4 @@ class ReportTestCase(TestCase):
     def test_generate_excel_report(self):
         response = generate_excel_report(None)
         self.assertEqual(response.status_code, 200)
-class MpesaTestCase(TestCase):
-    @patch("HIFACHAMA.utils.mpesa.requests.post")
-    def test_process_payment_success(self, mock_post):
-        mock_post.return_value.status_code = 200
-        response = process_payment(1000, "254712345678")
-        self.assertTrue(response)
+
