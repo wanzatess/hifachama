@@ -161,32 +161,10 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
 class LoanSerializer(serializers.ModelSerializer):
-    member = serializers.StringRelatedField(read_only=True)
-    chama_name = serializers.CharField(source='chama.name', read_only=True)
-    chama_id = serializers.PrimaryKeyRelatedField(
-        queryset=Chama.objects.all(),
-        write_only=True,
-        required=True,  # Enforce chama_id in request
-        source='chama'  # Map to the chama field in the model
-    )
-
     class Meta:
         model = Loan
-        fields = [
-            'id', 'chama', 'chama_id', 'chama_name', 'member', 
-            'amount', 'interest_rate', 'purpose', 'status',
-            'date_requested', 'date_approved', 'date_repaid'
-        ]
-        read_only_fields = ['chama', 'member', 'status', 'date_requested']
-
-    def validate(self, data):
-        if not data.get('chama'):
-            raise serializers.ValidationError({"chama_id": "This field is required."})
-        return data
-
-    def create(self, validated_data):
-        validated_data['member'] = self.context['request'].user
-        return super().create(validated_data)
+        fields = '__all__'
+        read_only_fields = ['member', 'chama', 'status', 'created_at', 'updated_at']
 
 
 

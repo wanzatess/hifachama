@@ -194,6 +194,10 @@ def transaction_history(request):
 
 
 
+
+
+
+
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
@@ -201,29 +205,26 @@ class LoanViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        # Get user's first active chama membership
-        chama_membership = ChamaMember.objects.filter(
-            user=user, 
-            is_active=True
-        ).first()
+
+        # Get chama_id from the request data
+        chama_id = self.request.data.get('chama_id')
         
-        if not chama_membership:
-            raise ValidationError("You must be a member of a chama to request a loan")
-            
+        # Validate that the chama_id is provided and exists in the database
+        if not chama_id:
+            raise ValidationError("Chama ID is required.")
+        
+        try:
+            chama = Chama.objects.get(id=chama_id)
+        except Chama.DoesNotExist:
+            raise ValidationError("Chama with the provided ID does not exist.")
+        
+        # Save the loan with the provided chama_id and user as member
         serializer.save(
-            member=user, 
-            chama=chama_membership.chama, 
-            status='pending'
+            member=user,
+            chama=chama,
+            status='pending'  # Default status when creating the loan
         )
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def my_chamas(request):
-    chamas = Chama.objects.filter(
-        models.Q(admin=request.user) |
-        models.Q(members__user=request.user)
-    ).distinct()
-    serializer = ChamaSerializer(chamas, many=True)
-    return Response(serializer.data)
+
 
 
 class MyChamasView(APIView):

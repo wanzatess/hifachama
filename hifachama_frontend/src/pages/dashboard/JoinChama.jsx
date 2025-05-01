@@ -17,69 +17,76 @@ const JoinChama = () => {
 
   const handleJoinChama = async (e) => {
     e.preventDefault();
-
+  
     if (!chamaId) {
       toast.error("Please enter a valid Chama ID");
       return;
     }
-
+  
     if (!isAuthenticated || !user) {
       toast.error("You must be logged in to join a Chama");
       navigate('/login');
       return;
     }
-
+  
     setLoading(true);
+  
     try {
-      // 1. First get chama details to determine its type
-      const chamaResponse = await api.get(`/api/chamas/${chamaId}/`);
-      const chamaType = chamaResponse.data.type;
-
-      // 2. Join the chama
+      // Try joining the chama directly
       await api.post('/api/chama-members/', {
         chama: chamaId,
         role: 'member'
       });
-
+  
       toast.success("Successfully joined Chama!");
-      
-      // 3. Redirect based on chama type
+  
+      // Now fetch the Chama details (including the type)
+      const chamaResponse = await api.get(`/api/chamas/${chamaId}/`);
+      const chamaType = chamaResponse.data.chama_type;
+      console.log("Chama Type:", chamaType);
+  
+      // Based on the type, redirect to the corresponding dashboard
       const dashboardPath = getDashboardPath(chamaType, chamaId);
+      console.log('Redirecting to:', dashboardPath);
       navigate(dashboardPath);
-      
+  
     } catch (error) {
-      let errorMessage = "Failed to join Chama";
-      
-      if (error.response) {
-        if (error.response.status === 400) {
+      // If user is already a member, proceed to redirect
+      if (error.response?.status === 409) {
+        toast.info("You are already a member of this Chama.");
+      } else {
+        let errorMessage = "Failed to join Chama";
+  
+        if (error.response?.status === 400) {
           errorMessage = error.response.data.detail || "Invalid request data";
-        } else if (error.response.status === 404) {
+        } else if (error.response?.status === 404) {
           errorMessage = "Chama not found";
-        } else if (error.response.status === 409) {
-          errorMessage = "You're already a member of this Chama";
         }
+  
+        toast.error(errorMessage);
+        setLoading(false);
+        return; // Stop here for actual errors
       }
-      
-      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
-
-  // Helper function to determine dashboard path
+  
+  // Helper function to determine dashboard path based on Chama type
   const getDashboardPath = (chamaType, chamaId) => {
     const validTypes = ['hybrid', 'investment', 'merry_go_round'];
     const normalizedType = validTypes.includes(chamaType) ? chamaType : 'default';
-    
+  
     const paths = {
       hybrid: `/dashboard/hybrid/${chamaId}`,
       investment: `/dashboard/investment/${chamaId}`,
       merry_go_round: `/dashboard/merry_go_round/${chamaId}`,
-      default: `/chamas/${chamaId}`
+      default: `/dashboard/chamas/${chamaId}` // fallback to a default page if the type is unknown
     };
-    
+  
     return paths[normalizedType];
   };
+  
 
   return (
     <div className="chama-form-container">

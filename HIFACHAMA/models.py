@@ -25,11 +25,10 @@ class Chama(models.Model):
         on_delete=models.CASCADE,
         related_name='administered_chamas'
     )
-    # A member can also be linked to the Chama via a ManyToMany relationship
     members = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name='chamas',
-        blank=True  # Optional, can be empty until users are added to chamas
+        blank=True
     )
     current_balance = models.DecimalField(
         max_digits=12,
@@ -90,33 +89,8 @@ class Chama(models.Model):
             ]
         }
         return features.get(self.chama_type, [])
-    
-    def get_next_meeting(self):
-        """Calculate next meeting date (every 2 weeks)"""
-        if not self.meeting_day:
-            return None
-        
-        weekday_map = {
-            'monday': 0,
-            'tuesday': 1,
-            'wednesday': 2,
-            'thursday': 3,
-            'friday': 4,
-            'saturday': 5
-        }
-        
-        today = timezone.now().date()
-        target_weekday = weekday_map[self.meeting_day]
-        days_ahead = target_weekday - today.weekday()
-        if days_ahead < 0:
-            days_ahead += 7
-        next_meeting = today + timedelta(days=days_ahead)
 
-        # If the next meeting is in the past (today), add 14 days
-        if next_meeting <= today:
-            next_meeting += timedelta(days=14)
 
-        return next_meeting
 class PaymentDetails(models.Model):
     chama = models.OneToOneField(Chama, on_delete=models.CASCADE)
     paybill_number = models.CharField(max_length=20, blank=True, null=True)

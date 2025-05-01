@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
 import api from "../api/axiosConfig";
 import { useAuth } from "../context/AuthContext";
@@ -8,52 +8,36 @@ const LoanRequestForm = ({ onSuccess }) => {
   const [amount, setAmount] = useState("");
   const [repaymentPeriod, setRepaymentPeriod] = useState("3 months");
   const [purpose, setPurpose] = useState("");
+  const [chamaId, setChamaId] = useState("");  // Field to enter Chama ID
   const [loading, setLoading] = useState(false);
-  const [chamas, setChamas] = useState([]);
-  const [selectedChama, setSelectedChama] = useState("");
-
-  useEffect(() => {
-    const fetchUserChamas = async () => {
-      if (isAuthenticated && user) {
-        try {
-          const response = await api.get("/api/chamas/");
-          setChamas(response.data);
-        } catch (error) {
-          console.error("Error fetching chamas:", error);
-          toast.error("Failed to load your chamas");
-        }
-      }
-    };
-    fetchUserChamas();
-  }, [isAuthenticated, user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!isAuthenticated || !user) {
       toast.error("You must be logged in to request a loan.");
       return;
     }
-
-    if (!amount || !purpose || !selectedChama) {
-      toast.error("Amount, purpose and chama selection are required!");
+  
+    if (!amount || !purpose || !chamaId) {
+      toast.error("Amount, purpose, and Chama ID are required!");
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
       await api.post("/api/loans/", {
         amount: parseFloat(amount),
         repayment_period: repaymentPeriod,
         purpose,
-        chama_id: selectedChama
+        chama_id: chamaId // Send the chama_id entered by the user
       });
-
+  
       toast.success("Loan request submitted!");
       setAmount("");
       setPurpose("");
-      setSelectedChama("");
+      setChamaId("");
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Loan request error:", error.response?.data || error.message);
@@ -62,51 +46,41 @@ const LoanRequestForm = ({ onSuccess }) => {
       setLoading(false);
     }
   };
-
-  if (!isAuthenticated) {
-    return <p className="text-red-600">Please log in to request a loan.</p>;
-  }
+  
 
   return (
-    <div className="p-4 bg-white shadow rounded-lg">
+    <div className="p-4 bg-white rounded shadow">
       <h2 className="text-xl font-bold mb-4">Request a Loan</h2>
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700">Select Chama</label>
-          <select
-            value={selectedChama}
-            onChange={(e) => setSelectedChama(e.target.value)}
-            className="w-full border rounded p-2"
+        <div className="mb-3">
+          <label className="block">Enter Chama ID</label>
+          <input
+            type="text"
+            value={chamaId}
+            onChange={(e) => setChamaId(e.target.value)}
+            className="w-full border p-2 rounded"
             required
-          >
-            <option value="">Select a Chama</option>
-            {chamas.map((chama) => (
-              <option key={chama.id} value={chama.id}>
-                {chama.name} ({chama.chama_type})
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Amount</label>
+        <div className="mb-3">
+          <label className="block">Amount</label>
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full border rounded p-2"
+            className="w-full border p-2 rounded"
             required
-            min="1"
-            step="0.01"
+            min={1}
           />
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Repayment Period</label>
+        <div className="mb-3">
+          <label className="block">Repayment Period</label>
           <select
             value={repaymentPeriod}
             onChange={(e) => setRepaymentPeriod(e.target.value)}
-            className="w-full border rounded p-2"
+            className="w-full border p-2 rounded"
           >
             <option value="3 months">3 months</option>
             <option value="6 months">6 months</option>
@@ -114,24 +88,23 @@ const LoanRequestForm = ({ onSuccess }) => {
           </select>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Purpose</label>
+        <div className="mb-3">
+          <label className="block">Purpose</label>
           <textarea
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
-            className="w-full border rounded p-2"
-            rows="3"
-            placeholder="What is the loan for?"
+            className="w-full border p-2 rounded"
+            rows={3}
             required
           />
         </div>
 
         <button
           type="submit"
-          className="bg-green-500 text-white p-2 rounded w-full"
+          className="w-full bg-green-600 text-white p-2 rounded"
           disabled={loading}
         >
-          {loading ? "Processing..." : "Request Loan"}
+          {loading ? "Submitting..." : "Submit Loan Request"}
         </button>
       </form>
     </div>

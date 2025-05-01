@@ -4,6 +4,8 @@ import api from "../api/axiosConfig";
 import "../styles/Login.css";
 import logo from '../static/images/logo.png';
 import { useAuth } from '../context/AuthContext';
+import Spinner from "../components/Spinner";
+
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -136,17 +138,13 @@ const Login = () => {
               </button>
             </div>
           </div>
-
           <button
             type="submit"
             className={`login-button ${isLoading ? "loading" : ""}`}
             disabled={isLoading}
           >
             {isLoading ? (
-              <>
-                <span className="spinner"></span>
-                <span>Logging In...</span>
-              </>
+              <Spinner message="Logging In..." />
             ) : (
               "Log In"
             )}

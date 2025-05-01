@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getAuthToken } from '../../utils/auth';
 import { supabase } from '../../utils/supabaseClient';
-import {
-  MemberList,
-  ContributionDisplay,
-  RotationSchedule,
-  ReportDisplay,
-} from '../../components/Hybrid';
+import MemberList from '../../components/MemberList';
+import ContributionDisplay from '../../components/ContributionDisplay';
+import RotationSchedule from '../../components/RotationSchedule';
+import ReportDisplay from '../../components/ReportDisplay';
 import ContributionForm from '../../components/ContributionForm';
 import WithdrawalForm from '../../components/WithdrawalForm';
 import LoanRequestForm from '../../components/LoanRequestForm';
@@ -18,6 +16,7 @@ import MeetingSchedule from '../../components/MeetingSchedule';
 import '../../styles/Dashboard.css';
 
 const HybridDashboard = () => {
+  console.log("🔵 HybridDashboard component loaded");
   const [activeSection, setActiveSection] = useState('overview');
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [members, setMembers] = useState([]);
@@ -61,151 +60,78 @@ const HybridDashboard = () => {
   }, []);
 
   // Supabase data fetch
+  // Supabase real-time listener setup
   useEffect(() => {
-    if (!chamaData?.id) return;
-    console.log("🟢 Setting up subscriptions for chama_id:", chamaData.id);
+    if (!userData || !chamaData?.id) return;
 
     const chamaId = chamaData.id;
+    console.log("✅ Initializing live data sync for chama:", chamaId);
 
-    const fetchAllData = async () => {
+    let activeChannels = [];
+
+    const setupRealtime = async () => {
       try {
-        const [
-          { data: m, error: mErr },
-          { data: t, error: tErr },
-          { data: mt, error: mtErr },
-          { data: l, error: lErr },
-        ] = await Promise.all([
+        // Initial fetch
+        const [{ data: m }, { data: t }, { data: mt }, { data: l }] = await Promise.all([
           supabase.from('HIFACHAMA_customuser').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_transaction').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_meeting').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_loan').select('*').eq('chama_id', chamaId),
         ]);
-
-        if (mErr || tErr || mtErr || lErr) {
-          console.error('🛑 Supabase errors:', { mErr, tErr, mtErr, lErr });
-        }
-
+        console.log("👥 Members fetched:", m);
         setMembers(m || []);
         setContributions(t || []);
         setMeetings(mt || []);
         setLoans(l || []);
-      } catch (error) {
-        console.error('❌ Error fetching Supabase data:', error);
+      } catch (err) {
+        console.error('❌ Error fetching initial data:', err);
       }
     };
 
-    fetchAllData();
+    setupRealtime();
 
-    // Subscribe to realtime changes per table
     const channels = [
-      {
-        table: 'HIFACHAMA_customuser',
-        callback: async () => {
-          console.log('📡 Realtime update: users');
-          const { data } = await supabase.from('HIFACHAMA_customuser').select('*').eq('chama_id', chamaId);
-          setMembers(data || []);
-        },
-      },
-      {
-        table: 'HIFACHAMA_transaction',
-        callback: async () => {
-          console.log('📡 Realtime update: transactions');
-          const { data } = await supabase.from('HIFACHAMA_transaction').select('*').eq('chama_id', chamaId);
-          setContributions(data || []);
-        },
-      },
-      {
-        table: 'HIFACHAMA_meeting',
-        callback: async () => {
-          console.log('📡 Realtime update: meetings');
-          const { data } = await supabase.from('HIFACHAMA_meeting').select('*').eq('chama_id', chamaId);
-          setMeetings(data || []);
-        },
-      },
-      {
-        table: 'HIFACHAMA_loan',
-        callback: async () => {
-          console.log('📡 Realtime update: loans');
-          const { data } = await supabase.from('HIFACHAMA_loan').select('*').eq('chama_id', chamaId);
-          setLoans(data || []);
-        },
-      },
+      { table: 'HIFACHAMA_customuser', setter: setMembers },
+      { table: 'HIFACHAMA_transaction', setter: setContributions },
+      { table: 'HIFACHAMA_meeting', setter: setMeetings },
+      { table: 'HIFACHAMA_loan', setter: setLoans },
     ];
 
-    const subscriptions = channels.map(({ table, callback }) => {
+    activeChannels = channels.map(({ table, setter }) => {
       const channel = supabase.channel(`realtime:${table}`);
 
-      channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
-        console.log(`🔥 Received payload for ${table}:`, payload);
+      channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
         const { eventType, new: newRow, old: oldRow } = payload;
+        console.log(`🔁 ${eventType} on ${table}:`, payload);
 
-        switch (eventType) {
-          case 'INSERT':
-            if (table === 'HIFACHAMA_transaction') {
-              setContributions((prev) => [newRow, ...prev]);
-            } else if (table === 'HIFACHAMA_loan') {
-              setLoans((prev) => [newRow, ...prev]);
-            } else if (table === 'HIFACHAMA_customuser') {
-              setMembers((prev) => [newRow, ...prev]);
-            } else if (table === 'HIFACHAMA_meeting') {
-              setMeetings((prev) => [newRow, ...prev]);
-            }
-            break;
-          case 'UPDATE':
-            if (table === 'HIFACHAMA_transaction') {
-              setContributions((prev) => prev.map((item) => (item.id === newRow.id ? newRow : item)));
-            } else if (table === 'HIFACHAMA_loan') {
-              setLoans((prev) => prev.map((item) => (item.id === newRow.id ? newRow : item)));
-            } else if (table === 'HIFACHAMA_customuser') {
-              setMembers((prev) => prev.map((item) => (item.id === newRow.id ? newRow : item)));
-            } else if (table === 'HIFACHAMA_meeting') {
-              setMeetings((prev) => prev.map((item) => (item.id === newRow.id ? newRow : item)));
-            }
-            break;
-          case 'DELETE':
-            if (table === 'HIFACHAMA_transaction') {
-              setContributions((prev) => prev.filter((item) => item.id !== oldRow.id));
-            } else if (table === 'HIFACHAMA_loan') {
-              setLoans((prev) => prev.filter((item) => item.id !== oldRow.id));
-            } else if (table === 'HIFACHAMA_customuser') {
-              setMembers((prev) => prev.filter((item) => item.id !== oldRow.id));
-            } else if (table === 'HIFACHAMA_meeting') {
-              setMeetings((prev) => prev.filter((item) => item.id !== oldRow.id));
-            }
-            break;
-          default:
-            break;
-        }
+        setter((prev) => {
+          switch (eventType) {
+            case 'INSERT':
+              return [newRow, ...prev];
+            case 'UPDATE':
+              return prev.map((item) => (item.id === newRow.id ? newRow : item));
+            case 'DELETE':
+              return prev.filter((item) => item.id !== oldRow.id);
+            default:
+              return prev;
+          }
+        });
       });
 
       channel.subscribe((status) => {
-        console.log(`📡 Channel status for ${table}:`, status);
+        console.log(`📡 Subscribed to ${table}:`, status);
       });
 
       return channel;
     });
 
     return () => {
-      subscriptions.forEach((sub) => supabase.removeChannel(sub));
+      console.log("📴 Cleaning up Supabase channels");
+      activeChannels.forEach((channel) => supabase.removeChannel(channel));
     };
-  }, [chamaData?.id]);
+  }, [userData?.id, chamaData?.id]);
 
-  useEffect(() => {
-    const fetchPaymentDetails = async () => {
-      try {
-        if (chamaData?.id) {
-          const { data: paymentDetails } = await axios.get(
-            `https://hifachama-backend.onrender.com/api/payment-details/${chamaData.id}`
-          );
-          setPaymentDetails(paymentDetails);
-        }
-      } catch (err) {
-        console.error('Error fetching payment details:', err);
-      }
-    };
 
-    fetchPaymentDetails();
-  }, [chamaData?.id]);
 
   const renderContent = () => {
     switch (activeSection) {
