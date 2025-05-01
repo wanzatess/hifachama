@@ -1,8 +1,28 @@
-import React from 'react';
-import '../styles/Dashboard.css';
+import React, { useEffect, useState } from 'react';
 
-const MemberList = ({ members }) => {
-  console.log("🔁 MemberDirectory rendered");
+const MemberList = ({ chamaId }) => {
+  const [members, setMembers] = useState([]);
+
+  useEffect(() => {
+    if (!chamaId) return;
+
+    console.log("🔁 Fetching members for chamaId:", chamaId);
+
+    const fetchMembers = async () => {
+      try {
+        const res = await fetch(`https://hifachama-backend.onrender.com/api/chama-members/?chama_id=${chamaId}`);
+        const data = await res.json();
+        setMembers(data);
+        console.log("📦 Members fetched:", data);
+      } catch (err) {
+        console.error("❌ Failed to fetch members:", err);
+      }
+    };
+
+    fetchMembers();
+  }, [chamaId]);
+
+  if (!chamaId) return <p>Loading members...</p>;
 
   return (
     <div className="member-directory-card">
@@ -32,11 +52,11 @@ const MemberList = ({ members }) => {
               {members.map((m, index) => (
                 <tr key={m.id}>
                   <td>{index + 1}</td>
-                  <td>{m.name || m.username}</td>
+                  <td>{m.user.username}</td>
                   <td>{m.role}</td>
-                  <td>{m.phone || 'N/A'}</td>
-                  <td>{m.email || 'N/A'}</td>
-                  <td>{m.joinDate || 'N/A'}</td>
+                  <td>{m.user.phone_number || 'N/A'}</td>
+                  <td>{m.user.email || 'N/A'}</td>
+                  <td>{m.joined_at || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>

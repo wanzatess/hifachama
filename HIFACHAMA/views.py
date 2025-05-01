@@ -62,34 +62,51 @@ class ChamaViewSet(viewsets.ModelViewSet):
     serializer_class = ChamaSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def perform_create(self, serializer):
+        chama = serializer.save(admin=self.request.user)
+        chama.members.add(self.request.user)  # ✅ Add the user to the members
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(admin=self.request.user)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
         
-        # Include chama_type in the response
+        # Remove this line — it skips perform_create
+        # serializer.save(admin=self.request.user)
+
+        self.perform_create(serializer)  # This handles save and adding user
+        headers = self.get_success_headers(serializer.data)
+
         return Response({
             **serializer.data,
-            "redirect_to": f"/dashboard/{serializer.data['chama_type']}"  # Add dynamic path
+            "redirect_to": f"/dashboard/{serializer.data['chama_type']}"
         }, status=201, headers=headers)
+
+
+
 
 class ChamaMemberViewSet(viewsets.ModelViewSet):
     queryset = ChamaMember.objects.all()
     serializer_class = ChamaMemberSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
-        # Only show memberships for the current user
-        return self.queryset.filter(user=self.request.user)
-    
+        chama_id = self.request.query_params.get("chama_id")
+
+        if chama_id:
+            return ChamaMember.objects.filter(chama_id=chama_id)
+        
+        return ChamaMember.objects.filter(user=self.request.user)
+
+
+
+
     def perform_create(self, serializer):
-        # Verify the user isn't already a member
+        # Verify the user isn't already a member of the Chama
         chama_id = serializer.validated_data['chama'].id
         if ChamaMember.objects.filter(chama_id=chama_id, user=self.request.user).exists():
             raise ValidationError("You are already a member of this Chama")
         serializer.save(user=self.request.user)
+
 
 
 

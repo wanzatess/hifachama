@@ -354,30 +354,19 @@ class CustomUser(AbstractUser):
         blank=False
     )
     chama = models.ForeignKey(
-        Chama,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='customuser_chamas'
+    Chama,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name='customuser_chamas'
     )
-
     # Authentication
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
-    class Meta:
-        permissions = [
-            ("can_create_chama", "Can create Chama"),
-            ("can_approve_loans", "Can approve loans"),
-            ("can_add_members", "Can add new members"),
-            ("can_approve_withdrawals", "Can approve withdrawals"),
-            ("can_approve_contributions", "Can approve contributions"),
-            ("can_schedule_meetings", "Can schedule meetings"),
-            ("can_send_notifications", "Can send notifications"),
-        ]
-
     def __str__(self):
         return f"{self.get_full_name() or self.username} ({self.role})"
+
 
 class OTP(models.Model):
     user = models.ForeignKey(

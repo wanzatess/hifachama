@@ -136,6 +136,11 @@ const HybridDashboard = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
+        console.log("📦 chamaData in Dashboard:", chamaData);
+        console.log("📦 chamaId passed to MemberList:", chamaData?.id);
+        if (!chamaData) {
+          return <p>⏳ Loading chama data...</p>;
+        }
         return (
           <div className="dashboard-content">
             <div className="dashboard-header">
@@ -143,7 +148,7 @@ const HybridDashboard = () => {
               <div>{chamaData?.name}</div>
             </div>
             <div className="dashboard-card">
-              <MemberList members={members} title="Member Directory" />
+              <MemberList chamaId={chamaData?.id} title="Member Directory" />
             </div>
             {userData?.role === 'Chairperson' && (
               <div className="dashboard-card">
