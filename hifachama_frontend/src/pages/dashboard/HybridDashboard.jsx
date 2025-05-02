@@ -27,42 +27,63 @@ const HybridDashboard = () => {
   const [userData, setUserData] = useState(null);
   const [chamaData, setChamaData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      setIsLoading(true);
-      const token = getAuthToken();
-      if (!token) {
+  const fetchUser = async () => {
+    setIsLoading(true);
+    setError(null);
+    const token = getAuthToken();
+    if (!token) {
+      console.error("❌ No auth token found");
+      setError("Please log in to access the dashboard.");
+      setIsLoading(false);
+      return;
+    }
+    try {
+      console.log("🔍 Fetching user data with token:", token.slice(0, 10) + "...");
+      const { data: user } = await axios.get(
+        'http://127.0.0.1:8080/api/users/me/',
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("👤 User data fetched:", user);
+      setUserData(user);
+
+      console.log("🔎 Inspecting chama_id and chama_name:", {
+        chama_id: user?.chama_id,
+        chama_name: user?.chama_name
+      });
+      if (!user?.chama_id) {
+        console.warn("⚠️ No chama associated with user. chama_id:", user?.chama_id);
+        setError("No chama found. Please join or create a chama.");
         setIsLoading(false);
         return;
       }
-      try {
-        const { data: user } = await axios.get(
-          'http://127.0.0.1:8080/api/users/me/',
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setUserData(user);
-        const chamaId = user?.chamas?.[0]; // Assuming there's only one chama in the array
-        if (chamaId) {
-          const { data: chama } = await axios.get(
-            `http://127.0.0.1:8080/api/chamas/${chamaId}/`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          setChamaData(chama);
-        }
-      } catch (err) {
-        console.error('Error fetching user/chama:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+
+      // Set chamaData using chama_id and chama_name from user data
+      const chama = {
+        id: user.chama_id,
+        name: user.chama_name || 'Unnamed Chama'
+      };
+      console.log("🏛️ Chama data set:", chama);
+      setChamaData(chama);
+    } catch (err) {
+      console.error("❌ Error fetching user data:", err.response?.data || err.message);
+      setError("Failed to load dashboard data. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUser();
   }, []);
 
-  // Supabase data fetch
   // Supabase real-time listener setup
   useEffect(() => {
-    if (!userData || !chamaData?.id) return;
+    if (!userData || !chamaData?.id) {
+      console.log("⏳ Skipping Supabase setup: userData or chamaData missing");
+      return;
+    }
 
     const chamaId = chamaData.id;
     console.log("✅ Initializing live data sync for chama:", chamaId);
@@ -71,40 +92,62 @@ const HybridDashboard = () => {
 
     const setupRealtime = async () => {
       try {
-        // Initial fetch
+        console.log("🔍 Fetching initial Supabase data...");
         const [{ data: m }, { data: t }, { data: mt }, { data: l }] = await Promise.all([
-          supabase.from('HIFACHAMA_customuser').select('*').eq('chama_id', chamaId),
+          // Join HIFACHAMA_customuser with HIFACHAMA_chamamember to filter by chama_id
+          supabase
+            .from('HIFACHAMA_customuser')
+            .select('*, HIFACHAMA_chamamember!inner(chama_id)')
+            .eq('HIFACHAMA_chamamember.chama_id', chamaId),
           supabase.from('HIFACHAMA_transaction').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_meeting').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_loan').select('*').eq('chama_id', chamaId),
         ]);
         console.log("👥 Members fetched:", m);
+        console.log("🔎 Member schema:", m?.[0] || "No members found");
         setMembers(m || []);
         setContributions(t || []);
         setMeetings(mt || []);
         setLoans(l || []);
       } catch (err) {
         console.error('❌ Error fetching initial data:', err);
+        setError(`Failed to load real-time data: ${err.message}`);
       }
     };
 
     setupRealtime();
 
     const channels = [
-      { table: 'HIFACHAMA_customuser', setter: setMembers },
+      // Listen to HIFACHAMA_customuser for user data changes
+      { table: 'HIFACHAMA_customuser', setter: setMembers, filterByChama: true },
+      // Listen to HIFACHAMA_chamamember for membership changes
+      { table: 'HIFACHAMA_chamamember', setter: setMembers, isMembershipTable: true },
       { table: 'HIFACHAMA_transaction', setter: setContributions },
       { table: 'HIFACHAMA_meeting', setter: setMeetings },
       { table: 'HIFACHAMA_loan', setter: setLoans },
     ];
 
-    activeChannels = channels.map(({ table, setter }) => {
+    activeChannels = channels.map(({ table, setter, filterByChama, isMembershipTable }) => {
       const channel = supabase.channel(`realtime:${table}`);
 
-      channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
+      channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
         const { eventType, new: newRow, old: oldRow } = payload;
         console.log(`🔁 ${eventType} on ${table}:`, payload);
 
+        if (isMembershipTable) {
+          // For HIFACHAMA_chamamember changes, refresh the member list
+          const { data: updatedMembers } = await supabase
+            .from('HIFACHAMA_customuser')
+            .select('*, HIFACHAMA_chamamember!inner(chama_id)')
+            .eq('HIFACHAMA_chamamember.chama_id', chamaId);
+          console.log("👥 Updated members after HIFACHAMA_chamamember change:", updatedMembers);
+          setMembers(updatedMembers || []);
+          return;
+        }
+
         setter((prev) => {
+          if (filterByChama && newRow?.chama_id !== chamaId) return prev;
+
           switch (eventType) {
             case 'INSERT':
               return [newRow, ...prev];
@@ -131,13 +174,24 @@ const HybridDashboard = () => {
     };
   }, [userData?.id, chamaData?.id]);
 
-
-
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
         console.log("📦 chamaData in Dashboard:", chamaData);
         console.log("📦 chamaId passed to MemberList:", chamaData?.id);
+        if (error) {
+          return (
+            <div className="error-message">
+              <p>{error}</p>
+              <button onClick={() => window.location.href = '/join-chama'}>
+                Join or Create a Chama
+              </button>
+              <button onClick={fetchUser} style={{ marginLeft: '10px' }}>
+                Retry
+              </button>
+            </div>
+          );
+        }
         if (!chamaData) {
           return <p>⏳ Loading chama data...</p>;
         }
@@ -148,7 +202,7 @@ const HybridDashboard = () => {
               <div>{chamaData?.name}</div>
             </div>
             <div className="dashboard-card">
-              <MemberList chamaId={chamaData?.id} title="Member Directory" />
+              <MemberList chamaId={chamaData?.id} members={members} title="Member Directory" />
             </div>
             {userData?.role === 'Chairperson' && (
               <div className="dashboard-card">
@@ -183,11 +237,10 @@ const HybridDashboard = () => {
               <ContributionDisplay contributions={contributions} />
             </div>
             <div className="dashboard-card">
-            <ContributionForm
-              chamaId={chamaData?.id}
-              userId={userData?.id}
-            />
-
+              <ContributionForm
+                chamaId={chamaData?.id}
+                userId={userData?.id}
+              />
             </div>
           </div>
         );
@@ -214,9 +267,9 @@ const HybridDashboard = () => {
         return (
           <div className="dashboard-content">
             <div className="dashboard-card">
-            <ReportDisplay
+              <ReportDisplay
                 contributions={contributions}
-                withdrawals={[]} // You can replace with actual withdrawals data if available
+                withdrawals={[]}
                 loans={loans}
                 members={members}
                 chama={chamaData}
@@ -228,11 +281,11 @@ const HybridDashboard = () => {
         return (
           <div className="dashboard-content">
             <div className="dashboard-card">
-            <LoanRequestForm
-              chamaId={chamaData?.id}
-              userId={userData?.id}
-              onSuccess={() => setRefreshLoans(prev => !prev)}  // Optional: Refresh loan list
-            />
+              <LoanRequestForm
+                chamaId={chamaData?.id}
+                userId={userData?.id}
+                onSuccess={() => setRefreshLoans(prev => !prev)}
+              />
             </div>
             <div className="dashboard-card">
               <LoanList loans={loans} />

@@ -1,34 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-const MemberList = ({ chamaId }) => {
-  const [members, setMembers] = useState([]);
-
-  useEffect(() => {
-    if (!chamaId) return;
-
-    console.log("🔁 Fetching members for chamaId:", chamaId);
-
-    const fetchMembers = async () => {
-      try {
-        const res = await fetch(`http://127.0.0.1:8080/api/chama-members/?chama_id=${chamaId}`);
-        const data = await res.json();
-        setMembers(data);
-        console.log("📦 Members fetched:", data);
-      } catch (err) {
-        console.error("❌ Failed to fetch members:", err);
-      }
-    };
-
-    fetchMembers();
-  }, [chamaId]);
-
-  if (!chamaId) return <p>Loading members...</p>;
+const MemberList = ({ chamaId, members, title }) => {
+  if (!chamaId || !members) return <p>Loading members...</p>;
 
   return (
     <div className="member-directory-card">
       <div className="card-header">
         <span className="card-icon">👥</span>
-        <h3 className="card-title">Member Directory</h3>
+        <h3 className="card-title">{title || 'Member Directory'}</h3>
       </div>
 
       <div className="recent-activity">
@@ -52,10 +31,10 @@ const MemberList = ({ chamaId }) => {
               {members.map((m, index) => (
                 <tr key={m.id}>
                   <td>{index + 1}</td>
-                  <td>{m.user.username}</td>
-                  <td>{m.role}</td>
-                  <td>{m.user.phone_number || 'N/A'}</td>
-                  <td>{m.user.email || 'N/A'}</td>
+                  <td>{m.username}</td>
+                  <td>{m.role || 'N/A'}</td>
+                  <td>{m.phone_number || 'N/A'}</td>
+                  <td>{m.email || 'N/A'}</td>
                   <td>{m.joined_at || 'N/A'}</td>
                 </tr>
               ))}
