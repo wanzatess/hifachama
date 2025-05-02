@@ -8,7 +8,7 @@ from rest_framework.authtoken.models import Token
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'username', 'role', 'phone', 'is_active', 'date_joined']
+        fields = ['id', 'email', 'username', 'role', 'phone_number', 'is_active', 'date_joined']
         read_only_fields = ['id', 'date_joined']
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
