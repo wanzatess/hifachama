@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import ChamaMember
 
 class ChamaMemberAdmin(admin.ModelAdmin):
-    list_display = ('user', 'chama', 'role', 'joined_at', 'is_active')
+    list_display = ('user', 'chama', 'role', 'join_date', 'is_active')
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

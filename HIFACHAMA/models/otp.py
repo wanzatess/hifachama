@@ -1,13 +1,13 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import timedelta
 
 class OTP(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     otp_code = models.CharField(max_length=6)  # Store the OTP code
-    created_at = models.DateTimeField(auto_now_add=True)  # When the OTP was generated
-    expires_at = models.DateTimeField()  # Expiration time of the OTP
+    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)  # When the OTP was generated
+    expires_at = models.DateTimeField(default=timezone.now() + timedelta(hours=1))  # Expiration time of the OTP
     used = models.BooleanField(default=False)  # Whether the OTP has been used or not
 
     def __str__(self):

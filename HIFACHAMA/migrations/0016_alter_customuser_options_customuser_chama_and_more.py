@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                 ('paybill_number', models.CharField(blank=True, max_length=20, null=True)),
                 ('till_number', models.CharField(blank=True, max_length=20, null=True)),
                 ('phone_number', models.CharField(blank=True, max_length=15, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('created_at', models.DateTimeField(null=True, blank=True, auto_now_add=True)),
                 ('chama', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='HIFACHAMA.chama')),
                 ('created_by', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],

@@ -4,13 +4,18 @@ from django.core.mail import send_mail
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+# ✅ Import actual model classes instead of using string references
+from HIFACHAMA.models.transactions import Contribution, Withdrawal 
+from HIFACHAMA.models.loans import Loan
+from HIFACHAMA.models.meetings import Meeting  # Make sure Meeting is in chama/models.py
+
 class Notification(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     message = models.TextField()
-    subject = models.CharField(max_length=255)
+    subject = models.CharField(max_length=255, default="No Subject")
     is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    recipient_email = models.EmailField()
+    created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    recipient_email = models.EmailField(default='default@example.com')
 
     def __str__(self):
         return f"Notification for {self.user.username} - {self.subject}"
@@ -24,8 +29,8 @@ class Notification(models.Model):
             fail_silently=False,
         )
 
-# Notifications for Transactions (Contributions & Withdrawals)
-@receiver(post_save, sender='transactions.Contribution')
+# ✅ Notifications for Contributions
+@receiver(post_save, sender=Contribution)
 def send_contribution_notification(sender, instance, created, **kwargs):
     if created:
         message = f"Your contribution of {instance.amount} has been successfully recorded."
@@ -38,7 +43,8 @@ def send_contribution_notification(sender, instance, created, **kwargs):
         )
         notification.send_email()
 
-@receiver(post_save, sender='transactions.Withdrawal')
+# ✅ Notifications for Withdrawals
+@receiver(post_save, sender=Withdrawal)
 def send_withdrawal_notification(sender, instance, created, **kwargs):
     if created:
         message = f"Your withdrawal of {instance.amount} has been successfully processed."
@@ -51,8 +57,8 @@ def send_withdrawal_notification(sender, instance, created, **kwargs):
         )
         notification.send_email()
 
-# Notifications for Loan Approval
-@receiver(post_save, sender='transactions.Loan')
+# ✅ Notifications for Loan Approval
+@receiver(post_save, sender=Loan)
 def send_loan_approval_notification(sender, instance, created, **kwargs):
     if instance.status == 'approved':
         message = f"Your loan of {instance.amount} has been approved. Please refer to your repayment schedule."
@@ -65,8 +71,8 @@ def send_loan_approval_notification(sender, instance, created, **kwargs):
         )
         notification.send_email()
 
-# Notifications for Meetings
-@receiver(post_save, sender='chama.Meeting')
+# ✅ Notifications for Meetings
+@receiver(post_save, sender=Meeting)
 def send_meeting_scheduled_notification(sender, instance, created, **kwargs):
     if created:
         message = f"A new meeting titled '{instance.title}' has been scheduled for {instance.date}. Please make sure to attend."
