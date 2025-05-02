@@ -193,10 +193,11 @@ const Register = () => {
               onChange={handleChange}
               className="input-field"
             >
-              <option value="member">Member</option>
-              <option value="chairperson">Chairperson</option>
-              <option value="treasurer">Treasurer</option>
-              <option value="secretary">Secretary</option>
+              <option value="" disabled selected>-- Pick a Role --</option>
+              <option value="Chairperson">Chairperson</option>
+              <option value="Treasurer">Treasurer</option>
+              <option value="Secretary">Secretary</option>
+              <option value="Member">Member</option>
             </select>
           </div>
 
