@@ -22,16 +22,23 @@ class ChamaListCreateView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        """Create a new chama and assign the user as admin."""
+        """Create a new chama and automatically add the user as a member."""
         serializer = ChamaSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.validated_data['admin'] = request.user
-            chama = serializer.save()
+            # Create the chama (without the user being part of the chama yet)
+            chama = serializer.save(admin=request.user)
+
+            # Create the ChamaMember to link the user to the new chama
+            ChamaMember.objects.create(chama=chama, user=request.user, role="Admin")
+
+            # Respond with the chama data including the user link
             return Response({
                 'id': chama.id,
                 'name': chama.name,
                 'chama_type': chama.chama_type,
-                'admin_id': chama.admin.id
+                'admin_id': chama.admin.id,
+                'chama_id': chama.id,  # Include chama_id
+                'role': "Admin"        # Role of the user in this chama
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -52,7 +59,12 @@ class ChamaMemberViewSet(viewsets.ModelViewSet):
         chama_id = serializer.validated_data['chama'].id
         if ChamaMember.objects.filter(chama_id=chama_id, user=self.request.user).exists():
             raise ValidationError("You are already a member of this chama.")
-        serializer.save(user=self.request.user)
+        
+        # Save the ChamaMember object to link the user with the chama
+        chama_member = serializer.save(user=self.request.user)
+        
+        # You could also update user-related fields if needed
+        self.request.user.save()
 
 class ChamaViewSet(viewsets.ModelViewSet):
     queryset = Chama.objects.all()
@@ -62,7 +74,9 @@ class ChamaViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a chama and add the user as admin and member."""
         chama = serializer.save(admin=self.request.user)
-        chama.members.add(self.request.user)
+
+        # Create a ChamaMember to link the user to the new chama
+        ChamaMember.objects.create(chama=chama, user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         """Override create to include redirect logic."""
@@ -131,3 +145,33 @@ def dashboard_data(request):
         return Response(data)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+class JoinChamaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """Allow a user to join an existing chama."""
+        chama_id = request.data.get('chama_id')  # Expecting the chama ID in the request data
+
+        if not chama_id:
+            return Response({"detail": "Chama ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Check if the Chama exists
+            chama = Chama.objects.get(id=chama_id)
+        except Chama.DoesNotExist:
+            return Response({"detail": "Chama not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if the user is already a member
+        if ChamaMember.objects.filter(chama=chama, user=request.user).exists():
+            return Response({"detail": "You are already a member of this chama."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Add the user as a member
+        ChamaMember.objects.create(chama=chama, user=request.user, role="Member")
+
+        return Response({
+            'message': 'Successfully joined the chama',
+            'chama_id': chama.id,
+            'user': request.user.username,
+            'role': "Member"  # Role of the user in this chama
+        }, status=status.HTTP_201_CREATED)

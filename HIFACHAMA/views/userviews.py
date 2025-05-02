@@ -44,11 +44,6 @@ class RegisterView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from HIFACHAMA.serializers.customuserserializer import LoginSerializer
-
 class UserLoginView(APIView):
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
@@ -61,16 +56,8 @@ class UserLoginView(APIView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def verify_token(request):
-    # Get the authenticated user
     user = request.user
-
-    # Safely get the first chama ID if exists
-    chama_id = None
-    # Safely get the first chama membership, if it exists
     chama_member = user.chama_memberships.first()
-    if chama_member:
-        chama_id = chama_member.chama.id
-
     return Response({
         "valid": True,
         "user": {
@@ -80,7 +67,7 @@ def verify_token(request):
             "username": user.username,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "chama_id": chama_id  # Return the chama ID if available
+            "chama_id": chama_member.chama.id if chama_member else None,
+            "chama_name": chama_member.chama.name if chama_member else None
         }
     })
-

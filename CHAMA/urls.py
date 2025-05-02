@@ -7,6 +7,10 @@ from HIFACHAMA.views.transactionviews import TransactionViewSet
 from HIFACHAMA.views.loansview import LoanViewSet
 from HIFACHAMA.views.meetingsview import MeetingViewSet
 from HIFACHAMA.views.notificationsview import NotificationViewSet
+from django.http import HttpResponse
+
+def home(request):
+    return HttpResponse("Welcome to the HIFACHAMA API!")
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -18,9 +22,10 @@ router.register(r'meetings', MeetingViewSet, basename='meeting')
 router.register(r'notifications', NotificationViewSet, basename='notification')
 
 urlpatterns = [
+    path('', home),
     path('admin/', admin.site.urls),
     path('api/login/', UserLoginView.as_view(), name='login'),
     path("api/users/me/", current_user, name="current-user"),
-    path('api/', include('HIFACHAMA.urls')),  # Custom APIViews
+    path('', include('HIFACHAMA.urls')),  # Custom APIViews
     path('api/', include(router.urls)),   # ViewSets
 ]

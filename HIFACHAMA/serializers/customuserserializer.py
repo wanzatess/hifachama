@@ -7,10 +7,33 @@ from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    chama_id = serializers.SerializerMethodField()
+    chama_name = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'username', 'role', 'phone_number', 'is_active', 'date_joined']
+        fields = [
+            'id',
+            'email',
+            'username',
+            'role',
+            'phone_number',
+            'is_active',
+            'date_joined',
+            'chama_id',
+            'chama_name',
+        ]
         read_only_fields = ['id', 'date_joined']
+
+    def get_chama_id(self, obj):
+        # Retrieve the first ChamaMember record for the user
+        chama_member = obj.chama_memberships.first()
+        return chama_member.chama.id if chama_member else None
+
+    def get_chama_name(self, obj):
+        # Retrieve the first ChamaMember record for the user
+        chama_member = obj.chama_memberships.first()
+        return chama_member.chama.name if chama_member else None
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -71,7 +94,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             phone_number=validated_data.get('phone_number', ''),
-            role=validated_data.get('role', 'member')
+            role=validated_data.get('role', 'Member')
         )
         return user
 
@@ -105,8 +128,10 @@ class LoginSerializer(serializers.Serializer):
         refresh = RefreshToken.for_user(user)
         redirect_to = 'join-chama'  # Default for non-chairpersons
         if user.role.lower() == 'chairperson':
-            redirect_to = 'create-chama' if not hasattr(user, 'chama') or not user.chama_id else 'chama'
-        elif hasattr(user, 'chama') and user.chama_id:
+            # Check if user has a chama_membership
+            chama_member = user.chama_memberships.first()
+            redirect_to = 'create-chama' if not chama_member else 'chama'
+        elif user.chama_memberships.exists():
             redirect_to = 'chama'
         
         response = {
@@ -119,17 +144,18 @@ class LoginSerializer(serializers.Serializer):
                 "username": user.username,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-                "chama_id": user.chama_id if hasattr(user, 'chama') else None
+                "chama_id": user.chama_memberships.first().chama.id if user.chama_memberships.exists() else None
             },
             "message": "Login successful",
             "redirectTo": redirect_to
         }
         
         # Include chama data if available
-        if hasattr(user, 'chama') and user.chama_id:
+        if user.chama_memberships.exists():
+            chama = user.chama_memberships.first().chama
             response["chama"] = {
-                "id": user.chama_id,
-                "name": user.chama.name if hasattr(user.chama, 'name') else ""
+                "id": chama.id,
+                "name": chama.name
             }
         
         return response
