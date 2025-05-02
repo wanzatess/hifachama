@@ -102,6 +102,9 @@ const CreateChama = () => {
             onChange={handleInputChange}
             required
           >
+            <option value="" disabled hidden>
+              Pick a chama
+            </option>
             {chamaTypes.map((type) => (
               <option key={type.value} value={type.value}>
                 {type.label}

@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       // Verify token and get user data
-      const { data: user } = await api.get('/api/users/me/');
+      const { data: user } = await api.get('api/users/me/');
       setAuthState({
         user,
         loading: false,
@@ -56,25 +56,27 @@ export const AuthProvider = ({ children }) => {
   const resolveFrontendPath = (redirectTo, chama) => {
     if (!redirectTo) return '/';
 
-    // Handle API-style redirects
-    if (redirectTo.startsWith('/api/chamas/')) {
-      const chamaId = redirectTo.split('/')[3];
-      switch (chama?.type) {
-        case 'hybrid': return `/dashboard/hybrid/${chamaId}`;
-        case 'investment': return `/dashboard/investment/${chamaId}`;
-        case 'merry_go_round': return `/dashboard/merry_go_round/${chamaId}`;
-        default: return `/chamas/${chamaId}`;
-      }
+    // Handle role-based redirects for chairperson and others
+    if (redirectTo === 'create-chama') {
+      return '/dashboard/create-chama';
+    } else if (redirectTo === 'join-chama') {
+      return '/dashboard/join-chama';
     }
+
+    // Fallback logic
+    if (chama && chama.id) {
+      return `/dashboard/chama/${chama.id}`;
+    }
+
     return redirectTo;
   };
 
   const login = async (email, password) => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
-  
+
     try {
       const { data } = await api.post('/api/login/', { email, password });
-      
+
       // Store JWT tokens
       setAuthTokens({
         access: data.access,
@@ -83,11 +85,11 @@ export const AuthProvider = ({ children }) => {
 
       const user = {
         ...data.user,
-        chamaId: data.chama?.id || null
+        chama: data.chama || null  // Include chama data
       };
       localStorage.setItem("user", JSON.stringify(user));
 
-      setAuthState({ 
+      setAuthState({
         user,
         loading: false,
         error: null
@@ -96,40 +98,37 @@ export const AuthProvider = ({ children }) => {
       const frontendRedirectTo = resolveFrontendPath(data.redirectTo, data.chama);
       navigate(frontendRedirectTo, { replace: true });
 
-      return { 
+      return {
         success: true,
         user,
         redirectTo: frontendRedirectTo
       };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 
-                         error.message || 
-                         'Login failed';
-      
+      const errorMessage = error.response?.data?.error ||
+        error.message ||
+        'Login failed';
+
       setAuthState(prev => ({
         ...prev,
         loading: false,
         error: errorMessage
       }));
-      
-      return { 
-        success: false, 
-        error: errorMessage 
+
+      return {
+        success: false,
+        error: errorMessage
       };
     }
   };
 
   const logout = useCallback(() => {
-    // Optional: Call backend logout endpoint if needed
-    // await api.post('/api/auth/logout/');
-    
     clearAuthTokens();
-    setAuthState({ 
-      user: null, 
-      loading: false, 
-      error: null 
+    setAuthState({
+      user: null,
+      loading: false,
+      error: null
     });
-    
+
     navigate('/login', { replace: true });
     toast.info('You have been logged out');
   }, [navigate]);

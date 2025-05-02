@@ -7,8 +7,8 @@ from HIFACHAMA.serializers.customuserserializer import CustomUserSerializer
 class ChamaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chama
-        fields = ['id', 'name', 'description', 'type', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ['id', 'name', 'description', 'chama_type', 'created_at', 'admin']
+        read_only_fields = ['id', 'created_at', 'admin']
 
 class ChamaMemberSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer()  # Nested serializer to include user details
@@ -22,7 +22,7 @@ class ChamaMemberSerializer(serializers.ModelSerializer):
 class ChamaCreationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chama
-        fields = ['name', 'description', 'type']
+        fields = ['name', 'description', 'chama_type']
 
     def create(self, validated_data):
         # Create a Chama instance

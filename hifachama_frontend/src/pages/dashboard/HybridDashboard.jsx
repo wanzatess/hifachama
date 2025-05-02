@@ -38,14 +38,14 @@ const HybridDashboard = () => {
       }
       try {
         const { data: user } = await axios.get(
-          'https://hifachama-backend.onrender.com/api/users/me/',
+          'http://127.0.0.1:8080/api/users/me/',
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUserData(user);
         const chamaId = user?.chamas?.[0]; // Assuming there's only one chama in the array
         if (chamaId) {
           const { data: chama } = await axios.get(
-            `https://hifachama-backend.onrender.com/api/chamas/${chamaId}/`,
+            `http://127.0.0.1:8080/api/chamas/${chamaId}/`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           setChamaData(chama);

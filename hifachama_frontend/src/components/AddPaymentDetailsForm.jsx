@@ -20,7 +20,7 @@ const AddPaymentDetailsForm = ({ chamaId }) => {
     }
 
     try {
-      await axios.post(`https://hifachama-backend.onrender.com/api/chamas/${chamaId}/add-payment-details/`, {
+      await axios.post(`http://127.0.0.1:8080/api/chamas/${chamaId}/add-payment-details/`, {
         paybill_number: paybillNumber,
         till_number: tillNumber,
         phone_number: phoneNumber,

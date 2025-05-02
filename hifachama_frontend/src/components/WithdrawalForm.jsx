@@ -19,7 +19,7 @@ const WithdrawalForm = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `https://hifachama-backend.onrender.com/api/chamas/${formData.chama}/balance/`, 
+        `http://127.0.0.1:8080/api/chamas/${formData.chama}/balance/`, 
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -67,7 +67,7 @@ const WithdrawalForm = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "https://hifachama-backend.onrender.com/api/transactions/",
+        "http://127.0.0.1:8080/api/transactions/",
         formData,
         {
           headers: {

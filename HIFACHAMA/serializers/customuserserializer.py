@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -75,77 +76,60 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(
-        required=True,
-        label="Email Address",
-        help_text="Enter your registered email address",
-        error_messages={
-            'required': _('Email address is required'),
-            'invalid': _('Enter a valid email address')
-        }
-    )
-    password = serializers.CharField(
-        write_only=True,
-        required=True,
-        style={'input_type': 'password'},
-        trim_whitespace=False,
-        label="Password",
-        help_text="Enter your password",
-        error_messages={
-            'required': _('Password is required')
-        }
-    )
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True)
 
     def validate(self, attrs):
         email = attrs.get('email', '').lower().strip()
         password = attrs.get('password')
-
         if not email or not password:
-            raise serializers.ValidationError(
-                _("Both email and password are required"),
-                code='authorization'
-            )
-
+            raise serializers.ValidationError(_("Both email and password are required"))
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
-            raise AuthenticationFailed(
-                _("Invalid email or password"),
-                code='authorization'
-            )
-
+            raise AuthenticationFailed(_("Invalid email or password"))
         authenticated_user = authenticate(
             request=self.context.get('request'),
             username=email,
             password=password
         )
-
         if not authenticated_user:
-            raise AuthenticationFailed(
-                _("Invalid email or password"),
-                code='authorization'
-            )
-
+            raise AuthenticationFailed(_("Invalid email or password"))
         if not authenticated_user.is_active:
-            raise AuthenticationFailed(
-                _("Account is inactive"),
-                code='inactive'
-            )
-
+            raise AuthenticationFailed(_("Account is inactive"))
         attrs['user'] = authenticated_user
         return attrs
 
     def to_representation(self, instance):
         user = instance['user']
-        token, created = Token.objects.get_or_create(user=user)
+        refresh = RefreshToken.for_user(user)
+        redirect_to = 'join-chama'  # Default for non-chairpersons
+        if user.role.lower() == 'chairperson':
+            redirect_to = 'create-chama' if not hasattr(user, 'chama') or not user.chama_id else 'chama'
+        elif hasattr(user, 'chama') and user.chama_id:
+            redirect_to = 'chama'
         
-        return {
-            "token": token.key,
-            "user_id": user.pk,
-            "email": user.email,
-            "role": user.role,
-            "username": user.username,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "chama_id": user.chama_id if hasattr(user, 'chama') else None
+        response = {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": {
+                "id": user.pk,
+                "email": user.email,
+                "role": user.role,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "chama_id": user.chama_id if hasattr(user, 'chama') else None
+            },
+            "message": "Login successful",
+            "redirectTo": redirect_to
         }
+        
+        # Include chama data if available
+        if hasattr(user, 'chama') and user.chama_id:
+            response["chama"] = {
+                "id": user.chama_id,
+                "name": user.chama.name if hasattr(user.chama, 'name') else ""
+            }
+        
+        return response

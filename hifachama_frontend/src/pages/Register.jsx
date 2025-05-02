@@ -42,7 +42,7 @@ const Register = () => {
     e.preventDefault();
     
     // 1. Hardcoded API URL - change this to your actual backend URL
-    const BACKEND_URL = "https://hifachama-backend.onrender.com/"; // ← CHANGE THIS IF NEEDED
+    const BACKEND_URL = "http://127.0.0.1:8080/"; // ← CHANGE THIS IF NEEDED
     
     // 2. Validate form
     if (!validateForm()) {

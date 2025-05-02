@@ -27,7 +27,7 @@ const MerryGoRoundDashboard = () => {
         
         // Fetch chama data
         const chamaResponse = await axios.get(
-          `https://hifachama-backend.onrender.com/api/chamas/${id}/`,
+          `http://127.0.0.1:8080/api/chamas/${id}/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -38,7 +38,7 @@ const MerryGoRoundDashboard = () => {
 
         // Fetch user data
         const userResponse = await axios.get(
-          'https://hifachama-backend.onrender.com/api/users/me/',
+          'http://127.0.0.1:8080/api/users/me/',
           {
             headers: {
               Authorization: `Bearer ${token}`,

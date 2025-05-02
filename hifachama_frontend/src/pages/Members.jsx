@@ -5,7 +5,7 @@ const Members = () => {
   const [members, setMembers] = useState([]);
 
   useEffect(() => {
-    api.get("https://hifachama-backend.onrender.com/api/members/")
+    api.get("http://127.0.0.1:8080/api/members/")
       .then(response => setMembers(response.data))
       .then((data) => console.log(data))
       .catch(error => console.error("Error fetching members:", error));

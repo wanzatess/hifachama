@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getAuthToken, getRefreshToken, clearAuthTokens, setAuthTokens } from '../utils/auth';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://hifachama-backend.onrender.com',
+  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -35,7 +35,7 @@ api.interceptors.response.use(
         if (refreshToken) {
           // Attempt to refresh tokens
           const { data } = await axios.post(
-            `${originalRequest.baseURL}/api/token/refresh/`, 
+            `${originalRequest.baseURL}/api/refresh/`, 
             { refresh: refreshToken }
           );
           

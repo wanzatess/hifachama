@@ -10,7 +10,7 @@ const MemberList = ({ chamaId }) => {
 
     const fetchMembers = async () => {
       try {
-        const res = await fetch(`https://hifachama-backend.onrender.com/api/chama-members/?chama_id=${chamaId}`);
+        const res = await fetch(`http://127.0.0.1:8080/api/chama-members/?chama_id=${chamaId}`);
         const data = await res.json();
         setMembers(data);
         console.log("📦 Members fetched:", data);
