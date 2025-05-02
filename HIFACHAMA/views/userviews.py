@@ -55,8 +55,10 @@ def verify_token(request):
 
     # Safely get the first chama ID if exists
     chama_id = None
-    if user.chama_memberships.exists():
-        chama_id = user.chama_memberships.first().chama.id
+    # Safely get the first chama membership, if it exists
+    chama_member = user.chama_memberships.first()
+    if chama_member:
+        chama_id = chama_member.chama.id
 
     return Response({
         "valid": True,

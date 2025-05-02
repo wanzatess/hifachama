@@ -6,8 +6,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         user = self.user
 
-        # Determine redirect path based on role and chama status
-        if not user.chama_id:
+        # Safely access the chama ID through ChamaMember relationship
+        chama_id = None
+        if user.chama_memberships.exists():
+            chama_id = user.chama_memberships.first().chama.id
+
+        # Set the redirect path based on the role and chama status
+        if not chama_id:
             if user.role == "Chairperson":
                 redirect_path = "/dashboard/create-chama"
             else:
@@ -15,6 +20,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         else:
             redirect_path = "/dashboard"
 
+        # Update response data with user and chama details
         data.update({
             "user": {
                 "id": user.id,
@@ -24,8 +30,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 "last_name": user.last_name,
                 "role": user.role,
             },
-            "chama": getattr(user, "chama_id", None),
+            "chama": chama_id,
             "redirectTo": redirect_path
         })
 
         return data
+
