@@ -13,7 +13,7 @@ export default defineConfig({
         target: 'http://127.0.0.1:8080',
         changeOrigin: true,
         secure: false, // Only for development with self-signed certs
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path, // do not modify the path
         headers: {
           // Ensure backend receives proper headers
           'Access-Control-Allow-Origin': '*',

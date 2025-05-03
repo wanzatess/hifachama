@@ -21,7 +21,6 @@ const HybridDashboard = () => {
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [members, setMembers] = useState([]);
   const [contributions, setContributions] = useState([]);
-  const [refreshContributions, setRefreshContributions] = useState(false);
   const [meetings, setMeetings] = useState([]);
   const [loans, setLoans] = useState([]);
   const [userData, setUserData] = useState(null);
@@ -66,7 +65,6 @@ const HybridDashboard = () => {
       console.log("🏛️ Chama data set:", chama);
       setChamaData(chama);
 
-      // Fetch payment details
       console.log("🔍 Fetching payment details for chama:", chama.id);
       try {
         const { data: paymentData } = await axios.get(
@@ -84,6 +82,49 @@ const HybridDashboard = () => {
       setError("Failed to load dashboard data. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const refreshContributions = async () => {
+    if (!chamaData?.id || !userData?.id) {
+      console.log("⏳ Skipping refresh: chamaData or userData missing");
+      return;
+    }
+
+    try {
+      console.log("🔍 Refreshing contributions for chama:", chamaData.id);
+      const { data: memberData } = await supabase
+        .from('HIFACHAMA_chamamember')
+        .select('id, chama_id')
+        .eq('user_id', userData.id)
+        .single();
+      if (!memberData) {
+        console.error("❌ No member data found");
+        return;
+      }
+      const chamaId = memberData.chama_id;
+
+      const { data: chamaMembers } = await supabase
+        .from('HIFACHAMA_chamamember')
+        .select('id')
+        .eq('chama_id', chamaId);
+      const memberIds = chamaMembers ? chamaMembers.map(m => m.id) : [];
+
+      const { data: transactions } = await supabase
+        .from('HIFACHAMA_transaction')
+        .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
+        .in('member_id', memberIds)
+        .eq('category', 'contribution');
+
+      const formattedTransactions = transactions.map(t => ({
+        ...t,
+        username: t.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+      }));
+
+      console.log("💰 Refreshed contributions:", formattedTransactions);
+      setContributions(formattedTransactions || []);
+    } catch (err) {
+      console.error("❌ Error refreshing contributions:", err);
     }
   };
 
@@ -106,24 +147,72 @@ const HybridDashboard = () => {
     const setupRealtime = async () => {
       try {
         console.log("🔍 Fetching initial Supabase data...");
-        const [{ data: m }, { data: t }, { data: mt }, { data: l }, { data: pd }] = await Promise.all([
+
+        // Fetch user's member ID and chama members
+        const { data: memberData, error: memberError } = await supabase
+          .from('HIFACHAMA_chamamember')
+          .select('id, chama_id')
+          .eq('user_id', userData.id)
+          .single();
+        if (memberError || !memberData) {
+          console.error("❌ Error fetching member data:", memberError);
+          setError("Failed to load member data.");
+          return;
+        }
+        const memberId = memberData.id;
+        const chamaId = memberData.chama_id;
+
+        // Fetch all member IDs for the chama
+        const { data: chamaMembers, error: membersError } = await supabase
+          .from('HIFACHAMA_chamamember')
+          .select('id')
+          .eq('chama_id', chamaId);
+        if (membersError) {
+          console.error("❌ Error fetching chama members:", membersError);
+          setError("Failed to load chama members.");
+          return;
+        }
+        const memberIds = chamaMembers.map(m => m.id);
+
+        // Fetch initial data
+        const [
+          { data: users },
+          { data: transactions },
+          { data: meetings },
+          { data: loans },
+          { data: paymentDetails }
+        ] = await Promise.all([
           supabase
             .from('HIFACHAMA_customuser')
             .select('*, HIFACHAMA_chamamember!inner(chama_id)')
             .eq('HIFACHAMA_chamamember.chama_id', chamaId),
-          supabase.from('HIFACHAMA_transaction').select('*').eq('chama_id', chamaId),
+          supabase
+            .from('HIFACHAMA_transaction')
+            .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
+            .in('member_id', memberIds)
+            .eq('category', 'contribution'),
           supabase.from('HIFACHAMA_meeting').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_loan').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_paymentdetails').select('*').eq('chama_id', chamaId).single(),
         ]);
-        console.log("👥 Members fetched:", m);
-        console.log("🔎 Member schema:", m?.[0] || "No members found");
-        console.log("💳 Supabase payment details:", pd);
-        setMembers(m || []);
-        setContributions(t || []);
-        setMeetings(mt || []);
-        setLoans(l || []);
-        setPaymentDetails(pd || null);
+
+        // Map transactions to include username directly
+        const formattedTransactions = transactions.map(t => ({
+          ...t,
+          username: t.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+        }));
+
+        console.log("👥 Members fetched:", users);
+        console.log("💰 Contributions fetched:", formattedTransactions);
+        console.log("📅 Meetings fetched:", meetings);
+        console.log("💸 Loans fetched:", loans);
+        console.log("💳 Payment details fetched:", paymentDetails);
+
+        setMembers(users || []);
+        setContributions(formattedTransactions || []);
+        setMeetings(meetings || []);
+        setLoans(loans || []);
+        setPaymentDetails(paymentDetails || null);
       } catch (err) {
         console.error('❌ Error fetching initial data:', err);
         setError(`Failed to load real-time data: ${err.message}`);
@@ -135,13 +224,18 @@ const HybridDashboard = () => {
     const channels = [
       { table: 'HIFACHAMA_customuser', setter: setMembers, filterByChama: true },
       { table: 'HIFACHAMA_chamamember', setter: setMembers, isMembershipTable: true },
-      { table: 'HIFACHAMA_transaction', setter: setContributions },
-      { table: 'HIFACHAMA_meeting', setter: setMeetings },
-      { table: 'HIFACHAMA_loan', setter: setLoans },
-      { table: 'HIFACHAMA_paymentdetails', setter: setPaymentDetails },
+      {
+        table: 'HIFACHAMA_transaction',
+        setter: setContributions,
+        filterByMembers: true,
+        filterByCategory: 'contribution'
+      },
+      { table: 'HIFACHAMA_meeting', setter: setMeetings, filterByChama: true },
+      { table: 'HIFACHAMA_loan', setter: setLoans, filterByChama: true },
+      { table: 'HIFACHAMA_paymentdetails', setter: setPaymentDetails, filterByChama: true },
     ];
 
-    activeChannels = channels.map(({ table, setter, filterByChama, isMembershipTable }) => {
+    activeChannels = channels.map(({ table, setter, filterByChama, filterByMembers, isMembershipTable, filterByCategory }) => {
       const channel = supabase.channel(`realtime:${table}`);
 
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
@@ -158,16 +252,37 @@ const HybridDashboard = () => {
           return;
         }
 
-        setter((prev) => {
-          if (filterByChama && newRow?.chama_id !== chamaId) return prev;
+        if (filterByMembers) {
+          const { data: chamaMembers } = await supabase
+            .from('HIFACHAMA_chamamember')
+            .select('id')
+            .eq('chama_id', chamaId);
+          const memberIds = chamaMembers ? chamaMembers.map(m => m.id) : [];
 
+          if (!newRow || !memberIds.includes(newRow.member) || (filterByCategory && newRow.category !== filterByCategory)) {
+            return;
+          }
+
+          const { data: memberData } = await supabase
+            .from('HIFACHAMA_chamamember')
+            .select('HIFACHAMA_customuser!inner(username)')
+            .eq('id', newRow.member)
+            .single();
+          newRow.username = memberData?.HIFACHAMA_customuser?.username || 'Unknown';
+        }
+
+        if (filterByChama && newRow?.chama_id !== chamaId) {
+          return;
+        }
+
+        setter((prev) => {
           switch (eventType) {
             case 'INSERT':
-              return newRow;
+              return [...prev, newRow];
             case 'UPDATE':
-              return newRow;
+              return prev.map((item) => (item.id === newRow.id ? newRow : item));
             case 'DELETE':
-              return null;
+              return prev.filter((item) => item.id !== oldRow.id);
             default:
               return prev;
           }
@@ -234,15 +349,6 @@ const HybridDashboard = () => {
             )}
           </div>
         );      
-      case 'meetings':
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <h3>Upcoming Meetings</h3>
-              <MeetingSchedule />
-            </div>
-          </div>
-        );
       case 'contributions':
         return (
           <div className="dashboard-content">
@@ -253,7 +359,17 @@ const HybridDashboard = () => {
               <ContributionForm
                 chamaId={chamaData?.id}
                 userId={userData?.id}
+                onSuccess={refreshContributions}
               />
+            </div>
+          </div>
+        );
+      case 'meetings':
+        return (
+          <div className="dashboard-content">
+            <div className="dashboard-card">
+              <h3>Upcoming Meetings</h3>
+              <MeetingSchedule />
             </div>
           </div>
         );
@@ -325,7 +441,7 @@ const HybridDashboard = () => {
         role={userData?.role}
         chamaType={chamaData?.type}
         chamaName={chamaData?.name}
-        balance={0} // Adjust if balance data is available
+        balance={0}
       />
       <main className="main-content">
         {isLoading ? (

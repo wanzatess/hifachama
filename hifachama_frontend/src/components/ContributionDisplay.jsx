@@ -6,9 +6,10 @@ import '../styles/Dashboard.css';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 const ContributionDisplay = ({ contributions }) => {
+  // Process chart data for the Pie chart
   const processChartData = () => {
-    const rotational = contributions.filter(c => c.type === 'rotational');
-    const investment = contributions.filter(c => c.type === 'investment');
+    const rotational = contributions.filter(c => c.transaction_type === 'rotational');
+    const investment = contributions.filter(c => c.transaction_type === 'investment');
 
     return {
       labels: ['Rotational', 'Investment'],
@@ -27,8 +28,21 @@ const ContributionDisplay = ({ contributions }) => {
     };
   };
 
+  // Handle loading or empty states
+  if (!contributions || contributions.length === 0) {
+    return (
+      <div className="contribution-display-card">
+        <div className="card-header">
+          <span className="card-icon">💰</span>
+          <h3 className="card-title">Contribution Summary</h3>
+        </div>
+        <p>No contributions found.</p>
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="contribution-display-card">
       <div className="card-header">
         <span className="card-icon">💰</span>
         <h3 className="card-title">Contribution Summary</h3>
@@ -43,9 +57,9 @@ const ContributionDisplay = ({ contributions }) => {
         <ul className="transaction-list">
           {contributions.slice(0, 5).map(c => (
             <li key={c.id}>
-              <span>{c.memberName} - {c.type}</span>
-              <span>KES {c.amount.toFixed(2)}</span>
-              <small>{c.date}</small>
+              <span>{c.member_name || 'Unknown Member'} - {c.transaction_type}</span>
+              <span>KES {(c.amount || 0).toFixed(2)}</span>
+              <small>{c.created_at || 'N/A'}</small>
             </li>
           ))}
         </ul>

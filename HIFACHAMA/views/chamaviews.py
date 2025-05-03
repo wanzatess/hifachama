@@ -66,6 +66,16 @@ class ChamaMemberViewSet(viewsets.ModelViewSet):
         # You could also update user-related fields if needed
         self.request.user.save()
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_chama_member_id(request, chama_id):
+    try:
+        member = ChamaMember.objects.get(user=request.user, chama_id=chama_id)
+        return Response({'chama_member_id': member.id})
+    except ChamaMember.DoesNotExist:
+        return Response({'error': 'You are not a member of this chama.'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class ChamaViewSet(viewsets.ModelViewSet):
     queryset = Chama.objects.all()
     serializer_class = ChamaSerializer

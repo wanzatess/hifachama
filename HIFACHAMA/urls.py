@@ -11,6 +11,7 @@ from HIFACHAMA.views.chamaviews import (
     MyChamasView,
     dashboard_data,
     JoinChamaView,
+    get_chama_member_id
 )
 from HIFACHAMA.views.paymentdetailsview import PaymentDetailsView
 from HIFACHAMA.views.reportsview import generate_pdf_report, generate_excel_report
@@ -53,6 +54,7 @@ urlpatterns = [
     path("api/chamas/", ChamaListCreateView.as_view(), name="chama-list"),
     path("api/chamas/<int:id>/", chama_detail, name="chama-detail"),
     path("api/chamas/my-chamas/", MyChamasView.as_view(), name="my-chamas"),
+    path('api/chamas/<int:chama_id>/my-membership/', get_chama_member_id),
     path("api/chamas/<int:chama_id>/add-payment-details/", PaymentDetailsView.as_view(), name="add-payment-details"),
     path('api/join-chama/', JoinChamaView.as_view(), name='join-chama'),
 

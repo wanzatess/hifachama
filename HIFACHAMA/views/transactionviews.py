@@ -1,42 +1,37 @@
 from django.db import models
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 
-from HIFACHAMA.models.transactions import Contribution, Withdrawal, Transaction
+from HIFACHAMA.models.transactions import Transaction
 from HIFACHAMA.models.chamamember import ChamaMember
 from HIFACHAMA.serializers.transactionserializer import TransactionSerializer
 
 class TransactionViewSet(viewsets.ModelViewSet):
     """
-    Handles listing, retrieving, and creating contributions and withdrawals
+    Handles listing, retrieving, and creating transactions
     using the unified TransactionSerializer.
     """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = TransactionSerializer
+    queryset = Transaction.objects.all()
 
     def get_queryset(self):
         user = self.request.user
-
-        contributions = Contribution.objects.filter(
-            models.Q(member=user) |
-            models.Q(chama__admin=user) |
-            models.Q(chama__members__user=user, chama__members__role__in=['chairperson', 'treasurer'])
-        ).distinct()
-
-        withdrawals = Withdrawal.objects.filter(
-            models.Q(member=user) |
-            models.Q(chama__admin=user) |
-            models.Q(chama__members__user=user, chama__members__role__in=['chairperson', 'treasurer'])
-        ).distinct()
-
-        all_transactions = list(contributions) + list(withdrawals)
-        return sorted(all_transactions, key=lambda t: t.date, reverse=True)
+        return Transaction.objects.filter(
+            models.Q(member__user=user) |
+            models.Q(member__chama__admin=user) |
+            models.Q(member__chama__members__user=user, member__chama__members__role__in=['chairperson', 'treasurer'])
+        ).distinct().order_by('-date')
 
     def perform_create(self, serializer):
-        serializer.save(member=self.request.user)
+        try:
+            chama_member = ChamaMember.objects.get(user=self.request.user, is_active=True)
+        except ChamaMember.DoesNotExist:
+            raise serializers.ValidationError("You are not an active member of any chama.")
+        serializer.save(member=chama_member)
 
 class ContributionView(APIView):
     """
@@ -52,11 +47,11 @@ class ContributionView(APIView):
 
         data = request.data.copy()
         data['chama'] = chama_member.chama.id
-        data['transaction_type'] = 'contribution'
+        data['category'] = 'contribution'
 
         serializer = TransactionSerializer(data=data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(member=request.user)
+            serializer.save(member=chama_member)
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
@@ -75,12 +70,12 @@ class WithdrawalRequestView(APIView):
 
         data = request.data.copy()
         data['chama'] = chama_member.chama.id
-        data['transaction_type'] = 'withdrawal'
+        data['category'] = 'withdrawal'
         data['status'] = 'pending'
 
         serializer = TransactionSerializer(data=data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(member=request.user)
+            serializer.save(member=chama_member)
             return Response({
                 "message": "Withdrawal requested successfully",
                 "data": serializer.data
@@ -96,7 +91,7 @@ def contributions_data(request):
     try:
         contributions = Transaction.objects.filter(
             member__user=request.user,
-            transaction_type='contribution'
+            category='contribution'
         ).order_by('-date')
 
         serializer = TransactionSerializer(contributions, many=True)
@@ -111,6 +106,11 @@ def transaction_history(request):
     """
     Returns a full transaction history for the authenticated user.
     """
-    transactions = Transaction.objects.all().order_by('-date')
-    serializer = TransactionSerializer(transactions, many=True)
-    return Response(serializer.data)
+    try:
+        transactions = Transaction.objects.filter(
+            member__user=request.user
+        ).order_by('-date')
+        serializer = TransactionSerializer(transactions, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
