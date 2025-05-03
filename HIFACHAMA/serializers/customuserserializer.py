@@ -98,6 +98,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         )
         return user
 
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True)
@@ -105,36 +107,45 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, attrs):
         email = attrs.get('email', '').lower().strip()
         password = attrs.get('password')
+
         if not email or not password:
             raise serializers.ValidationError(_("Both email and password are required"))
+
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
             raise AuthenticationFailed(_("Invalid email or password"))
+
         authenticated_user = authenticate(
             request=self.context.get('request'),
             username=email,
             password=password
         )
+
         if not authenticated_user:
             raise AuthenticationFailed(_("Invalid email or password"))
+
         if not authenticated_user.is_active:
             raise AuthenticationFailed(_("Account is inactive"))
+
         attrs['user'] = authenticated_user
         return attrs
 
     def to_representation(self, instance):
         user = instance['user']
         refresh = RefreshToken.for_user(user)
-        redirect_to = 'join-chama'  # Default for non-chairpersons
-        if user.role.lower() == 'chairperson':
-            # Check if user has a chama_membership
-            chama_member = user.chama_memberships.first()
-            redirect_to = 'create-chama' if not chama_member else 'chama'
-        elif user.chama_memberships.exists():
-            redirect_to = 'chama'
-        
-        response = {
+
+        chama_member = user.chama_memberships.first()
+        chama_data = None
+        if chama_member:
+            chama = chama_member.chama
+            chama_data = {
+                "id": chama.id,
+                "name": chama.name,
+                "type": chama.chama_type
+            }
+
+        return {
             "access": str(refresh.access_token),
             "refresh": str(refresh),
             "user": {
@@ -144,18 +155,8 @@ class LoginSerializer(serializers.Serializer):
                 "username": user.username,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-                "chama_id": user.chama_memberships.first().chama.id if user.chama_memberships.exists() else None
+                "chama_id": chama_member.chama.id if chama_member else None
             },
-            "message": "Login successful",
-            "redirectTo": redirect_to
+            "chama": chama_data,
+            "message": "Login successful"
         }
-        
-        # Include chama data if available
-        if user.chama_memberships.exists():
-            chama = user.chama_memberships.first().chama
-            response["chama"] = {
-                "id": chama.id,
-                "name": chama.name
-            }
-        
-        return response

@@ -29,7 +29,7 @@ const HybridDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchUser = async () => {
+  const fetchUserAndPaymentDetails = async () => {
     setIsLoading(true);
     setError(null);
     const token = getAuthToken();
@@ -59,13 +59,26 @@ const HybridDashboard = () => {
         return;
       }
 
-      // Set chamaData using chama_id and chama_name from user data
       const chama = {
         id: user.chama_id,
         name: user.chama_name || 'Unnamed Chama'
       };
       console.log("🏛️ Chama data set:", chama);
       setChamaData(chama);
+
+      // Fetch payment details
+      console.log("🔍 Fetching payment details for chama:", chama.id);
+      try {
+        const { data: paymentData } = await axios.get(
+          `http://127.0.0.1:8080/api/chamas/${chama.id}/add-payment-details/`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        console.log("💳 Payment details fetched:", paymentData);
+        setPaymentDetails(paymentData);
+      } catch (err) {
+        console.warn("⚠️ No payment details found:", err.response?.data || err.message);
+        setPaymentDetails(null);
+      }
     } catch (err) {
       console.error("❌ Error fetching user data:", err.response?.data || err.message);
       setError("Failed to load dashboard data. Please try again.");
@@ -75,7 +88,7 @@ const HybridDashboard = () => {
   };
 
   useEffect(() => {
-    fetchUser();
+    fetchUserAndPaymentDetails();
   }, []);
 
   // Supabase real-time listener setup
@@ -93,8 +106,7 @@ const HybridDashboard = () => {
     const setupRealtime = async () => {
       try {
         console.log("🔍 Fetching initial Supabase data...");
-        const [{ data: m }, { data: t }, { data: mt }, { data: l }] = await Promise.all([
-          // Join HIFACHAMA_customuser with HIFACHAMA_chamamember to filter by chama_id
+        const [{ data: m }, { data: t }, { data: mt }, { data: l }, { data: pd }] = await Promise.all([
           supabase
             .from('HIFACHAMA_customuser')
             .select('*, HIFACHAMA_chamamember!inner(chama_id)')
@@ -102,13 +114,16 @@ const HybridDashboard = () => {
           supabase.from('HIFACHAMA_transaction').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_meeting').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_loan').select('*').eq('chama_id', chamaId),
+          supabase.from('HIFACHAMA_paymentdetails').select('*').eq('chama_id', chamaId).single(),
         ]);
         console.log("👥 Members fetched:", m);
         console.log("🔎 Member schema:", m?.[0] || "No members found");
+        console.log("💳 Supabase payment details:", pd);
         setMembers(m || []);
         setContributions(t || []);
         setMeetings(mt || []);
         setLoans(l || []);
+        setPaymentDetails(pd || null);
       } catch (err) {
         console.error('❌ Error fetching initial data:', err);
         setError(`Failed to load real-time data: ${err.message}`);
@@ -118,13 +133,12 @@ const HybridDashboard = () => {
     setupRealtime();
 
     const channels = [
-      // Listen to HIFACHAMA_customuser for user data changes
       { table: 'HIFACHAMA_customuser', setter: setMembers, filterByChama: true },
-      // Listen to HIFACHAMA_chamamember for membership changes
       { table: 'HIFACHAMA_chamamember', setter: setMembers, isMembershipTable: true },
       { table: 'HIFACHAMA_transaction', setter: setContributions },
       { table: 'HIFACHAMA_meeting', setter: setMeetings },
       { table: 'HIFACHAMA_loan', setter: setLoans },
+      { table: 'HIFACHAMA_paymentdetails', setter: setPaymentDetails },
     ];
 
     activeChannels = channels.map(({ table, setter, filterByChama, isMembershipTable }) => {
@@ -135,7 +149,6 @@ const HybridDashboard = () => {
         console.log(`🔁 ${eventType} on ${table}:`, payload);
 
         if (isMembershipTable) {
-          // For HIFACHAMA_chamamember changes, refresh the member list
           const { data: updatedMembers } = await supabase
             .from('HIFACHAMA_customuser')
             .select('*, HIFACHAMA_chamamember!inner(chama_id)')
@@ -150,11 +163,11 @@ const HybridDashboard = () => {
 
           switch (eventType) {
             case 'INSERT':
-              return [newRow, ...prev];
+              return newRow;
             case 'UPDATE':
-              return prev.map((item) => (item.id === newRow.id ? newRow : item));
+              return newRow;
             case 'DELETE':
-              return prev.filter((item) => item.id !== oldRow.id);
+              return null;
             default:
               return prev;
           }
@@ -179,6 +192,7 @@ const HybridDashboard = () => {
       case 'overview':
         console.log("📦 chamaData in Dashboard:", chamaData);
         console.log("📦 chamaId passed to MemberList:", chamaData?.id);
+      
         if (error) {
           return (
             <div className="error-message">
@@ -186,41 +200,40 @@ const HybridDashboard = () => {
               <button onClick={() => window.location.href = '/join-chama'}>
                 Join or Create a Chama
               </button>
-              <button onClick={fetchUser} style={{ marginLeft: '10px' }}>
+              <button onClick={fetchUserAndPaymentDetails} style={{ marginLeft: '10px' }}>
                 Retry
               </button>
             </div>
           );
         }
+      
         if (!chamaData) {
           return <p>⏳ Loading chama data...</p>;
         }
+      
         return (
           <div className="dashboard-content">
             <div className="dashboard-header">
               <div>Welcome, {userData?.username || userData?.email}</div>
               <div>{chamaData?.name}</div>
             </div>
+      
             <div className="dashboard-card">
               <MemberList chamaId={chamaData?.id} members={members} title="Member Directory" />
             </div>
+      
             {userData?.role === 'Chairperson' && (
-              <div className="dashboard-card">
-                <a href="#" onClick={() => setActiveSection('paymentDetails')}>
-                  Add Payment Details
-                </a>
+              <div className="dashboard-card" style={{ marginTop: '20px' }}>
+                <h3>Manage Payment Details</h3>
+                <AddPaymentDetailsForm
+                  chamaId={chamaData?.id}
+                  initialData={paymentDetails}
+                  onSuccess={(updatedData) => setPaymentDetails(updatedData)}
+                />
               </div>
             )}
           </div>
-        );
-      case 'paymentDetails':
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <AddPaymentDetailsForm chamaId={chamaData?.id} />
-            </div>
-          </div>
-        );
+        );      
       case 'meetings':
         return (
           <div className="dashboard-content">
@@ -305,7 +318,15 @@ const HybridDashboard = () => {
 
   return (
     <div className="dashboard-layout">
-      <Sidebar setActiveSection={setActiveSection} activeSection={activeSection} />
+      <Sidebar
+        setActiveSection={setActiveSection}
+        activeSection={activeSection}
+        paymentDetails={paymentDetails}
+        role={userData?.role}
+        chamaType={chamaData?.type}
+        chamaName={chamaData?.name}
+        balance={0} // Adjust if balance data is available
+      />
       <main className="main-content">
         {isLoading ? (
           <div className="dashboard-loading">Loading...</div>

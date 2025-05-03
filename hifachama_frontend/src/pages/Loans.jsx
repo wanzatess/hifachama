@@ -1,9 +1,10 @@
 import { useState, useEffect, useContext } from "react";
 import api from '../api/axiosConfig';
-import { AuthProvider } from "../context/AuthContext";  // ✅ Add this
+import { useAuth } from "../context/AuthContext";
+ // ✅ Add this
 
 const Loans = () => {
-  const { user } = useContext(AuthContext);  // ✅ Get the logged-in user's role
+  const { user } = useAuth();  // ✅ Get the logged-in user's role
   const [loans, setLoans] = useState([]);
 
   useEffect(() => {

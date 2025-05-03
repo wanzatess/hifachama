@@ -1,7 +1,7 @@
 import { createContext, useState, useEffect, useCallback, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/axiosConfig';
-import { getAuthToken, getRefreshToken, setAuthTokens, clearAuthTokens } from '../utils/auth';
+import { getAuthToken, setAuthTokens, clearAuthTokens } from '../utils/auth';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Initialize auth state
   const initializeAuth = useCallback(async () => {
     const token = getAuthToken();
     if (!token) {
@@ -24,25 +23,20 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      // Verify token and get user data
-      const { data: user } = await api.get('api/users/me/');
+      const { data: user } = await api.get('/api/users/me/');
       setAuthState({
         user,
         loading: false,
         error: null
       });
       localStorage.setItem("user", JSON.stringify(user));
-
     } catch (error) {
-      console.error('Authentication check failed:', error);
       clearAuthTokens();
       setAuthState({
         user: null,
         loading: false,
         error: error.response?.data?.detail || 'Session expired'
       });
-      
-      // Redirect to login if not already there
       if (!location.pathname.startsWith('/login')) {
         navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
       }
@@ -50,26 +44,12 @@ export const AuthProvider = ({ children }) => {
   }, [navigate, location.pathname]);
 
   useEffect(() => {
+    if (location.pathname === '/login') {
+      setAuthState(prev => ({ ...prev, loading: false }));
+      return;
+    }
     initializeAuth();
-  }, [initializeAuth]);
-
-  const resolveFrontendPath = (redirectTo, chama) => {
-    if (!redirectTo) return '/';
-
-    // Handle role-based redirects for chairperson and others
-    if (redirectTo === 'create-chama') {
-      return '/dashboard/create-chama';
-    } else if (redirectTo === 'join-chama') {
-      return '/dashboard/join-chama';
-    }
-
-    // Fallback logic
-    if (chama && chama.id) {
-      return `/dashboard/chama/${chama.id}`;
-    }
-
-    return redirectTo;
-  };
+  }, [initializeAuth, location.pathname]);
 
   const login = async (email, password) => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
@@ -77,36 +57,39 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await api.post('/api/login/', { email, password });
 
-      // Store JWT tokens
       setAuthTokens({
         access: data.access,
         refresh: data.refresh
       });
 
-      const user = {
-        ...data.user,
-        chama: data.chama || null  // Include chama data
-      };
+      const user = data.user;
+      const chama = data.chama || null;
+      
       localStorage.setItem("user", JSON.stringify(user));
-
+      localStorage.setItem("chama", JSON.stringify(chama));
       setAuthState({
         user,
         loading: false,
         error: null
       });
+      
+      // 🧭 Redirect logic
+      let redirectPath;
+      if (chama?.id) {
+        redirectPath = `/dashboard/${chama.type}/${chama.id}`;
+      } else if (user.role.toLowerCase() === 'chairperson') {
+        redirectPath = '/dashboard/create-chama';
+      } else {
+        redirectPath = '/dashboard/join-chama';
+      }
+      
+      console.log('Navigating to:', redirectPath);
+      navigate(redirectPath);
 
-      const frontendRedirectTo = resolveFrontendPath(data.redirectTo, data.chama);
-      navigate(frontendRedirectTo, { replace: true });
-
-      return {
-        success: true,
-        user,
-        redirectTo: frontendRedirectTo
-      };
+      return { success: true, user };
     } catch (error) {
       const errorMessage = error.response?.data?.error ||
-        error.message ||
-        'Login failed';
+        error.message || 'Login failed';
 
       setAuthState(prev => ({
         ...prev,
@@ -114,6 +97,7 @@ export const AuthProvider = ({ children }) => {
         error: errorMessage
       }));
 
+      clearAuthTokens();
       return {
         success: false,
         error: errorMessage
@@ -128,12 +112,10 @@ export const AuthProvider = ({ children }) => {
       loading: false,
       error: null
     });
-
     navigate('/login', { replace: true });
     toast.info('You have been logged out');
   }, [navigate]);
 
-  // Auto-logout on 401 errors (handled in axios interceptor)
   useEffect(() => {
     if (authState.error?.includes('Session expired')) {
       logout();

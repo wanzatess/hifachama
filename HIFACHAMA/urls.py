@@ -12,7 +12,7 @@ from HIFACHAMA.views.chamaviews import (
     dashboard_data,
     JoinChamaView,
 )
-from HIFACHAMA.views.paymentdetailsview import AddPaymentDetailsView
+from HIFACHAMA.views.paymentdetailsview import PaymentDetailsView
 from HIFACHAMA.views.reportsview import generate_pdf_report, generate_excel_report
 from HIFACHAMA.views.transactionviews import TransactionViewSet, transaction_history, contributions_data
 from HIFACHAMA.views.userviews import current_user, UserLoginView, RegisterView
@@ -53,7 +53,7 @@ urlpatterns = [
     path("api/chamas/", ChamaListCreateView.as_view(), name="chama-list"),
     path("api/chamas/<int:id>/", chama_detail, name="chama-detail"),
     path("api/chamas/my-chamas/", MyChamasView.as_view(), name="my-chamas"),
-    path("api/chamas/<int:chama_id>/add-payment-details/", AddPaymentDetailsView.as_view(), name="add-payment-details"),
+    path("api/chamas/<int:chama_id>/add-payment-details/", PaymentDetailsView.as_view(), name="add-payment-details"),
     path('api/join-chama/', JoinChamaView.as_view(), name='join-chama'),
 
     # Dashboard

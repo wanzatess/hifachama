@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import api from "../api/axiosConfig";
 import "../styles/Login.css";
 import logo from '../static/images/logo.png';
 import { useAuth } from '../context/AuthContext';
 import Spinner from "../components/Spinner";
-
+import { clearAuthTokens } from '../utils/auth';
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -13,40 +13,23 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-  
+
     try {
-      // Perform authentication - destructure all needed values
-      const { role, chama, redirectTo } = await login(email, password);
-      
-      // Use redirectTo if provided, otherwise fall back to role-based logic
-      if (redirectTo) {
-        navigate(redirectTo, { replace: true });
-      } else {
-        // Fallback logic (shouldn't be needed if backend provides redirectTo)
-        if (role === 'chairperson') {
-          navigate(
-            chama 
-              ? `/dashboard/chama/${chama.id}`
-              : '/dashboard/create-chama',
-            { replace: true }
-          );
-        } else {
-          navigate(
-            chama
-              ? `/dashboard/chama/${chama.id}`
-              : '/dashboard/join-chama',
-            { replace: true }
-          );
-        }
+      const response = await login(email, password);
+      console.log("Login.jsx: Response from login:", response); // Debug
+
+      if (!response.success) {
+        throw new Error(response.error || "Login failed");
       }
-  
+
+      console.log("Login.jsx: Login successful, expecting redirect by AuthContext");
+
     } catch (err) {
       console.error("Login error:", {
         error: err,
@@ -54,7 +37,7 @@ const Login = () => {
         status: err.response?.status,
         config: err.config
       });
-  
+
       if (err.message.includes('404') || err.response?.status === 404) {
         setError("Login service unavailable. Please try later.");
       } else if (err.message.includes('Network Error')) {
@@ -62,15 +45,16 @@ const Login = () => {
       } else {
         setError(err.response?.data?.detail || 
                  err.response?.data?.error || 
+                 err.message || 
                  "Login failed. Please try again.");
       }
-  
-      localStorage.removeItem('authToken');
+
+      clearAuthTokens();
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="login-container">
       <div className="login-card">

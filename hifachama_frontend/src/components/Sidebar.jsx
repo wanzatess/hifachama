@@ -7,14 +7,15 @@ import {
   FaUsers,
   FaChartBar,
   FaCalendar,
-  FaCreditCard
+  FaCreditCard,
+  FaCreditCard as FaPayment
 } from "react-icons/fa";
 import '../styles/Sidebar.css';
 
 const Sidebar = ({ role, chamaType, chamaName, balance, setActiveSection, paymentDetails, activeSection }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Define your default navigation links
+  // Define default navigation links
   const navigationLinks = [
     { id: 'overview', label: 'Overview', icon: <FaHome /> },
     { id: 'contributions', label: 'Contributions', icon: <FaMoneyBill /> },
@@ -22,12 +23,13 @@ const Sidebar = ({ role, chamaType, chamaName, balance, setActiveSection, paymen
     { id: 'rotation', label: 'Rotation', icon: <FaUsers /> },
     { id: 'reports', label: 'Reports', icon: <FaChartBar /> },
     { id: 'meetings', label: 'Meetings', icon: <FaCalendar /> },
-    { id: 'loans', label: 'Loans', icon: <FaCreditCard /> },  // Always visible
+    { id: 'loans', label: 'Loans', icon: <FaCreditCard /> },
   ];
 
   // Conditional Links for Chairperson, Treasurer, and Secretary
   const roleBasedLinks = {
     Chairperson: [
+      { id: 'paymentDetails', label: 'Payment Details', icon: <FaPayment /> },
       { id: 'loan-approval', label: 'Loan Approval', icon: <FaHandHoldingUsd /> },
       { id: 'view-loans', label: 'View Loans', icon: <FaCreditCard /> },
     ],
@@ -42,7 +44,7 @@ const Sidebar = ({ role, chamaType, chamaName, balance, setActiveSection, paymen
   };
 
   const getRoleLinks = () => {
-    return roleBasedLinks[role] || []; // Return links based on the role
+    return roleBasedLinks[role] || [];
   };
 
   return (
@@ -64,20 +66,36 @@ const Sidebar = ({ role, chamaType, chamaName, balance, setActiveSection, paymen
 
       {!isCollapsed && (
         <div className="sidebar-profile">
-          <h3>{chamaName}</h3>
+          <h3>{chamaName || 'Chama'}</h3>
           {paymentDetails ? (
-            <>
-              <p>PayBill/Till: {paymentDetails.payBillTill}</p>
-              <p>Phone Number: {paymentDetails.phoneNumber}</p>
-            </>
+            <div className="payment-details">
+              {paymentDetails.paybill_number && (
+                <p><strong>PayBill:</strong> {paymentDetails.paybill_number}</p>
+              )}
+              {paymentDetails.till_number && (
+                <p><strong>Till:</strong> {paymentDetails.till_number}</p>
+              )}
+              {paymentDetails.phone_number && (
+                <p><strong>Phone:</strong> {paymentDetails.phone_number}</p>
+              )}
+              {paymentDetails.bank_account && (
+                <p><strong>Bank:</strong> {paymentDetails.bank_account}</p>
+              )}
+              {!paymentDetails.paybill_number && !paymentDetails.till_number &&
+               !paymentDetails.phone_number && !paymentDetails.bank_account && (
+                <p>No payment details available.</p>
+              )}
+            </div>
           ) : (
-            <p>No payment details available</p>
+            <p>No payment details available.</p>
+          )}
+          {balance !== undefined && (
+            <p><strong>Balance:</strong> {balance} KES</p>
           )}
         </div>
       )}
 
       <nav className="sidebar-nav">
-        {/* Render default navigation links */}
         {navigationLinks.map((link) => (
           <button
             key={link.id}
@@ -88,8 +106,6 @@ const Sidebar = ({ role, chamaType, chamaName, balance, setActiveSection, paymen
             {!isCollapsed && <span className="sidebar-label">{link.label}</span>}
           </button>
         ))}
-
-        {/* Role-based links */}
         {getRoleLinks().map((link) => (
           <button
             key={link.id}
