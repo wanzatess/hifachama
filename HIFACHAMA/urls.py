@@ -15,7 +15,7 @@ from HIFACHAMA.views.chamaviews import (
 )
 from HIFACHAMA.views.paymentdetailsview import PaymentDetailsView
 from HIFACHAMA.views.reportsview import generate_pdf_report, generate_excel_report
-from HIFACHAMA.views.transactionviews import TransactionViewSet, transaction_history, contributions_data
+from HIFACHAMA.views.transactionviews import TransactionViewSet, transaction_history, contributions_data, ChamaBalanceView, NextRotationView, CreateRotationView, UpcomingRotationsView
 from HIFACHAMA.views.userviews import current_user, UserLoginView, RegisterView
 from HIFACHAMA.views.meetingsview import MeetingViewSet
 
@@ -56,6 +56,10 @@ urlpatterns = [
     path("api/chamas/my-chamas/", MyChamasView.as_view(), name="my-chamas"),
     path('api/chamas/<int:chama_id>/my-membership/', get_chama_member_id),
     path("api/chamas/<int:chama_id>/add-payment-details/", PaymentDetailsView.as_view(), name="add-payment-details"),
+    path('api/chamas/<int:chama_id>/balance/', ChamaBalanceView.as_view(), name='chama-balance'),
+    path('api/chamas/<int:chama_id>/next-rotation/', NextRotationView.as_view(), name='next-rotation'),
+    path('api/chamas/<int:chama_id>/create-rotation/', CreateRotationView.as_view(), name='create-rotation'),
+    path('chamas/<int:chama_id>/upcoming-rotations/', UpcomingRotationsView.as_view(), name='upcoming-rotations'),
     path('api/join-chama/', JoinChamaView.as_view(), name='join-chama'),
 
     # Dashboard

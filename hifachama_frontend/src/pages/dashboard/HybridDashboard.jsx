@@ -14,6 +14,7 @@ import AddPaymentDetailsForm from '../../components/AddPaymentDetailsForm';
 import Sidebar from '../../components/Sidebar';
 import MeetingSchedule from '../../components/MeetingSchedule';
 import '../../styles/Dashboard.css';
+import { toast } from 'react-toastify';
 
 const HybridDashboard = () => {
   console.log("🔵 HybridDashboard component loaded");
@@ -21,8 +22,11 @@ const HybridDashboard = () => {
   const [paymentDetails, setPaymentDetails] = useState(null);
   const [members, setMembers] = useState([]);
   const [contributions, setContributions] = useState([]);
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [balance, setBalance] = useState(null);
   const [meetings, setMeetings] = useState([]);
   const [loans, setLoans] = useState([]);
+  const [rotations, setRotations] = useState([]);
   const [userData, setUserData] = useState(null);
   const [chamaData, setChamaData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -132,6 +136,20 @@ const HybridDashboard = () => {
     fetchUserAndPaymentDetails();
   }, []);
 
+  const handleWithdrawalAction = async (transactionId, action) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.post(
+        `http://127.0.0.1:8080/api/transactions/${transactionId}/approve/`,
+        { action },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`Withdrawal ${action}d successfully!`);
+    } catch (error) {
+      toast.error(error.response?.data?.error || `Failed to ${action} withdrawal.`);
+    }
+  };
+
   // Supabase real-time listener setup
   useEffect(() => {
     if (!userData || !chamaData?.id) {
@@ -148,7 +166,6 @@ const HybridDashboard = () => {
       try {
         console.log("🔍 Fetching initial Supabase data...");
 
-        // Fetch user's member ID and chama members
         const { data: memberData, error: memberError } = await supabase
           .from('HIFACHAMA_chamamember')
           .select('id, chama_id')
@@ -162,7 +179,6 @@ const HybridDashboard = () => {
         const memberId = memberData.id;
         const chamaId = memberData.chama_id;
 
-        // Fetch all member IDs for the chama
         const { data: chamaMembers, error: membersError } = await supabase
           .from('HIFACHAMA_chamamember')
           .select('id')
@@ -174,13 +190,14 @@ const HybridDashboard = () => {
         }
         const memberIds = chamaMembers.map(m => m.id);
 
-        // Fetch initial data
         const [
           { data: users },
           { data: transactions },
           { data: meetings },
           { data: loans },
-          { data: paymentDetails }
+          { data: paymentDetails },
+          { data: balanceData },
+          { data: rotationData }
         ] = await Promise.all([
           supabase
             .from('HIFACHAMA_customuser')
@@ -189,30 +206,44 @@ const HybridDashboard = () => {
           supabase
             .from('HIFACHAMA_transaction')
             .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
-            .in('member_id', memberIds)
-            .eq('category', 'contribution'),
+            .in('member_id', memberIds),
           supabase.from('HIFACHAMA_meeting').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_loan').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_paymentdetails').select('*').eq('chama_id', chamaId).single(),
+          supabase.from('HIFACHAMA_balance').select('*').eq('chama_id', chamaId).single(),
+          supabase.from('HIFACHAMA_rotation').select('*').eq('chama_id', chamaId),
         ]);
 
-        // Map transactions to include username directly
-        const formattedTransactions = transactions.map(t => ({
-          ...t,
-          username: t.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
-        }));
+        const formattedContributions = transactions
+          .filter(t => t.category === 'contribution')
+          .map(t => ({
+            ...t,
+            username: t.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+          }));
+        const formattedWithdrawals = transactions
+          .filter(t => t.category === 'withdrawal')
+          .map(t => ({
+            ...t,
+            username: t.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+          }));
 
         console.log("👥 Members fetched:", users);
-        console.log("💰 Contributions fetched:", formattedTransactions);
+        console.log("💰 Contributions fetched:", formattedContributions);
+        console.log("💸 Withdrawals fetched:", formattedWithdrawals);
         console.log("📅 Meetings fetched:", meetings);
         console.log("💸 Loans fetched:", loans);
         console.log("💳 Payment details fetched:", paymentDetails);
+        console.log("💰 Balance fetched:", balanceData);
+        console.log("🔄 Rotations fetched:", rotationData);
 
         setMembers(users || []);
-        setContributions(formattedTransactions || []);
+        setContributions(formattedContributions || []);
+        setWithdrawals(formattedWithdrawals || []);
         setMeetings(meetings || []);
         setLoans(loans || []);
+        setBalance(balanceData || null);
         setPaymentDetails(paymentDetails || null);
+        setRotations(rotationData || []);
       } catch (err) {
         console.error('❌ Error fetching initial data:', err);
         setError(`Failed to load real-time data: ${err.message}`);
@@ -226,16 +257,41 @@ const HybridDashboard = () => {
       { table: 'HIFACHAMA_chamamember', setter: setMembers, isMembershipTable: true },
       {
         table: 'HIFACHAMA_transaction',
-        setter: setContributions,
+        setter: (data) => {
+          const formatted = {
+            ...data,
+            username: data.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+          };
+          if (data.category === 'contribution') {
+            setContributions(prev => {
+              switch (data.eventType) {
+                case 'INSERT': return [...prev, formatted];
+                case 'UPDATE': return prev.map(item => item.id === formatted.id ? formatted : item);
+                case 'DELETE': return prev.filter(item => item.id !== data.old.id);
+                default: return prev;
+              }
+            });
+          } else if (data.category === 'withdrawal') {
+            setWithdrawals(prev => {
+              switch (data.eventType) {
+                case 'INSERT': return [...prev, formatted];
+                case 'UPDATE': return prev.map(item => item.id === formatted.id ? formatted : item);
+                case 'DELETE': return prev.filter(item => item.id !== data.old.id);
+                default: return prev;
+              }
+            });
+          }
+        },
         filterByMembers: true,
-        filterByCategory: 'contribution'
       },
       { table: 'HIFACHAMA_meeting', setter: setMeetings, filterByChama: true },
       { table: 'HIFACHAMA_loan', setter: setLoans, filterByChama: true },
       { table: 'HIFACHAMA_paymentdetails', setter: setPaymentDetails, filterByChama: true },
+      { table: 'HIFACHAMA_balance', setter: setBalance, filterByChama: true },
+      { table: 'HIFACHAMA_rotation', setter: setRotations, filterByChama: true },
     ];
 
-    activeChannels = channels.map(({ table, setter, filterByChama, filterByMembers, isMembershipTable, filterByCategory }) => {
+    activeChannels = channels.map(({ table, setter, filterByChama, filterByMembers, isMembershipTable }) => {
       const channel = supabase.channel(`realtime:${table}`);
 
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
@@ -259,34 +315,25 @@ const HybridDashboard = () => {
             .eq('chama_id', chamaId);
           const memberIds = chamaMembers ? chamaMembers.map(m => m.id) : [];
 
-          if (!newRow || !memberIds.includes(newRow.member) || (filterByCategory && newRow.category !== filterByCategory)) {
+          if (!newRow || !memberIds.includes(newRow.member_id)) {
             return;
           }
 
           const { data: memberData } = await supabase
             .from('HIFACHAMA_chamamember')
             .select('HIFACHAMA_customuser!inner(username)')
-            .eq('id', newRow.member)
+            .eq('id', newRow.member_id)
             .single();
-          newRow.username = memberData?.HIFACHAMA_customuser?.username || 'Unknown';
+          newRow.HIFACHAMA_chamamember = {
+            HIFACHAMA_customuser: { username: memberData?.HIFACHAMA_customuser?.username || 'Unknown' }
+          };
         }
 
         if (filterByChama && newRow?.chama_id !== chamaId) {
           return;
         }
 
-        setter((prev) => {
-          switch (eventType) {
-            case 'INSERT':
-              return [...prev, newRow];
-            case 'UPDATE':
-              return prev.map((item) => (item.id === newRow.id ? newRow : item));
-            case 'DELETE':
-              return prev.filter((item) => item.id !== oldRow.id);
-            default:
-              return prev;
-          }
-        });
+        setter({ ...newRow, eventType, old: oldRow });
       });
 
       channel.subscribe((status) => {
@@ -303,40 +350,39 @@ const HybridDashboard = () => {
   }, [userData?.id, chamaData?.id]);
 
   const renderContent = () => {
+    if (isLoading) {
+      return <div className="dashboard-loading">Loading...</div>;
+    }
+    if (error) {
+      return (
+        <div className="error-message">
+          <p>{error}</p>
+          <button onClick={() => window.location.href = '/join-chama'}>
+            Join or Create a Chama
+          </button>
+          <button onClick={fetchUserAndPaymentDetails} style={{ marginLeft: '10px' }}>
+            Retry
+          </button>
+        </div>
+      );
+    }
+    if (!chamaData) {
+      return <p>⏳ Loading chama data...</p>;
+    }
+    console.log('🔍 Rendering section with userData:', userData);
     switch (activeSection) {
       case 'overview':
         console.log("📦 chamaData in Dashboard:", chamaData);
         console.log("📦 chamaId passed to MemberList:", chamaData?.id);
-      
-        if (error) {
-          return (
-            <div className="error-message">
-              <p>{error}</p>
-              <button onClick={() => window.location.href = '/join-chama'}>
-                Join or Create a Chama
-              </button>
-              <button onClick={fetchUserAndPaymentDetails} style={{ marginLeft: '10px' }}>
-                Retry
-              </button>
-            </div>
-          );
-        }
-      
-        if (!chamaData) {
-          return <p>⏳ Loading chama data...</p>;
-        }
-      
         return (
           <div className="dashboard-content">
             <div className="dashboard-header">
               <div>Welcome, {userData?.username || userData?.email}</div>
               <div>{chamaData?.name}</div>
             </div>
-      
             <div className="dashboard-card">
               <MemberList chamaId={chamaData?.id} members={members} title="Member Directory" />
             </div>
-      
             {userData?.role === 'Chairperson' && (
               <div className="dashboard-card" style={{ marginTop: '20px' }}>
                 <h3>Manage Payment Details</h3>
@@ -348,7 +394,7 @@ const HybridDashboard = () => {
               </div>
             )}
           </div>
-        );      
+        );
       case 'contributions':
         return (
           <div className="dashboard-content">
@@ -382,13 +428,64 @@ const HybridDashboard = () => {
                 userId={userData?.id}
               />
             </div>
+            <div className="dashboard-card">
+              <h3>Pending Withdrawals</h3>
+              {withdrawals.filter(w => w.status === 'pending').length === 0 ? (
+                <p>No pending withdrawals.</p>
+              ) : (
+                <table className="withdrawal-table">
+                  <thead>
+                    <tr>
+                      <th>Member</th>
+                      <th>Type</th>
+                      <th>Amount</th>
+                      <th>Description</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {withdrawals.filter(w => w.status === 'pending').map(w => (
+                      <tr key={w.id}>
+                        <td>{w.username}</td>
+                        <td>{w.transaction_type}</td>
+                        <td>{w.amount}</td>
+                        <td>{w.purpose}</td>
+                        <td>{w.status}</td>
+                        <td>
+                          <button
+                            onClick={() => handleWithdrawalAction(w.id, 'approve')}
+                            className="action-button approve"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleWithdrawalAction(w.id, 'reject')}
+                            className="action-button reject"
+                            style={{ marginLeft: '10px' }}
+                          >
+                            Reject
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         );
       case 'rotation':
         return (
           <div className="dashboard-content">
             <div className="dashboard-card">
-              <RotationSchedule members={members} contributions={contributions} />
+              <RotationSchedule
+                members={members}
+                contributions={contributions}
+                chamaId={chamaData?.id}
+                rotations={rotations}
+                role={userData?.role}
+              />
             </div>
           </div>
         );
@@ -398,10 +495,11 @@ const HybridDashboard = () => {
             <div className="dashboard-card">
               <ReportDisplay
                 contributions={contributions}
-                withdrawals={[]}
+                withdrawals={withdrawals}
                 loans={loans}
                 members={members}
                 chama={chamaData}
+                balance={balance}
               />
             </div>
           </div>
@@ -441,7 +539,7 @@ const HybridDashboard = () => {
         role={userData?.role}
         chamaType={chamaData?.type}
         chamaName={chamaData?.name}
-        balance={0}
+        balance={balance ? { rotational: balance.rotational_balance, investment: balance.investment_balance } : { rotational: 0, investment: 0 }}
       />
       <main className="main-content">
         {isLoading ? (

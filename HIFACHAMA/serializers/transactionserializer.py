@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from HIFACHAMA.models.transactions import Transaction
+from HIFACHAMA.models.transactions import Transaction, Rotation, Balance
 from HIFACHAMA.models.chama import Chama
 from HIFACHAMA.models.chamamember import ChamaMember
 
@@ -15,3 +15,13 @@ class TransactionSerializer(serializers.ModelSerializer):
         if data['amount'] <= 0:
             raise serializers.ValidationError({"amount": "Amount must be greater than zero."})
         return data
+    
+class BalanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Balance
+        fields = ['chama_id', 'rotational_balance', 'investment_balance', 'pending_balance', 'updated_at']
+    
+class RotationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rotation
+        fields = ['id', 'chama_id', 'member_id', 'position', 'cycle_date', 'payout_amount', 'status', 'completed']

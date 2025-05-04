@@ -89,8 +89,13 @@ const Sidebar = ({ role, chamaType, chamaName, balance, setActiveSection, paymen
           ) : (
             <p>No payment details available.</p>
           )}
-          {balance !== undefined && (
-            <p><strong>Balance:</strong> {balance} KES</p>
+          {balance ? (
+            <div className="balance-details">
+              <p><strong>Rotational Balance:</strong> KES {balance.rotational.toFixed(2)}</p>
+              <p><strong>Investment Balance:</strong> KES {balance.investment.toFixed(2)}</p>
+            </div>
+          ) : (
+            <p>No balance information available.</p>
           )}
         </div>
       )}

@@ -27,3 +27,32 @@ class Transaction(models.Model):
         elif self.category == 'withdrawal':
             return f"Withdrawal by {self.member.user.username} of {self.amount}"
         return f"Transaction by {self.member.user.username} of {self.amount}"
+    
+class Balance(models.Model):
+    chama_id = models.IntegerField(unique=True)
+    rotational_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    investment_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    pending_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'HIFACHAMA_balance'
+    
+class Rotation(models.Model):
+    STATUS_CHOICES = [
+        ('scheduled', 'Scheduled'),
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+    ]
+    
+    chama_id = models.IntegerField()
+    member_id = models.IntegerField()
+    position = models.IntegerField()  # Order in rotation
+    cycle_date = models.DateField()  # Date of rotation payout
+    payout_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Amount to pay out
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')  # Rotation status
+    completed = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'HIFACHAMA_rotation'
+        unique_together = ('chama_id', 'position', 'cycle_date')
