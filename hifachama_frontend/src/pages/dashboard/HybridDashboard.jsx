@@ -130,6 +130,50 @@ const HybridDashboard = () => {
       setContributions(formattedTransactions || []);
     } catch (err) {
       console.error("❌ Error refreshing contributions:", err);
+      toast.error("Failed to refresh contributions.");
+    }
+  };
+
+  const refreshLoans = async () => {
+    if (!chamaData?.id || !userData?.id) {
+      console.log("⏳ Skipping loan refresh: chamaData or userData missing");
+      return;
+    }
+
+    try {
+      console.log("🔍 Refreshing loans for chama:", chamaData.id);
+      const { data: memberData } = await supabase
+        .from('HIFACHAMA_chamamember')
+        .select('id, chama_id')
+        .eq('user_id', userData.id)
+        .single();
+      if (!memberData) {
+        console.error("❌ No member data found");
+        return;
+      }
+      const chamaId = memberData.chama_id;
+
+      const { data: chamaMembers } = await supabase
+        .from('HIFACHAMA_chamamember')
+        .select('id')
+        .eq('chama_id', chamaId);
+      const memberIds = chamaMembers ? chamaMembers.map(m => m.id) : [];
+
+      const { data: loans } = await supabase
+        .from('HIFACHAMA_loan')
+        .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
+        .in('member_id', memberIds);
+
+      const formattedLoans = loans.map(loan => ({
+        ...loan,
+        member_name: loan.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+      }));
+
+      console.log("💸 Refreshed loans:", formattedLoans);
+      setLoans(formattedLoans || []);
+    } catch (err) {
+      console.error("❌ Error refreshing loans:", err);
+      toast.error("Failed to refresh loans.");
     }
   };
 
@@ -137,21 +181,6 @@ const HybridDashboard = () => {
     fetchUserAndPaymentDetails();
   }, []);
 
-  const handleWithdrawalAction = async (transactionId, action) => {
-    try {
-      const token = getAuthToken();
-      const response = await axios.post(
-        `http://127.0.0.1:8080/api/transactions/${transactionId}/approve/`,
-        { action },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success(`Withdrawal ${action}d successfully!`);
-    } catch (error) {
-      toast.error(error.response?.data?.error || `Failed to ${action} withdrawal.`);
-    }
-  };
-
-  // Supabase real-time listener setup
   useEffect(() => {
     if (!userData || !chamaData?.id) {
       console.log("⏳ Skipping Supabase setup: userData or chamaData missing");
@@ -177,7 +206,6 @@ const HybridDashboard = () => {
           setError("Failed to load member data.");
           return;
         }
-        const memberId = memberData.id;
         const chamaId = memberData.chama_id;
 
         const { data: chamaMembers, error: membersError } = await supabase
@@ -209,7 +237,10 @@ const HybridDashboard = () => {
             .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
             .in('member_id', memberIds),
           supabase.from('HIFACHAMA_meeting').select('*').eq('chama_id', chamaId),
-          supabase.from('HIFACHAMA_loan').select('*').eq('chama_id', chamaId),
+          supabase
+            .from('HIFACHAMA_loan')
+            .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
+            .in('member_id', memberIds),
           supabase.from('HIFACHAMA_paymentdetails').select('*').eq('chama_id', chamaId).single(),
           supabase.from('HIFACHAMA_balance').select('*').eq('chama_id', chamaId).single(),
           supabase.from('HIFACHAMA_rotation').select('*').eq('chama_id', chamaId),
@@ -227,12 +258,16 @@ const HybridDashboard = () => {
             ...t,
             username: t.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
           }));
+        const formattedLoans = loans.map(loan => ({
+          ...loan,
+          member_name: loan.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+        }));
 
         console.log("👥 Members fetched:", users);
         console.log("💰 Contributions fetched:", formattedContributions);
         console.log("💸 Withdrawals fetched:", formattedWithdrawals);
         console.log("📅 Meetings fetched:", meetings);
-        console.log("💸 Loans fetched:", loans);
+        console.log("💸 Loans fetched:", formattedLoans);
         console.log("💳 Payment details fetched:", paymentDetails);
         console.log("💰 Balance fetched:", balanceData);
         console.log("🔄 Rotations fetched:", rotationData);
@@ -241,7 +276,7 @@ const HybridDashboard = () => {
         setContributions(formattedContributions || []);
         setWithdrawals(formattedWithdrawals || []);
         setMeetings(meetings || []);
-        setLoans(loans || []);
+        setLoans(formattedLoans || []);
         setBalance(balanceData || null);
         setPaymentDetails(paymentDetails || null);
         setRotations(rotationData || []);
@@ -286,7 +321,24 @@ const HybridDashboard = () => {
         filterByMembers: true,
       },
       { table: 'HIFACHAMA_meeting', setter: setMeetings, filterByChama: true },
-      { table: 'HIFACHAMA_loan', setter: setLoans, filterByChama: true },
+      {
+        table: 'HIFACHAMA_loan',
+        setter: (data) => {
+          const formatted = {
+            ...data,
+            member_name: data.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+          };
+          setLoans(prev => {
+            switch (data.eventType) {
+              case 'INSERT': return [...prev, formatted];
+              case 'UPDATE': return prev.map(item => item.id === formatted.id ? formatted : item);
+              case 'DELETE': return prev.filter(item => item.id !== data.old.id);
+              default: return prev;
+            }
+          });
+        },
+        filterByMembers: true
+      },
       { table: 'HIFACHAMA_paymentdetails', setter: setPaymentDetails, filterByChama: true },
       { table: 'HIFACHAMA_balance', setter: setBalance, filterByChama: true },
       { table: 'HIFACHAMA_rotation', setter: setRotations, filterByChama: true },
@@ -349,6 +401,20 @@ const HybridDashboard = () => {
       activeChannels.forEach((channel) => supabase.removeChannel(channel));
     };
   }, [userData?.id, chamaData?.id]);
+
+  const handleWithdrawalAction = async (transactionId, action) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.post(
+        `http://127.0.0.1:8080/api/transactions/${transactionId}/approve/`,
+        { action },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`Withdrawal ${action}d successfully!`);
+    } catch (error) {
+      toast.error(error.response?.data?.error || `Failed to ${action} withdrawal.`);
+    }
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -471,11 +537,16 @@ const HybridDashboard = () => {
               <LoanRequestForm
                 chamaId={chamaData?.id}
                 userId={userData?.id}
-                onSuccess={() => setRefreshLoans(prev => !prev)}
+                onSuccess={refreshLoans}
               />
             </div>
             <div className="dashboard-card">
-              <LoanList loans={loans} />
+              <LoanList
+                loans={loans}
+                userData={userData}
+                chamaId={chamaData?.id}
+                refreshLoans={refreshLoans}
+              />
             </div>
           </div>
         );

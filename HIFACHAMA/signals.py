@@ -43,8 +43,8 @@ def loan_approval_notification(sender, instance, created, **kwargs):
         message = (
             f"Hello {instance.member.user.first_name},\n\n"
             f"Your loan request of Ksh {instance.amount} has been approved.\n"
-            f"Loan Type: {instance.loan_type}\n"
-            f"Approval Date: {instance.date.strftime('%B %d, %Y')}\n\n"
+            f"Purpose: {instance.purpose}\n"
+            f"Approval Date: {instance.approval_date.strftime('%B %d, %Y')}\n\n"
             "We look forward to supporting your financial goals!\n\n"
             "Best regards,\nThe HIFACHAMA Team"
         )
