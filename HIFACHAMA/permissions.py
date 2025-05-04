@@ -1,25 +1,27 @@
 from rest_framework.permissions import BasePermission
 from .models import Chama, ChamaMember
+from .models.transactions import Rotation
+from django.utils import timezone
 
 class IsChairperson(BasePermission):
-    """Allows access only to chairperson"""
+    """Allows access only to users with Chairperson role"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "chairperson"
+        return request.user.is_authenticated and request.user.role == "Chairperson"
 
 class IsTreasurer(BasePermission):
-    """Allows access only to treasurer"""
+    """Allows access only to users with Treasurer role"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "treasurer"
+        return request.user.is_authenticated and request.user.role == "Treasurer"
 
 class IsSecretary(BasePermission):
-    """Allows access only to secretary"""
+    """Allows access only to users with Secretary role"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "secretary"
+        return request.user.is_authenticated and request.user.role == "Secretary"
 
 class IsMember(BasePermission):
-    """Allows access only to members"""
+    """Allows access only to users with Member role"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "member"
+        return request.user.is_authenticated and request.user.role == "Member"
 
 class IsChamaAdmin(BasePermission):
     """Allows access to chama admin (chairperson)"""
@@ -30,7 +32,7 @@ class IsChamaAdmin(BasePermission):
         return Chama.objects.filter(id=chama_id, admin=request.user).exists()
 
 class IsChamaMember(BasePermission):
-    """Allows access to chama members"""
+    """Allows access to active chama members"""
     def has_permission(self, request, view):
         chama_id = view.kwargs.get('chama_id') or request.data.get('chama')
         if not chama_id:
@@ -42,7 +44,7 @@ class IsChamaMember(BasePermission):
         ).exists()
 
 class IsChamaTreasurer(BasePermission):
-    """Allows access to chama treasurer"""
+    """Allows access to active chama members with Treasurer role"""
     def has_permission(self, request, view):
         chama_id = view.kwargs.get('chama_id') or request.data.get('chama')
         if not chama_id:
@@ -50,6 +52,24 @@ class IsChamaTreasurer(BasePermission):
         return ChamaMember.objects.filter(
             chama_id=chama_id, 
             user=request.user, 
-            role='treasurer',
+            user__role='Treasurer',
             is_active=True
         ).exists()
+
+class IsCurrentRotationMember(BasePermission):
+    """Allows access only to the member whose turn it is in the current rotation"""
+    def has_permission(self, request, view):
+        chama_id = view.kwargs.get('chama_id') or request.data.get('chama')
+        if not chama_id:
+            return False
+        try:
+            chama_member = ChamaMember.objects.get(user=request.user, chama_id=chama_id, is_active=True)
+            current_date = timezone.now().date()
+            rotation = Rotation.objects.filter(
+                chama_id=chama_id,
+                cycle_date__lte=current_date,
+                completed=False
+            ).order_by('position').first()
+            return rotation and rotation.member_id == chama_member.id
+        except ChamaMember.DoesNotExist:
+            return False

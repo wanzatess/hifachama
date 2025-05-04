@@ -10,6 +10,12 @@ class Transaction(models.Model):
         ('withdrawal', 'Withdrawal'),
     ]
     
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('completed', 'Completed'),
+    ]
+    
     amount = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -20,6 +26,7 @@ class Transaction(models.Model):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     purpose = models.CharField(max_length=255, blank=True, null=True)
     transaction_type = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
     def __str__(self):
         if self.category == 'contribution':

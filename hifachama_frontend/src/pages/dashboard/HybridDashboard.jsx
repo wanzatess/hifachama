@@ -8,6 +8,7 @@ import RotationSchedule from '../../components/RotationSchedule';
 import ReportDisplay from '../../components/ReportDisplay';
 import ContributionForm from '../../components/ContributionForm';
 import WithdrawalForm from '../../components/WithdrawalForm';
+import WithdrawalTable from '../../components/WithdrawalTable';
 import LoanRequestForm from '../../components/LoanRequestForm';
 import LoanList from '../../components/LoanList';
 import AddPaymentDetailsForm from '../../components/AddPaymentDetailsForm';
@@ -430,48 +431,7 @@ const HybridDashboard = () => {
             </div>
             <div className="dashboard-card">
               <h3>Pending Withdrawals</h3>
-              {withdrawals.filter(w => w.status === 'pending').length === 0 ? (
-                <p>No pending withdrawals.</p>
-              ) : (
-                <table className="withdrawal-table">
-                  <thead>
-                    <tr>
-                      <th>Member</th>
-                      <th>Type</th>
-                      <th>Amount</th>
-                      <th>Description</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {withdrawals.filter(w => w.status === 'pending').map(w => (
-                      <tr key={w.id}>
-                        <td>{w.username}</td>
-                        <td>{w.transaction_type}</td>
-                        <td>{w.amount}</td>
-                        <td>{w.purpose}</td>
-                        <td>{w.status}</td>
-                        <td>
-                          <button
-                            onClick={() => handleWithdrawalAction(w.id, 'approve')}
-                            className="action-button approve"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleWithdrawalAction(w.id, 'reject')}
-                            className="action-button reject"
-                            style={{ marginLeft: '10px' }}
-                          >
-                            Reject
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+              <WithdrawalTable />
             </div>
           </div>
         );

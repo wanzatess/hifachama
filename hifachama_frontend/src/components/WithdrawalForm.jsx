@@ -1,46 +1,64 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../api/axiosConfig"; // Adjust the path based on your project structure
 import { toast } from "react-toastify";
 
 const WithdrawalForm = () => {
   const [formData, setFormData] = useState({
-    amount: "", 
+    amount: "",
     description: "",
     transaction_type: "withdrawal",
     chama: "",
-    member: ""
+    member: "",
   });
   const [loading, setLoading] = useState(false);
-  const [currentBalance, setCurrentBalance] = useState(0);
+  const [rotationalBalance, setRotationalBalance] = useState(0);
+  const [isUserTurn, setIsUserTurn] = useState(false);
+  const [nextInLine, setNextInLine] = useState(null);
 
   const fetchBalance = async () => {
     if (!formData.chama) return;
-    
+
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `http://127.0.0.1:8080/api/chamas/${formData.chama}/balance/`, 
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await api.get(
+        `/api/chamas/${formData.chama}/balance/`
       );
-      setCurrentBalance(response.data.balance);
+      setRotationalBalance(response.data.rotational_balance);
     } catch (error) {
-      toast.error("Failed to fetch Chama balance.");
+      toast.error("Failed to fetch rotational balance.");
+    }
+  };
+
+  const checkUserTurn = async () => {
+    if (!formData.chama || !formData.member) return;
+
+    try {
+      const response = await api.get(
+        `/api/chamas/${formData.chama}/next-rotation/`
+      );
+      if (response.data.message === "No active rotation found") {
+        setIsUserTurn(false);
+        setNextInLine(null);
+      } else {
+        const currentMemberId = response.data.member_id;
+        setIsUserTurn(currentMemberId === parseInt(formData.member));
+        setNextInLine(response.data.next_in_line);
+      }
+    } catch (error) {
+      toast.error("Failed to verify rotation turn.");
+      setIsUserTurn(false);
     }
   };
 
   useEffect(() => {
     fetchBalance();
-  }, [formData.chama]);
+    checkUserTurn();
+  }, [formData.chama, formData.member]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -52,45 +70,39 @@ const WithdrawalForm = () => {
       return;
     }
 
+    if (!isUserTurn) {
+      toast.error("It is not your turn to withdraw.");
+      return;
+    }
+
     if (formData.amount <= 0) {
       toast.error("Amount must be greater than zero.");
       return;
     }
 
-    if (parseFloat(formData.amount) > currentBalance) {
-      toast.error("Withdrawal amount exceeds the current balance.");
+    if (parseFloat(formData.amount) > rotationalBalance) {
+      toast.error("Withdrawal amount exceeds the rotational balance.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://127.0.0.1:8080/api/transactions/",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
+      await api.post("/api/transactions/withdrawal/", formData);
       toast.success("Withdrawal request submitted successfully!");
       setFormData({
         amount: "",
         description: "",
         transaction_type: "withdrawal",
         chama: formData.chama,
-        member: formData.member
+        member: formData.member,
       });
     } catch (error) {
       if (error.response) {
         if (error.response.status === 400) {
           toast.error(error.response.data.error || "Invalid withdrawal details.");
         } else if (error.response.status === 403) {
-          toast.error("Withdrawal amount exceeds chama balance.");
+          toast.error("Not your turn or insufficient balance.");
         } else {
           toast.error("Failed to submit withdrawal request.");
         }
@@ -105,6 +117,16 @@ const WithdrawalForm = () => {
   return (
     <div className="form-container">
       <h2 className="form-title">Request Withdrawal</h2>
+      {formData.chama && (
+        <p className="balance-info">Rotational Balance: {rotationalBalance}</p>
+      )}
+      {nextInLine && (
+        <p className="turn-info">
+          {isUserTurn
+            ? "It is your turn to withdraw."
+            : `Next in line: ${nextInLine}`}
+        </p>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label className="form-label">Chama ID</label>
@@ -140,9 +162,6 @@ const WithdrawalForm = () => {
             min="0.01"
             step="0.01"
           />
-          {formData.chama && (
-            <p className="balance-info">Current Balance: {currentBalance}</p>
-          )}
         </div>
         <div className="form-group">
           <label className="form-label">Reason/Description</label>
@@ -158,7 +177,7 @@ const WithdrawalForm = () => {
         <button
           type="submit"
           className="form-button"
-          disabled={loading}
+          disabled={loading || !isUserTurn}
         >
           {loading ? "Processing..." : "Submit Withdrawal Request"}
         </button>
