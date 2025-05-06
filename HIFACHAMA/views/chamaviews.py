@@ -9,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from HIFACHAMA.models import Chama, ChamaMember, Transaction, Loan
-from HIFACHAMA.serializers.chamaserializer import ChamaSerializer, ChamaMemberSerializer
+from HIFACHAMA.serializers.chamaserializer import ChamaSerializer, ChamaMemberSerializer, JoinChamaSerializer
 from HIFACHAMA.serializers.transactionserializer import TransactionSerializer
 
 class ChamaListCreateView(APIView):
@@ -160,28 +160,16 @@ class JoinChamaView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        """Allow a user to join an existing chama."""
-        chama_id = request.data.get('chama_id')  # Expecting the chama ID in the request data
+        data = request.data.copy()
+        data['user'] = request.user.id
+        data['role'] = 'Member'  # Set default role
 
-        if not chama_id:
-            return Response({"detail": "Chama ID is required."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            # Check if the Chama exists
-            chama = Chama.objects.get(id=chama_id)
-        except Chama.DoesNotExist:
-            return Response({"detail": "Chama not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        # Check if the user is already a member
-        if ChamaMember.objects.filter(chama=chama, user=request.user).exists():
-            return Response({"detail": "You are already a member of this chama."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Add the user as a member
-        ChamaMember.objects.create(chama=chama, user=request.user, role="Member")
-
-        return Response({
-            'message': 'Successfully joined the chama',
-            'chama_id': chama.id,
-            'user': request.user.username,
-            'role': "Member"  # Role of the user in this chama
-        }, status=status.HTTP_201_CREATED)
+        serializer = JoinChamaSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Successfully joined the chama',
+                'data': serializer.data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

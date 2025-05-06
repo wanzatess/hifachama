@@ -30,6 +30,8 @@ class ChamaCreationSerializer(serializers.ModelSerializer):
 
 User = get_user_model()
 
+
+
 class JoinChamaSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     chama = serializers.PrimaryKeyRelatedField(queryset=Chama.objects.all())
@@ -40,11 +42,7 @@ class JoinChamaSerializer(serializers.ModelSerializer):
         fields = ['user', 'chama', 'role']
 
     def validate(self, data):
-        # Ensure that the user isn't already a member of the Chama
         if ChamaMember.objects.filter(user=data['user'], chama=data['chama']).exists():
             raise serializers.ValidationError("This user is already a member of the Chama.")
         return data
-
-    def create(self, validated_data):
-        return ChamaMember.objects.create(**validated_data)
 
