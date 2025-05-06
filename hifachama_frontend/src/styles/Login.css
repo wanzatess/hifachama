@@ -4,7 +4,7 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #6f623e;
+    background-color: #a89863;
     padding: 20px;
   }
   
@@ -177,3 +177,10 @@
     font-size: 1.2em;
     color: inherit;
   }
+  .signup-text {
+    color: #4e4528;  /* Adjust the text color to match your theme */
+    font-size: 1rem;  /* Set a proper font size */
+    margin-top: 10px;  /* Optional: Add spacing for better readability */
+    text-align: center;  /* Optional: Center the text */
+  }
+  

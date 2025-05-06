@@ -1,91 +1,134 @@
-/* Minimal Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  --background: #6F623E;
+  --text-primary: #F0EAD6;
+  --header-footer: #a89863;
+  --hover: #CDBE96;
+  --cta: #9C8F5F;
+  --cta-hover: #8A7B50;
 }
 
-/* Base Styles */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #6F623E;
-  color: #F0EAD6;
-  padding-top: 50px; /* Space for fixed navbar */
+  margin: 0;
+  background-color: #F0EAD6;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-/* Compact Navigation Bar */
-nav {
-  background-color: #4E4528;
-  padding: 8px 5%;
-  position: fixed;
-  width: 100%;
+.homepage-full {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-image: url('../static/images/money 4.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: var(--text-primary);
+}
+
+/* Overlay */
+.homepage-full::before {
+  content: '';
+  position: absolute;
   top: 0;
-  z-index: 100;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* dark overlay */
+  z-index: 0;
+}
+
+/* Ensure content layers above overlay */
+.homepage-header,
+.homepage-content,
+.homepage-footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.homepage-header {
+  background-color: var(--header-footer);
+  padding: 10px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 50px; /* Reduced from original */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .logo {
-  height: 30px; /* Smaller logo */
+  height: 60px;
+  width: auto;
+  object-fit: contain;
 }
 
-nav ul {
+.nav-links {
   display: flex;
-  gap: 15px;
-  list-style: none;
+  justify-content: center;
+  gap: 15px; /* Space between individual links */
+  padding: 10px;
+  background: none; /* Ensure nav has no background */
 }
 
-nav a {
-  color: #F0EAD6;
+.nav-link {
+  background-color: #8A7B50; /* Background for each link */
+  color: inherit; /* Inherit #F0EAD6 from nav */
   text-decoration: none;
-  font-size: 14px; /* Smaller font */
-  font-weight: bold;
-  padding: 5px 0;
+  font-size: 16px;
+  padding: 8px 16px;
+  border-radius: 8px; /* Rounded corners */
+  display: inline-block; /* Ensure proper button-like appearance */
+  transition: background-color 0.3s ease;
 }
 
-/* Header Content (scrolls normally) */
-header {
-  padding: 30px 5%;
-  max-width: 800px;
-  margin: 0 auto;
+.nav-links a:hover {
+  color: var(--hover);
 }
 
-/* Button Styles */
+/* Main content */
+.homepage-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.hero-title {
+  font-size: 48px;
+  margin-bottom: 20px;
+  font-family: 'Script', sans-serif;
+  font-weight: 700;
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  margin-bottom: 30px;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 400;
+  max-width: 600px;
+}
+
+/* Call-to-action button */
 .cta-button {
-  display: inline-block;
-  background-color: #9C8F5F;
-  color: #F0EAD6;
-  padding: 10px 20px;
-  border-radius: 4px;
-  text-decoration: none;
-  margin-top: 20px;
-  font-weight: bold;
-  font-size: 14px;
+  background-color: var(--cta);
+  color: var(--text-primary);
+  border: none;
+  padding: 12px 28px;
+  font-size: 18px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-/* Mobile Adjustments */
-@media (max-width: 768px) {
-  body {
-    padding-top: 45px;
-  }
-  
-  nav {
-    padding: 6px 3%;
-    height: 45px;
-  }
-  
-  .logo {
-    height: 25px;
-  }
-  
-  nav ul {
-    gap: 10px;
-  }
-  
-  nav a {
-    font-size: 13px;
-  }
+.cta-button:hover {
+  background-color: var(--cta-hover);
+}
+
+/* Footer */
+.homepage-footer {
+  background-color: var(--header-footer);
+  padding: 10px;
+  text-align: center;
+  font-size: 13px;
 }

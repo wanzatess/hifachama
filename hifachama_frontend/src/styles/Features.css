@@ -1,0 +1,122 @@
+:root {
+  --background: #a89863;
+  --text-primary: #F0EAD6;
+  --header-footer: #a89863;
+  --hover: #CDBE96;
+  --cta: #9C8F5F;
+  --cta-hover: #8A7B50;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h2 {
+  font-size: 32px;
+  margin-bottom: 20px;
+  color: #000000;
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #000000
+}
+
+p {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.features-section {
+  background-color: var(--background);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  max-width: 300px;
+  text-align: center;
+}
+
+.features-section h3 {
+  color: var(--dark-brown);
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.features-section p {
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.features-section:hover {
+  background-color: var(--cta);
+  transition: background-color 0.3s ease;
+}
+
+.features-section:hover h3 {
+  color: var(--dark-brown);
+}
+
+.features-section:hover p {
+  color: var(--text-primary);
+}
+
+/* Stack items vertically in the row */
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+/* Remove left and right column distinctions */
+.left-column,
+.right-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.left-column h3,
+.right-column h3 {
+  color: var(--dark-brown);
+  font-size: 18px;
+}
+
+.left-column p,
+.right-column p {
+  color: var(--text-primary);
+}
+
+/* Adjust for laptops (between 1024px and 1440px) */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .row {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .left-column,
+  .right-column {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .features-section {
+    margin-bottom: 20px;
+    max-width: 300px;
+  }
+
+  .features-section h3 {
+    color: var(--dark-brown);
+  }
+}

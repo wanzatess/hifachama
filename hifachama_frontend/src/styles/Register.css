@@ -1,8 +1,8 @@
 /* Register Page Styling */
 body {
   font-family: Arial, sans-serif;
-  background-color: #6F623E;
-  color: #F0EAD6;
+  background-color: #a89863; /* Background color matches login page */
+  color: #F0EAD6; /* Text color matches login page */
   text-align: center;
   margin: 0;
   padding: 0;
@@ -14,7 +14,7 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #6F623E; /* Rich brown background */
+  background-color: #a89863; /* Rich brown background matches login page */
   padding: 20px;
 }
 
@@ -22,10 +22,10 @@ body {
   width: 100%;
   max-width: 450px;
   padding: 30px;
-  background: #b39534; /* Soft yellow background */
+  background: #F0EAD6; /* Soft yellow background matches login card */
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid #FFE680; /* Light golden border */
+  border: 1px solid #CDBE96; /* Light golden border matches login card */
 }
 
 .logo-header {
@@ -40,7 +40,7 @@ body {
 
 h2 {
   margin: 0;
-  color: #333;
+  color: #4E4528; /* Dark brown color for heading matches login page */
   font-size: 1.5rem;
   font-weight: 600;
 }
@@ -59,14 +59,14 @@ h2 {
 
 label {
   font-weight: 500;
-  color: #555;
+  color: #4E4528; /* Label color matches login form labels */
   font-size: 0.95rem;
 }
 
 .input-field {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid #ddd;
+  padding: 12px 10px;
+  border: 1px solid #CDBE96; /* Light golden border for inputs */
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
@@ -74,15 +74,15 @@ label {
 
 .input-field:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: #9C8F5F; /* Matches login page focus color */
 }
 
 .error {
-  border-color: #e74c3c;
+  border-color: #E74C3C; /* Red border for error */
 }
 
 .error-text {
-  color: #e74c3c;
+  color: #E74C3C; /* Red text for error */
   font-size: 0.85rem;
 }
 
@@ -98,7 +98,7 @@ label {
 .submit-btn {
   width: 100%;
   padding: 12px;
-  background-color: #3498db;
+  background-color: #9C8F5F; /* Match button color from login page */
   color: white;
   border: none;
   border-radius: 8px;
@@ -110,23 +110,23 @@ label {
 }
 
 .submit-btn:hover {
-  background-color: #2980b9;
+  background-color: #8A7B50; /* Button hover effect matches login page */
 }
 
 .submit-btn:disabled {
-  background-color: #95a5a6;
+  background-color: #CDBE96; /* Disabled button matches login page */
   cursor: not-allowed;
 }
 
 .login-link {
   text-align: center;
   margin-top: 20px;
-  color: #555;
+  color: #4E4528; /* Adjust text color to match login page */
   font-size: 0.95rem;
 }
 
 .login-link a {
-  color: #3498db;
+  color: #9C8F5F; /* Link color matches login footer link */
   text-decoration: none;
   font-weight: 500;
 }
@@ -144,13 +144,13 @@ label {
 }
 
 .message.success {
-  background-color: #d4edda;
+  background-color: #D4EDDA;
   color: #155724;
 }
 
 .message.error {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: #F8D7DA;
+  color: #721C24;
 }
 
 .rounded-box {
@@ -158,4 +158,39 @@ label {
   padding: 8px;
   border-radius: 6px;
   background-color: rgba(255, 255, 255, 0.7);
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .formWrapper {
+    padding: 20px;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+}
+
+.error-message {
+  position: relative;
+  padding-right: 30px;
+}
+
+.error-close {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2em;
+  color: inherit;
+}
+
+.signup-text {
+  color: #4E4528;  /* Adjust text color to match your theme */
+  font-size: 1rem;  /* Set a proper font size */
+  margin-top: 10px;  /* Optional: Add spacing for better readability */
+  text-align: center;  /* Optional: Center the text */
 }

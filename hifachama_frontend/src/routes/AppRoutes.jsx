@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 // Pages
 import HomePage from '../pages/HomePage.jsx';
+import Features from '../pages/Features.jsx';
 import Login from '../pages/Login.jsx';
 import Register from '../pages/Register.jsx';
 import DashboardHome from '../pages/dashboard/DashboardHome.jsx';
@@ -66,6 +67,7 @@ const AppRoutes = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/features" element={<Features />} />
 
         {/* Dashboard Routes */}
         <Route

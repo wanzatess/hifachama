@@ -61,11 +61,6 @@ const Login = () => {
         <div className="login-header">
           <img src={logo} alt="Company Logo" className="login-logo" />
           <h2>Welcome Back</h2>
-          {process.env.NODE_ENV === 'development' && (
-            <div className="dev-notice">
-              Development Mode - Using endpoint: {api.defaults.baseURL}
-            </div>
-          )}
         </div>
 
         {error && (
