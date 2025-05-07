@@ -12,6 +12,7 @@ import WithdrawalTable from '../../components/WithdrawalTable';
 import LoanRequestForm from '../../components/LoanRequestForm';
 import LoanList from '../../components/LoanList';
 import AddPaymentDetailsForm from '../../components/AddPaymentDetailsForm';
+import PaymentDetailsDisplay from '../../components/PaymentDetailsDisplay';
 import Sidebar from '../../components/Sidebar';
 import MeetingDisplay from '../../components/MeetingDisplay';
 import MeetingScheduleForm from '../../components/MeetingScheduleForm';
@@ -449,11 +450,19 @@ const HybridDashboard = () => {
         {(() => {
           switch (activeSection) {
             case 'overview':
+              console.log('Payment Details:', paymentDetails);
               return (
                 <div className="dashboard-card">
+                  {/* Member List */}
                   <MemberList chamaId={chamaData?.id} members={members} title="Member Directory" />
+            
+                  {/* Payment Details Section */}
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <PaymentDetailsDisplay details={paymentDetails} />
+                  </div>
                 </div>
               );
+            
             case 'payment-details':
               if (userData?.role !== 'Chairperson') {
                 return <p>Access restricted to Chairpersons.</p>;

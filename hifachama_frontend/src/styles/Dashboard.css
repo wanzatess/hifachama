@@ -305,3 +305,29 @@
 .error-message button:hover {
   background-color: #8a7e4f;
 }
+
+.payment-details-card {
+  background-color: #f0ead6;
+  border: 1px solid #ccc;
+  padding: 1rem 1.5rem;
+  margin-top: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.payment-details-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.payment-details-card h3 {
+  color: #4E4528; /* HIFACHAMA header/footer color */
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.payment-details-card p {
+  color: #6F623E; /* HIFACHAMA background text color */
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
