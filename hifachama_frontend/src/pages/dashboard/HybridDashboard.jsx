@@ -13,7 +13,8 @@ import LoanRequestForm from '../../components/LoanRequestForm';
 import LoanList from '../../components/LoanList';
 import AddPaymentDetailsForm from '../../components/AddPaymentDetailsForm';
 import Sidebar from '../../components/Sidebar';
-import MeetingSchedule from '../../components/MeetingSchedule';
+import MeetingDisplay from '../../components/MeetingDisplay';
+import MeetingScheduleForm from '../../components/MeetingScheduleForm';
 import '../../styles/Dashboard.css';
 import { toast } from 'react-toastify';
 
@@ -436,129 +437,201 @@ const HybridDashboard = () => {
     if (!chamaData) {
       return <p>⏳ Loading chama data...</p>;
     }
-    console.log('🔍 Rendering section with userData:', userData);
-    switch (activeSection) {
-      case 'overview':
-        console.log("📦 chamaData in Dashboard:", chamaData);
-        console.log("📦 chamaId passed to MemberList:", chamaData?.id);
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-header">
-              <div>Welcome, {userData?.username || userData?.email}</div>
-              <div>{chamaData?.name}</div>
-            </div>
-            <div className="dashboard-card">
-              <MemberList chamaId={chamaData?.id} members={members} title="Member Directory" />
-            </div>
-            {userData?.role === 'Chairperson' && (
-              <div className="dashboard-card" style={{ marginTop: '20px' }}>
-                <h3>Manage Payment Details</h3>
-                <AddPaymentDetailsForm
-                  chamaId={chamaData?.id}
-                  initialData={paymentDetails}
-                  onSuccess={(updatedData) => setPaymentDetails(updatedData)}
-                />
-              </div>
-            )}
-          </div>
-        );
-      case 'contributions':
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <ContributionDisplay contributions={contributions} />
-            </div>
-            <div className="dashboard-card">
-              <ContributionForm
-                chamaId={chamaData?.id}
-                userId={userData?.id}
-                onSuccess={refreshContributions}
-              />
-            </div>
-          </div>
-        );
-      case 'meetings':
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <h3>Upcoming Meetings</h3>
-              <MeetingSchedule />
-            </div>
-          </div>
-        );
-      case 'withdrawals':
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <WithdrawalForm
-                chamaId={chamaData?.id}
-                userId={userData?.id}
-              />
-            </div>
-            <div className="dashboard-card">
-              <h3>Pending Withdrawals</h3>
-              <WithdrawalTable />
-            </div>
-          </div>
-        );
-      case 'rotation':
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <RotationSchedule
-                members={members}
-                contributions={contributions}
-                chamaId={chamaData?.id}
-                rotations={rotations}
-                role={userData?.role}
-              />
-            </div>
-          </div>
-        );
-      case 'reports':
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <ReportDisplay
-                contributions={contributions}
-                withdrawals={withdrawals}
-                loans={loans}
-                members={members}
-                chama={chamaData}
-                balance={balance}
-              />
-            </div>
-          </div>
-        );
-      case 'loans':
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <LoanRequestForm
-                chamaId={chamaData?.id}
-                userId={userData?.id}
-                onSuccess={refreshLoans}
-              />
-            </div>
-            <div className="dashboard-card">
-              <LoanList
-                loans={loans}
-                userData={userData}
-                chamaId={chamaData?.id}
-                refreshLoans={refreshLoans}
-              />
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <div className="dashboard-content">
-            <div className="dashboard-card">
-              <p>Invalid section selected.</p>
-            </div>
-          </div>
-        );
-    }
+    return (
+      <div className="dashboard-content">
+        <div className="dashboard-header">
+          <div>Welcome, {userData?.username || userData?.email}</div>
+          <div>{chamaData?.name}</div>
+          {paymentDetails?.paybill && <div>PayBill: {paymentDetails.paybill}</div>}
+          {paymentDetails?.tillNumber && <div>Till Number: {paymentDetails.tillNumber}</div>}
+          {paymentDetails?.phoneNumber && <div>Phone: {paymentDetails.phoneNumber}</div>}
+        </div>
+        {(() => {
+          switch (activeSection) {
+            case 'overview':
+              return (
+                <div className="dashboard-card">
+                  <MemberList chamaId={chamaData?.id} members={members} title="Member Directory" />
+                </div>
+              );
+            case 'payment-details':
+              if (userData?.role !== 'Chairperson') {
+                return <p>Access restricted to Chairpersons.</p>;
+              }
+              return (
+                <div className="dashboard-card">
+                  <h3>Manage Payment Details</h3>
+                  <AddPaymentDetailsForm
+                    chamaId={chamaData?.id}
+                    initialData={paymentDetails}
+                    onSuccess={(updatedData) => setPaymentDetails(updatedData)}
+                  />
+                </div>
+              );
+            case 'contributions':
+              return (
+                <>
+                  <div className="dashboard-card">
+                    <ContributionDisplay contributions={contributions} />
+                  </div>
+                  <div className="dashboard-card">
+                    <ContributionForm
+                      chamaId={chamaData?.id}
+                      userId={userData?.id}
+                      onSuccess={refreshContributions}
+                    />
+                  </div>
+                </>
+              );
+            case 'withdrawals':
+              return (
+                <>
+                  <div className="dashboard-card">
+                    <WithdrawalForm
+                      chamaId={chamaData?.id}
+                      userId={userData?.id}
+                    />
+                  </div>
+                  <div className="dashboard-card">
+                    <h3>Pending Withdrawals</h3>
+                    <WithdrawalTable />
+                  </div>
+                </>
+              );
+            case 'approve-withdrawal':
+              if (userData?.role !== 'Treasurer') {
+                return <p>Access restricted to Treasurers.</p>;
+              }
+              return (
+                <div className="dashboard-card">
+                  <h3>Approve Withdrawals</h3>
+                  <WithdrawalTable
+                    withdrawals={withdrawals}
+                    onAction={handleWithdrawalAction}
+                    showActions={true}
+                  />
+                </div>
+              );
+            case 'meetings':
+              return (
+                <div className="dashboard-card">
+                  <h3>Upcoming Meetings</h3>
+                  <MeetingDisplay />
+                </div>
+              );
+            case 'schedule-meeting':
+              if (userData?.role !== 'Secretary') {
+                return <p>Access restricted to Secretaries.</p>;
+              }
+              return (
+                <div className="dashboard-card">
+                  <h3>Schedule a Meeting</h3>
+                  <MeetingScheduleForm chamaId={chamaData?.id} />
+                </div>
+              );
+            case 'loans':
+              return (
+                <>
+                  <div className="dashboard-card">
+                    <LoanRequestForm
+                      chamaId={chamaData?.id}
+                      userId={userData?.id}
+                      onSuccess={refreshLoans}
+                    />
+                  </div>
+                  <div className="dashboard-card">
+                    <LoanList
+                      loans={loans}
+                      userData={userData}
+                      chamaId={chamaData?.id}
+                      refreshLoans={refreshLoans}
+                    />
+                  </div>
+                </>
+              );
+            case 'approve-loan':
+              if (userData?.role !== 'Chairperson') {
+                return <p>Access restricted to Chairpersons.</p>;
+              }
+              return (
+                <div className="dashboard-card">
+                  <h3>Approve Loans</h3>
+                  <LoanList
+                    loans={loans}
+                    userData={userData}
+                    chamaId={chamaData?.id}
+                    refreshLoans={refreshLoans}
+                    showActions={true}
+                  />
+                </div>
+              );
+            case 'reports':
+              return (
+                <div className="dashboard-card">
+                  <ReportDisplay
+                    contributions={contributions}
+                    withdrawals={withdrawals}
+                    loans={loans}
+                    members={members}
+                    chama={chamaData}
+                    balance={balance}
+                  />
+                </div>
+              );
+            case 'meeting-minutes':
+              return (
+                <div className="dashboard-card">
+                  <h3>Meeting Minutes</h3>
+                  <p>Feature under development: Display meeting minutes here.</p>
+                  {/* TODO: Implement MeetingMinutes component */}
+                </div>
+              );
+            case 'contribution-reports':
+              return (
+                <div className="dashboard-card">
+                  <h3>Contribution Reports</h3>
+                  <p>Feature under development: Detailed contribution reports will be added here.</p>
+                  {/* TODO: Implement ContributionReports component */}
+                </div>
+              );
+            case 'loan-reports':
+              return (
+                <div className="dashboard-card">
+                  <h3>Loan Reports</h3>
+                  <p>Feature under development: Detailed loan reports will be added here.</p>
+                  {/* TODO: Implement LoanReports component */}
+                </div>
+              );
+            case 'rotation':
+              return (
+                <div className="dashboard-card">
+                  <RotationSchedule
+                    members={members}
+                    contributions={contributions}
+                    chamaId={chamaData?.id}
+                    rotations={rotations}
+                    role={userData?.role}
+                  />
+                </div>
+              );
+            case 'rotation-details':
+              return (
+                <div className="dashboard-card">
+                  <h3>Rotation Details</h3>
+                  <p>Feature under development: Detailed rotation information will be added here.</p>
+                  {/* TODO: Implement RotationDetails component */}
+                </div>
+              );
+            default:
+              return (
+                <div className="dashboard-card">
+                  <p>Invalid section selected.</p>
+                </div>
+              );
+          }
+        })()}
+      </div>
+    );
   };
 
   return (
@@ -572,12 +645,8 @@ const HybridDashboard = () => {
         chamaName={chamaData?.name}
         balance={balance ? { rotational: balance.rotational_balance, investment: balance.investment_balance } : { rotational: 0, investment: 0 }}
       />
-      <main className="main-content">
-        {isLoading ? (
-          <div className="dashboard-loading">Loading...</div>
-        ) : (
-          renderContent()
-        )}
+      <main className="dashboard-main-container">
+        {renderContent()}
       </main>
     </div>
   );

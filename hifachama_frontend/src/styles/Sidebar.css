@@ -69,7 +69,7 @@
 
 .sidebar-nav button:hover,
 .sidebar-nav button.active {
-  background-color: var(--gold-accent);
+  background-color: #d4a017;
 }
 
 .sidebar-icon {
@@ -125,4 +125,3 @@
   margin: 0 auto;        /* Center it with no extra top/bottom margin */
   padding: 0;            /* Remove internal space */
 }
-

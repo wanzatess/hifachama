@@ -19,7 +19,6 @@ const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
     setLoading(true);
 
     try {
-      // Fetch the ChamaMember ID for the user
       const { data: memberData } = await api.get(`/api/chama-members/?user=${userId}&chama=${chamaId}`);
       if (!memberData || memberData.length === 0) {
         throw new Error("Chama member not found.");
@@ -48,46 +47,43 @@ const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
   };
 
   return (
-    <div className="p-4 bg-white rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Request a Loan</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
+    <div className="dashboard-card">
+      <h3 className="card-title">Request a Loan</h3>
+      <form onSubmit={handleSubmit} className="schedule-meeting-form">
+        <div className="form-group">
           <label className="block">Amount</label>
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="form-input"
             required
             min={0}
             step={0.01}
           />
         </div>
-
-        <div className="mb-3">
+        <div className="form-group">
           <label className="block">Purpose</label>
           <textarea
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="form-textarea"
             rows={4}
           />
         </div>
-
-        <div className="mb-3">
+        <div className="form-group">
           <label className="block">Repayment Period</label>
           <input
             type="text"
             value={repaymentPeriod}
             onChange={(e) => setRepaymentPeriod(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="form-input"
             required
           />
         </div>
-
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded"
+          className="form-button"
           disabled={loading}
         >
           {loading ? "Submitting..." : "Submit Loan Request"}

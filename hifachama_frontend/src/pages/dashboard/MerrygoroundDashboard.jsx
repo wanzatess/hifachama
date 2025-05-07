@@ -8,142 +8,376 @@ import {
 import ContributionForm from "../../components/ContributionForm";
 import ContributionHistory from '../../components/ContributionHistory';
 import WithdrawalForm from "../../components/WithdrawalForm";
+import Sidebar from '../../components/Sidebar';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import { getAuthToken } from '../../utils/auth';
+import { toast } from 'react-toastify';
+import '../../styles/Dashboard.css';
 
 const MerryGoRoundDashboard = () => {
   const { id } = useParams();
+  const [activeSection, setActiveSection] = useState('overview');
   const [members, setMembers] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [contributions, setContributions] = useState([]);
   const [missedContributions, setMissedContributions] = useState([]);
   const [userData, setUserData] = useState(null);
   const [chamaData, setChamaData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [balance, setBalance] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchUserAndChamaData = async () => {
+    setIsLoading(true);
+    setError(null);
+    const token = getAuthToken();
+    if (!token) {
+      setError("Please log in to access the dashboard.");
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const { data: user } = await axios.get(
+        'http://127.0.0.1:8080/api/users/me/',
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUserData(user);
+
+      if (!user?.chama_id) {
+        setError("No chama found. Please join or create a chama.");
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: chama } = await axios.get(
+        `http://127.0.0.1:8080/api/chamas/${id}/`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setChamaData(chama);
+    } catch (err) {
+      setError("Failed to load dashboard data. Please try again.");
+      console.error("Error fetching user/chama data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshContributions = async () => {
+    if (!chamaData?.id || !userData?.id) return;
+    try {
+      const { data: memberData } = await supabase
+        .from('HIFACHAMA_chamamember')
+        .select('id, chama_id')
+        .eq('user_id', userData.id)
+        .single();
+      if (!memberData) return;
+
+      const chamaId = memberData.chama_id;
+      const { data: chamaMembers } = await supabase
+        .from('HIFACHAMA_chamamember')
+        .select('id')
+        .eq('chama_id', chamaId);
+      const memberIds = chamaMembers ? chamaMembers.map(m => m.id) : [];
+
+      const { data: transactions } = await supabase
+        .from('HIFACHAMA_transaction')
+        .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
+        .in('member_id', memberIds)
+        .eq('category', 'contribution');
+
+      const formattedTransactions = transactions.map(t => ({
+        ...t,
+        username: t.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+      }));
+      setContributions(formattedTransactions || []);
+
+      const missedContributionsData = formattedTransactions.filter(t => !t.paid);
+      setMissedContributions(missedContributionsData || []);
+    } catch (err) {
+      console.error("Error refreshing contributions:", err);
+      toast.error("Failed to refresh contributions.");
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
+    fetchUserAndChamaData();
+  }, [id]);
+
+  useEffect(() => {
+    if (!userData || !chamaData?.id) return;
+
+    const setupRealtime = async () => {
       try {
-        const token = localStorage.getItem('token');
-        
-        // Fetch chama data
-        const chamaResponse = await axios.get(
-          `http://127.0.0.1:8080/api/chamas/${id}/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setChamaData(chamaResponse.data);
+        const { data: memberData } = await supabase
+          .from('HIFACHAMA_chamamember')
+          .select('id, chama_id')
+          .eq('user_id', userData.id)
+          .single();
+        if (!memberData) return;
 
-        // Fetch user data
-        const userResponse = await axios.get(
-          'http://127.0.0.1:8080/api/users/me/',
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setUserData(userResponse.data);
+        const chamaId = memberData.chama_id;
+        const { data: chamaMembers } = await supabase
+          .from('HIFACHAMA_chamamember')
+          .select('id')
+          .eq('chama_id', chamaId);
+        const memberIds = chamaMembers ? chamaMembers.map(m => m.id) : [];
 
-        // Fetch Supabase data
-        const { data: membersData } = await supabase.from('HIFACHAMA_customuser').select('*');
-        const { data: transactionsData } = await supabase.from('HIFACHAMA_transaction').select('*');
+        const [
+          { data: users },
+          { data: transactions },
+          { data: balanceData }
+        ] = await Promise.all([
+          supabase
+            .from('HIFACHAMA_customuser')
+            .select('*, HIFACHAMA_chamamember!inner(chama_id)')
+            .eq('HIFACHAMA_chamamember.chama_id', chamaId),
+          supabase
+            .from('HIFACHAMA_transaction')
+            .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
+            .in('member_id', memberIds),
+          supabase.from('HIFACHAMA_balance').select('*').eq('chama_id', chamaId).single()
+        ]);
 
-        const contributions = transactionsData.filter(t => t.transaction_type === 'contribution');
-        const missedContributionsData = contributions.filter(transaction => !transaction.paid);
+        const formattedContributions = transactions
+          .filter(t => t.category === 'contribution')
+          .map(t => ({
+            ...t,
+            username: t.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+          }));
 
-        setMembers(membersData || []);
-        setTransactions(transactionsData || []);
+        const missedContributionsData = formattedContributions.filter(t => !t.paid);
+
+        setMembers(users || []);
+        setTransactions(transactions || []);
+        setContributions(formattedContributions || []);
         setMissedContributions(missedContributionsData || []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
+        setBalance(balanceData || null);
+      } catch (err) {
+        setError("Failed to load real-time data.");
+        console.error("Error fetching initial data:", err);
       }
     };
 
-    fetchData();
+    setupRealtime();
 
-    // Set up realtime subscriptions
-    const memberSub = supabase.channel('realtime:members')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'HIFACHAMA_customuser',
-      }, () => fetchData())
-      .subscribe();
-
-    const transactionSub = supabase.channel('realtime:transactions')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
+    const channels = [
+      { table: 'HIFACHAMA_customuser', setter: setMembers, filterByChama: true },
+      { table: 'HIFACHAMA_chamamember', setter: setMembers, isMembershipTable: true },
+      {
         table: 'HIFACHAMA_transaction',
-      }, () => fetchData())
-      .subscribe();
+        setter: (data) => {
+          const formatted = {
+            ...data,
+            username: data.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+          };
+          setTransactions(prev => {
+            switch (data.eventType) {
+              case 'INSERT': return [...prev, formatted];
+              case 'UPDATE': return prev.map(item => item.id === formatted.id ? formatted : item);
+              case 'DELETE': return prev.filter(item => item.id !== data.old.id);
+              default: return prev;
+            }
+          });
+          if (data.category === 'contribution') {
+            setContributions(prev => {
+              switch (data.eventType) {
+                case 'INSERT': return [...prev, formatted];
+                case 'UPDATE': return prev.map(item => item.id === formatted.id ? formatted : item);
+                case 'DELETE': return prev.filter(item => item.id !== data.old.id);
+                default: return prev;
+              }
+            });
+            if (!formatted.paid) {
+              setMissedContributions(prev => {
+                switch (data.eventType) {
+                  case 'INSERT': return [...prev, formatted];
+                  case 'UPDATE': return prev.map(item => item.id === formatted.id ? formatted : item);
+                  case 'DELETE': return prev.filter(item => item.id !== data.old.id);
+                  default: return prev;
+                }
+              });
+            }
+          }
+        },
+        filterByMembers: true
+      },
+      { table: 'HIFACHAMA_balance', setter: setBalance, filterByChama: true }
+    ];
+
+    const activeChannels = channels.map(({ table, setter, filterByChama, filterByMembers, isMembershipTable }) => {
+      const channel = supabase.channel(`realtime:${table}`);
+      channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
+        const { eventType, new: newRow, old: oldRow } = payload;
+        if (isMembershipTable) {
+          const { data: updatedMembers } = await supabase
+            .from('HIFACHAMA_customuser')
+            .select('*, HIFACHAMA_chamamember!inner(chama_id)')
+            .eq('HIFACHAMA_chamamember.chama_id', chamaData.id);
+          setMembers(updatedMembers || []);
+          return;
+        }
+        if (filterByMembers) {
+          const { data: chamaMembers } = await supabase
+            .from('HIFACHAMA_chamamember')
+            .select('id')
+            .eq('chama_id', chamaData.id);
+          const memberIds = chamaMembers ? chamaMembers.map(m => m.id) : [];
+          if (!newRow || !memberIds.includes(newRow.member_id)) return;
+          const { data: memberData } = await supabase
+            .from('HIFACHAMA_chamamember')
+            .select('HIFACHAMA_customuser!inner(username)')
+            .eq('id', newRow.member_id)
+            .single();
+          newRow.HIFACHAMA_chamamember = {
+            HIFACHAMA_customuser: { username: memberData?.HIFACHAMA_customuser?.username || 'Unknown' }
+          };
+        }
+        if (filterByChama && newRow?.chama_id !== chamaData.id) return;
+        setter({ ...newRow, eventType, old: oldRow });
+      });
+      channel.subscribe();
+      return channel;
+    });
 
     return () => {
-      supabase.removeChannel(memberSub);
-      supabase.removeChannel(transactionSub);
+      activeChannels.forEach(channel => supabase.removeChannel(channel));
     };
-  }, [id]);
+  }, [userData?.id, chamaData?.id]);
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#4E4528]"></div>
-    </div>;
-  }
+  const handleWithdrawalAction = async (transactionId, action) => {
+    try {
+      const token = getAuthToken();
+      await axios.post(
+        `http://127.0.0.1:8080/api/transactions/${transactionId}/approve/`,
+        { action },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`Withdrawal ${action}d successfully!`);
+    } catch (error) {
+      toast.error(error.response?.data?.error || `Failed to ${action} withdrawal.`);
+    }
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return <div className="dashboard-loading">Loading...</div>;
+    }
+    if (error) {
+      return (
+        <div className="error-message">
+          <p>{error}</p>
+          <button onClick={() => window.location.href = '/join-chama'}>
+            Join or Create a Chama
+          </button>
+          <button onClick={fetchUserAndChamaData} style={{ marginLeft: '10px' }}>
+            Retry
+          </button>
+        </div>
+      );
+    }
+    if (!chamaData) {
+      return <p>⏳ Loading chama data...</p>;
+    }
+    return (
+      <div className="dashboard-content">
+        <div className="dashboard-header">
+          <div>Welcome, {userData?.username || userData?.email}</div>
+          <div>{chamaData?.name}</div>
+        </div>
+        {(() => {
+          switch (activeSection) {
+            case 'overview':
+              return (
+                <div className="dashboard-card">
+                  <MemberManager members={members} setMembers={setMembers} />
+                </div>
+              );
+            case 'rotations':
+              return (
+                <div className="dashboard-card">
+                  <MemberRotation
+                    members={members}
+                    onUpdateMembers={setMembers}
+                    contributions={contributions}
+                    setContributions={setContributions}
+                    missedContributions={missedContributions}
+                    setMissedContributions={setMissedContributions}
+                  />
+                </div>
+              );
+            case 'analytics':
+              return (
+                <div className="dashboard-card">
+                  <RotationAnalytics
+                    members={members}
+                    contributions={contributions}
+                    missedContributions={missedContributions}
+                  />
+                </div>
+              );
+            case 'contributions':
+              return (
+                <>
+                  <div className="dashboard-card">
+                    <ContributionForm chamaId={chamaData?.id} userId={userData?.id} onSuccess={refreshContributions} />
+                  </div>
+                  <div className="dashboard-card">
+                    <ContributionHistory contributions={contributions} setContributions={setContributions} />
+                  </div>
+                </>
+              );
+            case 'withdrawals':
+              return (
+                <>
+                  <div className="dashboard-card">
+                    <WithdrawalForm chamaId={chamaData?.id} userId={userData?.id} />
+                  </div>
+                  <div className="dashboard-card">
+                    <h3>Pending Withdrawals</h3>
+                    <WithdrawalTable />
+                  </div>
+                </>
+              );
+            case 'approve-withdrawal':
+              if (userData?.role !== 'Chairperson') {
+                return <p>Access restricted to Chairpersons.</p>;
+              }
+              return (
+                <div className="dashboard-card">
+                  <h3>Approve Withdrawals</h3>
+                  <WithdrawalTable
+                    withdrawals={transactions.filter(t => t.category === 'withdrawal')}
+                    onAction={handleWithdrawalAction}
+                    showActions={true}
+                  />
+                </div>
+              );
+            default:
+              return (
+                <div className="dashboard-card">
+                  <p>Invalid section selected.</p>
+                </div>
+              );
+          }
+        })()}
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">
-        {chamaData?.name || 'Merry-go-round Chama'} Dashboard
-      </h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <MemberManager members={members} setMembers={setMembers} />
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <MemberRotation 
-            members={members} 
-            onUpdateMembers={setMembers}
-            contributions={transactions.filter(t => t.transaction_type === 'contribution')}
-            setContributions={setTransactions}
-            missedContributions={missedContributions}
-            setMissedContributions={setMissedContributions}
-          />
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <RotationAnalytics 
-            members={members}
-            contributions={transactions.filter(t => t.transaction_type === 'contribution')}
-            missedContributions={missedContributions}
-          />
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          {userData && chamaData && (
-            <ContributionForm 
-              chamaId={chamaData.id} 
-              userId={userData.id} 
-            />
-          )}
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-        <DashboardCard title="Contribution History">
-          <ContributionHistory />
-        </DashboardCard>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          {userData && chamaData && (
-            <WithdrawalForm 
-              chamaId={chamaData.id} 
-              userId={userData.id} 
-            />
-          )}
-        </div>
-      </div>
+    <div className="dashboard-layout">
+      <Sidebar
+        setActiveSection={setActiveSection}
+        activeSection={activeSection}
+        role={userData?.role}
+        chamaType={chamaData?.type}
+        chamaName={chamaData?.name}
+        balance={balance ? { rotational: balance.rotational_balance } : { rotational: 0 }}
+      />
+      <main className="dashboard-main-container">
+        {renderContent()}
+      </main>
     </div>
   );
 };

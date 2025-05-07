@@ -1,0 +1,154 @@
+/* MemberList table styles */
+.card-icon {
+  font-size: 1.5rem;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  color: #4e4528;
+  margin: 0;
+}
+
+.member-list-container {
+  margin-top: 1rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  color: #4e4528;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.no-members {
+  color: #4e4528;
+  font-size: 1rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.loading-text {
+  color: #4e4528;
+  font-size: 1rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.table-container {
+  width: 100%;
+}
+
+.member-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #f0ead6;
+  border-radius: 8px;
+  overflow: hidden;
+  table-layout: auto;
+}
+
+.member-table th,
+.member-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #4e4528;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.member-table th {
+  background-color: #9c8f5f;
+  color: #f0ead6;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.member-table td {
+  border-bottom: 1px solid #cdbe96;
+}
+
+.member-table tr:last-child td {
+  border-bottom: none;
+}
+
+.member-table tr:hover td {
+  background-color: #e8e0c2;
+  transition: background-color 0.3s ease;
+}
+
+.member-table th:first-child,
+.member-table td:first-child {
+  width: 10%; /* Adjusted for proportional sizing */
+  text-align: center;
+}
+
+.member-table th:nth-child(2),
+.member-table td:nth-child(2) {
+  width: 25%; /* Flexible width for member name */
+}
+
+.member-table th:nth-child(3),
+.member-table td:nth-child(3) {
+  width: 20%; /* Type column */
+}
+
+.member-table th:nth-child(4),
+.member-table td:nth-child(4) {
+  width: 20%; /* Amount column */
+}
+
+.member-table th:nth-child(5),
+.member-table td:nth-child(5) {
+  width: 25%; /* Date column */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .member-table th,
+  .member-table td {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .member-table th:first-child,
+  .member-table td:first-child {
+    width: 15%;
+  }
+
+  .member-table th:nth-child(2),
+  .member-table td:nth-child(2) {
+    width: 25%;
+  }
+
+  .member-table th:nth-child(3),
+  .member-table td:nth-child(3) {
+    width: 20%;
+  }
+
+  .member-table th:nth-child(4),
+  .member-table td:nth-child(4) {
+    width: 20%;
+  }
+
+  .member-table th:nth-child(5),
+  .member-table td:nth-child(5) {
+    width: 20%;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-title {
+    font-size: 1.3rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  .member-table th,
+  .member-table td {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
+}

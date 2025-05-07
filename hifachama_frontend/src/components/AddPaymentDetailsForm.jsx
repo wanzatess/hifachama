@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import '../styles/PaymentDetails.css';
 import axios from 'axios';
-import { getAuthToken } from '../utils/auth'; // Adjust path if needed
+import { getAuthToken } from '../utils/auth';
 
 const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
   const [paybillNumber, setPaybillNumber] = useState('');
@@ -39,67 +40,103 @@ const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
           paybill_number: paybillNumber,
           till_number: tillNumber,
           phone_number: phoneNumber,
-          bank_account: bankAccount
+          bank_account: bankAccount,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("💳 Payment details updated:", response.data);
-      // Call onSuccess with updated data
-      onSuccess(response.data.data); // Assumes response includes serialized data
+      console.log('💳 Payment details updated:', response.data);
+      onSuccess(response.data.data);
       alert('Payment details updated successfully!');
       setIsSubmitting(false);
     } catch (err) {
-      console.error("❌ Error updating payment details:", err.response?.data || err.message);
+      console.error('❌ Error updating payment details:', err.response?.data || err.message);
       setErrorMessage(err.response?.data?.error || 'Failed to update payment details.');
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="payment-details-form">
-      <form onSubmit={handleSubmit}>
+    <div className="dashboard-card">
+      <div className="card-header">
+        <span className="card-icon">💳</span>
+        <h3 className="card-title">Payment Details</h3>
+      </div>
+      <form onSubmit={handleSubmit} className="payment-details-form">
         <div className="form-group">
-          <label>PayBill Number</label>
+          <label htmlFor="paybillNumber">PayBill Number</label>
           <input
+            id="paybillNumber"
             type="text"
+            className="form-input"
             value={paybillNumber}
             onChange={(e) => setPaybillNumber(e.target.value)}
             disabled={isSubmitting}
+            placeholder="Enter PayBill number"
           />
         </div>
         <div className="form-group">
-          <label>Till Number</label>
+          <label htmlFor="tillNumber">Till Number</label>
           <input
+            id="tillNumber"
             type="text"
+            className="form-input"
             value={tillNumber}
             onChange={(e) => setTillNumber(e.target.value)}
             disabled={isSubmitting}
+            placeholder="Enter Till number"
           />
         </div>
         <div className="form-group">
-          <label>Phone Number</label>
+          <label htmlFor="phoneNumber">Phone Number</label>
           <input
+            id="phoneNumber"
             type="text"
+            className="form-input"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             disabled={isSubmitting}
+            placeholder="Enter Phone number"
           />
         </div>
         <div className="form-group">
-          <label>Bank Account</label>
+          <label htmlFor="bankAccount">Bank Account</label>
           <input
+            id="bankAccount"
             type="text"
+            className="form-input"
             value={bankAccount}
             onChange={(e) => setBankAccount(e.target.value)}
             disabled={isSubmitting}
+            placeholder="Enter Bank account details"
           />
         </div>
-        <div className="form-group">
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Save Details'}
+        <div className="form-group form-actions">
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="spinner"></span> Submitting...
+              </>
+            ) : (
+              'Save Details'
+            )}
           </button>
         </div>
-        {errorMessage && <div className="error-message">{errorMessage}</div>}
+        {errorMessage && (
+          <div className="error-message">
+            {errorMessage}
+            <button
+              className="error-close"
+              onClick={() => setErrorMessage('')}
+              aria-label="Close error message"
+            >
+              ×
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

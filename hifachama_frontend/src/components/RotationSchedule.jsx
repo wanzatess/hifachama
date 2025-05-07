@@ -105,86 +105,90 @@ const RotationSchedule = ({ members, contributions, chamaId, role }) => {
   };
 
   return (
-    <div>
-      <div className="card-header">
-        <span className="card-icon">🔄</span>
-        <h3 className="card-title">Current Rotation</h3>
-      </div>
+    <div className="dashboard-card">
+      <h3 className="card-title">Rotation Schedule</h3>
+      <div className="meeting-blocks">
+        <div className="meeting-block">
+          <h4 className="meeting-title">Current Rotation</h4>
+          <p><strong>Current Pool:</strong> KES {calculateRotationalTotal().toFixed(2)}</p>
+          {noRotationMessage ? (
+            <>
+              <p>{noRotationMessage}</p>
+              {role === 'Chairperson' ? (
+                <CreateRotationForm
+                  chamaId={chamaId}
+                  onSuccess={() => {
+                    fetchRotation();
+                    fetchUpcomingRotations();
+                  }}
+                />
+              ) : (
+                <p>Waiting for chairperson to create rotation schedule.</p>
+              )}
+            </>
+          ) : rotation ? (
+            <>
+              <p><strong>Member:</strong> {currentMember?.username || 'Unknown'}</p>
+              <p><strong>Amount:</strong> KES {formatPayoutAmount(rotation.payout_amount)}</p>
+              <p>
+                <strong>Date:</strong> {new Date(rotation.cycle_date).toLocaleString('en-KE', {
+                  timeZone: 'Africa/Nairobi',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+              <p><strong>Countdown:</strong> {countdown}</p>
+              <p className="payout-instruction">
+                Note: Request your payout in the "Withdrawals" section when due.
+              </p>
+            </>
+          ) : (
+            <p>Loading rotation data...</p>
+          )}
+        </div>
 
-      <div className="rotation-status">
-        <h4>Current Pool:</h4>
-        <p className="pool-amount">KES {calculateRotationalTotal().toFixed(2)}</p>
-      </div>
-
-      <div className="rotation-status">
-        <h4>Next Payout:</h4>
-        {noRotationMessage ? (
-          <>
-            <p>{noRotationMessage}</p>
-            {role === 'Chairperson' ? (
-              <CreateRotationForm chamaId={chamaId} onSuccess={() => {
-                fetchRotation();
-                fetchUpcomingRotations();
-              }} />
-            ) : (
-              <p>Waiting for chairperson to create rotation schedule.</p>
-            )}
-          </>
-        ) : rotation ? (
-          <>
-            <p>Member: {currentMember?.username || 'Unknown'}</p>
-            <p>Amount: KES {formatPayoutAmount(rotation.payout_amount)}</p>
-            <p>
-              Date: {new Date(rotation.cycle_date).toLocaleString('en-KE', {
-                timeZone: 'Africa/Nairobi',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </p>
-            <p>Countdown: {countdown}</p>
-            <p className="payout-instruction">
-              Note: Request your payout in the "Withdrawals" section when due.
-            </p>
-          </>
-        ) : (
-          <p>Loading rotation data...</p>
-        )}
-      </div>
-
-      <div className="recent-activity">
-        <h4 className="activity-title">Rotation Order</h4>
-        <ol className="member-list">
-          {members.map((member, index) => (
-            <li key={member.id} className={member.id === rotation?.member_id ? 'highlight' : ''}>
-              {index + 1}. {member.username}
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      <div className="recent-activity">
-        <h4 className="activity-title">Upcoming Rotations</h4>
-        {upcomingRotations.length > 0 ? (
-          <>
-            <p>🎯 Next in line: <strong>{nextInLineUser}</strong></p>
+        <div className="meeting-block">
+          <h4 className="meeting-title">Rotation Order</h4>
+          {members.length > 0 ? (
             <ol className="member-list">
-              {upcomingRotations.map((rot, index) => {
-                const member = members.find(m => m.id === rot.member_id);
-                return (
-                  <li key={rot.id}>
-                    {index + 1}. {member?.username || 'Unknown'} –{' '}
-                    {new Date(rot.cycle_date).toLocaleDateString('en-KE')}
-                  </li>
-                );
-              })}
+              {members.map((member, index) => (
+                <li
+                  key={member.id}
+                  className={member.id === rotation?.member_id ? 'highlight' : ''}
+                >
+                  {index + 1}. {member.username}
+                </li>
+              ))}
             </ol>
-          </>
-        ) : (
-          <p>No upcoming rotations</p>
-        )}
+          ) : (
+            <p>No members available.</p>
+          )}
+        </div>
+
+        <div className="meeting-block">
+          <h4 className="meeting-title">Upcoming Rotations</h4>
+          {upcomingRotations.length > 0 ? (
+            <>
+              <p><strong>Next in Line:</strong> {nextInLineUser || 'Unknown'}</p>
+              <ol className="member-list">
+                {upcomingRotations.map((rot, index) => {
+                  const member = members.find(m => m.id === rot.member_id);
+                  return (
+                    <li key={rot.id}>
+                      {index + 1}. {member?.username || 'Unknown'} –{' '}
+                      {new Date(rot.cycle_date).toLocaleDateString('en-KE')}
+                    </li>
+                  );
+                })}
+              </ol>
+            </>
+          ) : (
+            <p>No upcoming rotations.</p>
+          )}
+        </div>
       </div>
     </div>
   );
