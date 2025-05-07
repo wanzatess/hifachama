@@ -5,7 +5,7 @@
   left: 0;
   width: 240px;
   height: 100%;
-  background-color: var(--dark-brown);
+  background-color: #6F623E;
   color: var(--light-gold);
   display: flex;
   flex-direction: column;
@@ -13,10 +13,6 @@
   padding: 2rem 0;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-}
-
-.sidebar-container.collapsed {
-  width: 80px;
 }
 
 .sidebar-nav {
@@ -42,10 +38,10 @@
 }
 
 .sidebar-header {
-  padding: 1rem;
-  text-align: center;
-  margin-top: auto;
+  padding: 0.5rem 0;     /* Reduce top/bottom spacing */
+  margin: 0;             /* Remove any outer margin */
 }
+
 
 .sidebar-brand {
   display: flex;
@@ -80,26 +76,24 @@
   margin-right: 1rem;
 }
 
-.sidebar-toggle {
-  background: none;
-  border: none;
-  color: var(--light-gold);
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.5rem;
-}
-
 /* Dropdown styles */
 .sidebar-dropdown {
   position: relative;
 }
 
 .sidebar-dropdown-menu {
-  position: relative;
+  position: static;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 0 0 5px 5px;
   overflow: hidden;
-  margin-top: -5px;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.sidebar-dropdown-menu.open {
+  max-height: 500px; /* Adjust based on content size */
+  opacity: 1;
 }
 
 .sidebar-dropdown-menu .sidebar-link {
@@ -120,22 +114,15 @@
   transform: rotate(180deg);
 }
 
-/* Collapsed state styles */
-.sidebar-container.collapsed .sidebar-label,
-.sidebar-container.collapsed .sidebar-profile,
-.sidebar-container.collapsed .sidebar-brand span {
-  display: none;
-}
-
-.sidebar-container.collapsed .sidebar-logo {
-  max-width: 40px;
-}
-
 .dashboard-main-container {
   margin-left: 240px;
-  transition: margin-left 0.3s ease;
 }
 
-.sidebar-container.collapsed ~ .dashboard-main-container {
-  margin-left: 80px;
+.sidebar-logo {
+  width: 70px;           /* Small fixed width */
+  height: auto;
+  display: block;
+  margin: 0 auto;        /* Center it with no extra top/bottom margin */
+  padding: 0;            /* Remove internal space */
 }
+

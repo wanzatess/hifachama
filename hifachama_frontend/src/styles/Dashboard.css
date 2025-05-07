@@ -1,15 +1,23 @@
+/* Assuming root variables for undefined vars */
+:root {
+  --primary-brown: #f5f5f5;
+  --light-gold: #f4e5bc;
+  --dark-brown: #4a3728;
+  --gold-accent: #d4a017;
+}
+
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
 }
 
 .dashboard-main-container {
-  margin-left: 240px; /* Ensure the main content is pushed to the right of the sidebar */
+  margin-left: 240px; /* Matches sidebar width */
   flex: 1;
   padding: 2rem;
+  padding-top: 60px; /* Accounts for fixed header height */
   background-color: var(--primary-brown);
   min-width: 0;
-  transition: margin-left 0.3s ease; /* Optional smooth transition */
 }
 
 .dashboard-content {
@@ -19,21 +27,26 @@
   width: 100%;
 }
 
-
 .dashboard-header {
-  grid-column: 1 / -1;
-  background-color: var(--light-gold);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
+  position: fixed;
+  top: 0;
+  left: 240px;
+  right: 0;
+  height: 60px;
+  background-color: #6F623E;
+  color: var(--light-gold);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--dark-brown);
-  margin-bottom: 1.5rem;
+  padding: 0 2rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 900;
 }
 
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
 
 .dashboard-card {
   background-color: var(--light-gold);
@@ -67,63 +80,6 @@
   padding-bottom: 0.75rem;
 }
 
-/* Static sidebar adjustments */
-.sidebar-container {
-  position: fixed; /* Fix the sidebar on the left */
-  top: 0;
-  left: 0;
-  width: 240px; /* Set fixed width for the sidebar */
-  height: 100vh;
-  background-color: var(--dark-brown);
-  color: var(--light-gold);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 2rem 0;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000; /* Make sure the sidebar is always on top */
-}
-
-.sidebar-header,
-.sidebar-profile {
-  padding: 1rem;
-  text-align: center;
-}
-
-.sidebar-nav {
-  margin-top: 2rem;
-}
-
-.sidebar-logo {
-  max-width: 150px;
-}
-
-.sidebar-nav button {
-  width: 100%;
-  padding: 1rem;
-  background-color: transparent;
-  border: none;
-  display: flex;
-  align-items: center;
-  color: var(--light-gold);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.sidebar-nav button:hover,
-.sidebar-nav button.active {
-  background-color: var(--gold-accent);
-}
-
-.sidebar-icon {
-  margin-right: 1rem;
-}
-
-/* Ensure main content is not hidden behind the sidebar */
-.dashboard-main-container {
-  margin-left: 240px; /* Ensure this matches the sidebar width */
-}
 .create-rotation-form {
   margin-top: 20px;
   padding: 15px;

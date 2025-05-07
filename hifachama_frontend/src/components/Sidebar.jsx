@@ -1,125 +1,156 @@
 import React, { useState } from 'react';
-import logo from "../static/images/logo.png";
-import {
-  FaHome,
-  FaMoneyBill,
-  FaHandHoldingUsd,
-  FaUsers,
-  FaChartBar,
-  FaCalendar,
-  FaCreditCard,
-  FaCreditCard as FaPayment
-} from "react-icons/fa";
+import { FaHome, FaMoneyBill, FaHandHoldingUsd, FaUsers, FaChartBar, FaCalendar, FaCreditCard, FaAngleDown } from "react-icons/fa";
+import logo from '../static/images/logo1.png';
 import '../styles/Sidebar.css';
 
-const Sidebar = ({ role, chamaType, chamaName, balance, setActiveSection, paymentDetails, activeSection }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = ({ role, chamaName, setActiveSection, activeSection }) => {
+  const [openDropdowns, setOpenDropdowns] = useState({});
 
-  // Define default navigation links
+  const toggleDropdown = (id) => {
+    setOpenDropdowns((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  // Define navigation links with dropdowns
   const navigationLinks = [
-    { id: 'overview', label: 'Overview', icon: <FaHome /> },
-    { id: 'contributions', label: 'Contributions', icon: <FaMoneyBill /> },
-    { id: 'withdrawals', label: 'Withdrawals', icon: <FaHandHoldingUsd /> },
-    { id: 'rotation', label: 'Rotation', icon: <FaUsers /> },
-    { id: 'reports', label: 'Reports', icon: <FaChartBar /> },
-    { id: 'meetings', label: 'Meetings', icon: <FaCalendar /> },
-    { id: 'loans', label: 'Loans', icon: <FaCreditCard /> },
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: <FaHome />,
+      dropdown: [
+        { id: 'overview', label: 'Member List', icon: <FaUsers /> },
+        { id: 'payment-details', label: 'Payment Details', icon: <FaCreditCard /> },
+      ],
+    },
+    {
+      id: 'transactions',
+      label: 'Transactions',
+      icon: <FaMoneyBill />,
+      dropdown: [
+        { id: 'contributions', label: 'Contributions', icon: <FaMoneyBill /> },
+        {
+          id: 'withdrawals',
+          label: 'Withdrawals',
+          icon: <FaHandHoldingUsd />,
+          subDropdown: [
+            { id: 'withdrawals', label: 'Manage Withdrawals', icon: <FaHandHoldingUsd /> },
+            { id: 'approve-withdrawal', label: 'Approve a Withdrawal', icon: <FaHandHoldingUsd /> },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'meetings',
+      label: 'Meetings',
+      icon: <FaCalendar />,
+      dropdown: [
+        { id: 'meetings', label: 'Meeting Schedule', icon: <FaCalendar /> },
+        { id: 'schedule-meeting', label: 'Schedule a Meeting', icon: <FaCalendar /> },
+      ],
+    },
+    {
+      id: 'loans',
+      label: 'Loans',
+      icon: <FaCreditCard />,
+      dropdown: [
+        { id: 'loans', label: 'Request a Loan', icon: <FaCreditCard /> },
+        { id: 'approve-loan', label: 'Approve a Loan', icon: <FaHandHoldingUsd /> },
+      ],
+    },
+    {
+      id: 'reports',
+      label: 'Reports',
+      icon: <FaChartBar />,
+      dropdown: [
+        { id: 'meeting-minutes', label: 'Meeting Minutes', icon: <FaChartBar /> },
+        { id: 'contribution-reports', label: 'Contribution Reports', icon: <FaChartBar /> },
+        { id: 'loan-reports', label: 'Loan Reports', icon: <FaChartBar /> },
+      ],
+    },
+    {
+      id: 'rotation',
+      label: 'Rotation',
+      icon: <FaUsers />,
+      dropdown: [
+        { id: 'rotation', label: 'Rotation Schedule', icon: <FaUsers /> },
+        { id: 'rotation-details', label: 'Rotation Details', icon: <FaUsers /> },
+      ],
+    },
   ];
 
-  // Conditional Links for Chairperson, Treasurer, and Secretary
-  const roleBasedLinks = {
-    Chairperson: [
-      { id: 'paymentDetails', label: 'Payment Details', icon: <FaPayment /> },
-      { id: 'loan-approval', label: 'Loan Approval', icon: <FaHandHoldingUsd /> },
-      { id: 'view-loans', label: 'View Loans', icon: <FaCreditCard /> },
-    ],
-    Treasurer: [
-      { id: 'manage-contributions', label: 'Manage Contributions', icon: <FaMoneyBill /> },
-      { id: 'approve-withdrawals', label: 'Approve Withdrawals', icon: <FaHandHoldingUsd /> },
-    ],
-    Secretary: [
-      { id: 'schedule-meetings', label: 'Schedule Meetings', icon: <FaCalendar /> },
-      { id: 'edit-reports', label: 'Edit Reports', icon: <FaChartBar /> },
-    ],
-  };
-
-  const getRoleLinks = () => {
-    return roleBasedLinks[role] || [];
-  };
-
   return (
-    <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}>
+    <div className="sidebar-container">
       <div className="sidebar-header">
-        {!isCollapsed && (
-          <div className="sidebar-brand">
-            <img src={logo} alt="Logo" className="sidebar-logo" />
-            <span>HIFACHAMA</span>
-          </div>
-        )}
-        <button
-          className="sidebar-toggle"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? ">" : "<"}
-        </button>
+        <img
+          src={logo}
+          alt="Chama Logo"
+          className="sidebar-logo"
+          style={{
+            maxWidth: '80%',
+            margin: '1rem auto',
+            display: 'block',
+          }}
+        />
       </div>
-
-      {!isCollapsed && (
-        <div className="sidebar-profile">
-          <h3>{chamaName || 'Chama'}</h3>
-          {paymentDetails ? (
-            <div className="payment-details">
-              {paymentDetails.paybill_number && (
-                <p><strong>PayBill:</strong> {paymentDetails.paybill_number}</p>
-              )}
-              {paymentDetails.till_number && (
-                <p><strong>Till:</strong> {paymentDetails.till_number}</p>
-              )}
-              {paymentDetails.phone_number && (
-                <p><strong>Phone:</strong> {paymentDetails.phone_number}</p>
-              )}
-              {paymentDetails.bank_account && (
-                <p><strong>Bank:</strong> {paymentDetails.bank_account}</p>
-              )}
-              {!paymentDetails.paybill_number && !paymentDetails.till_number &&
-               !paymentDetails.phone_number && !paymentDetails.bank_account && (
-                <p>No payment details available.</p>
-              )}
-            </div>
-          ) : (
-            <p>No payment details available.</p>
-          )}
-          {balance ? (
-            <div className="balance-details">
-              <p><strong>Rotational Balance:</strong> KES {balance.rotational.toFixed(2)}</p>
-              <p><strong>Investment Balance:</strong> KES {balance.investment.toFixed(2)}</p>
-            </div>
-          ) : (
-            <p>No balance information available.</p>
-          )}
-        </div>
-      )}
 
       <nav className="sidebar-nav">
         {navigationLinks.map((link) => (
-          <button
-            key={link.id}
-            onClick={() => setActiveSection(link.id)}
-            className={`sidebar-link ${activeSection === link.id ? 'active' : ''}`}
-          >
-            <span className="sidebar-icon">{link.icon}</span>
-            {!isCollapsed && <span className="sidebar-label">{link.label}</span>}
-          </button>
-        ))}
-        {getRoleLinks().map((link) => (
-          <button
-            key={link.id}
-            onClick={() => setActiveSection(link.id)}
-            className={`sidebar-link ${activeSection === link.id ? 'active' : ''}`}
-          >
-            <span className="sidebar-icon">{link.icon}</span>
-            {!isCollapsed && <span className="sidebar-label">{link.label}</span>}
-          </button>
+          <div key={link.id} className="sidebar-dropdown">
+            <button
+              onClick={() => {
+                if (link.dropdown) {
+                  toggleDropdown(link.id);
+                } else {
+                  setActiveSection(link.id);
+                }
+              }}
+              className={`sidebar-link ${activeSection === link.id ? 'active' : ''}`}
+            >
+              <span className="sidebar-icon">{link.icon}</span>
+              <span className="sidebar-label">{link.label}</span>
+              {link.dropdown && (
+                <span className={`dropdown-icon ${openDropdowns[link.id] ? 'open' : ''}`}>
+                  <FaAngleDown />
+                </span>
+              )}
+            </button>
+            {link.dropdown && openDropdowns[link.id] && (
+              <div className={`sidebar-dropdown-menu ${openDropdowns[link.id] ? 'open' : ''}`}>
+                {link.dropdown.map((subLink) => (
+                  <div key={subLink.id} className="sidebar-sub-dropdown">
+                    <button
+                      onClick={() => setActiveSection(subLink.id)}
+                      className={`sidebar-link ${activeSection === subLink.id ? 'active' : ''}`}
+                    >
+                      <span className="sidebar-icon">{subLink.icon}</span>
+                      <span className="sidebar-label">{subLink.label}</span>
+                      {subLink.subDropdown && (
+                        <span className={`dropdown-icon ${openDropdowns[subLink.id] ? 'open' : ''}`}>
+                          <FaAngleDown />
+                        </span>
+                      )}
+                    </button>
+                    {subLink.subDropdown && openDropdowns[subLink.id] && (
+                      <div className={`sidebar-dropdown-menu sub-dropdown ${openDropdowns[subLink.id] ? 'open' : ''}`}>
+                        {subLink.subDropdown.map((subSubLink) => (
+                          <button
+                            key={subSubLink.id}
+                            onClick={() => setActiveSection(subSubLink.id)}
+                            className={`sidebar-link ${activeSection === subSubLink.id ? 'active' : ''}`}
+                          >
+                            <span className="sidebar-icon">{subSubLink.icon}</span>
+                            <span className="sidebar-label">{subSubLink.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </nav>
     </div>

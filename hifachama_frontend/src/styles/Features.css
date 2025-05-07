@@ -1,15 +1,6 @@
-:root {
-  --background: #a89863;
-  --text-primary: #F0EAD6;
-  --header-footer: #a89863;
-  --hover: #CDBE96;
-  --cta: #9C8F5F;
-  --cta-hover: #8A7B50;
-}
-
 body {
-  background-color: var(--background);
-  color: var(--text-primary);
+  background-color: #a89863;
+  color: #F0EAD6;
 }
 
 .container {
@@ -27,17 +18,17 @@ h2 {
 h3 {
   font-size: 20px;
   font-weight: bold;
-  color: #000000
+  color: #000000;
 }
 
 p {
   font-size: 14px;
-  color: var(--text-primary);
+  color: #F0EAD6;
   line-height: 1.4;
 }
 
 .features-section {
-  background-color: var(--background);
+  background-color: #a89863;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -47,27 +38,27 @@ p {
 }
 
 .features-section h3 {
-  color: var(--dark-brown);
+  color: #000000;
   margin-bottom: 8px;
   font-size: 18px;
 }
 
 .features-section p {
-  color: var(--text-primary);
+  color: #F0EAD6;
   margin: 0;
 }
 
 .features-section:hover {
-  background-color: var(--cta);
+  background-color: #9C8F5F;
   transition: background-color 0.3s ease;
 }
 
 .features-section:hover h3 {
-  color: var(--dark-brown);
+  color: #000000;
 }
 
 .features-section:hover p {
-  color: var(--text-primary);
+  color: #F0EAD6;
 }
 
 /* Stack items vertically in the row */
@@ -87,13 +78,13 @@ p {
 
 .left-column h3,
 .right-column h3 {
-  color: var(--dark-brown);
+  color: #000000;
   font-size: 18px;
 }
 
 .left-column p,
 .right-column p {
-  color: var(--text-primary);
+  color: #F0EAD6;
 }
 
 /* Adjust for laptops (between 1024px and 1440px) */
@@ -117,6 +108,6 @@ p {
   }
 
   .features-section h3 {
-    color: var(--dark-brown);
+    color: #000000;
   }
 }
