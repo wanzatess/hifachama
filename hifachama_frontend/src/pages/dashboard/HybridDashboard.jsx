@@ -5,17 +5,21 @@ import { supabase } from '../../utils/supabaseClient';
 import MemberList from '../../components/MemberList';
 import ContributionDisplay from '../../components/ContributionDisplay';
 import RotationSchedule from '../../components/RotationSchedule';
-import ReportDisplay from '../../components/ReportDisplay';
+import CreateRotationForm from '../../components/CreateRotationForm';
+import ContributionReports from '../../components/ContributionReports';
+import LoanReports from '../../components/LoanReports';
 import ContributionForm from '../../components/ContributionForm';
 import WithdrawalForm from '../../components/WithdrawalForm';
 import WithdrawalTable from '../../components/WithdrawalTable';
 import LoanRequestForm from '../../components/LoanRequestForm';
 import LoanList from '../../components/LoanList';
+import LoanApprovalForm from '../../components/LoanApprovalForm';
 import AddPaymentDetailsForm from '../../components/AddPaymentDetailsForm';
 import PaymentDetailsDisplay from '../../components/PaymentDetailsDisplay';
 import Sidebar from '../../components/Sidebar';
 import MeetingDisplay from '../../components/MeetingDisplay';
 import MeetingScheduleForm from '../../components/MeetingScheduleForm';
+import MeetingMinutesUpload from '../../components/MeetingMinutesUpload';
 import '../../styles/Dashboard.css';
 import { toast } from 'react-toastify';
 
@@ -558,22 +562,26 @@ const HybridDashboard = () => {
                   </div>
                 </>
               );
-            case 'approve-loan':
-              if (userData?.role !== 'Chairperson') {
-                return <p>Access restricted to Chairpersons.</p>;
-              }
-              return (
-                <div className="dashboard-card">
-                  <h3>Approve Loans</h3>
-                  <LoanList
-                    loans={loans}
-                    userData={userData}
-                    chamaId={chamaData?.id}
-                    refreshLoans={refreshLoans}
-                    showActions={true}
-                  />
-                </div>
-              );
+              case 'approve-loan':
+                if (userData?.role !== 'Chairperson') {
+                  return <p>Access restricted to Chairpersons.</p>;
+                }
+                const pendingLoan = loans?.find(loan => loan.status.toLowerCase() === 'pending');
+                return (
+                  <div className="dashboard-card">
+                    <h3>Approve Loan</h3>
+                    {pendingLoan ? (
+                      <LoanApprovalForm
+                        loan={pendingLoan}
+                        userData={userData}
+                        chamaId={chamaData?.id}
+                        onSuccess={refreshLoans}
+                      />
+                    ) : (
+                      <p>No pending loans available to approve.</p>
+                    )}
+                  </div>
+                );
             case 'reports':
               return (
                 <div className="dashboard-card">
@@ -587,30 +595,38 @@ const HybridDashboard = () => {
                   />
                 </div>
               );
-            case 'meeting-minutes':
-              return (
-                <div className="dashboard-card">
-                  <h3>Meeting Minutes</h3>
-                  <p>Feature under development: Display meeting minutes here.</p>
-                  {/* TODO: Implement MeetingMinutes component */}
-                </div>
-              );
-            case 'contribution-reports':
-              return (
-                <div className="dashboard-card">
-                  <h3>Contribution Reports</h3>
-                  <p>Feature under development: Detailed contribution reports will be added here.</p>
-                  {/* TODO: Implement ContributionReports component */}
-                </div>
-              );
-            case 'loan-reports':
-              return (
-                <div className="dashboard-card">
-                  <h3>Loan Reports</h3>
-                  <p>Feature under development: Detailed loan reports will be added here.</p>
-                  {/* TODO: Implement LoanReports component */}
-                </div>
-              );
+              case 'meeting-minutes':
+                return (
+                  <div className="dashboard-card">
+                    <h3>Meeting Minutes</h3>
+                    <MeetingMinutesUpload
+                      chamaId={chamaData?.id}
+                      canUpload={userData?.role === 'Secretary'}
+                    />
+                  </div>
+                );
+                case 'contribution-reports':
+                  return (
+                    <div className="dashboard-card">
+                      <h3>Contribution Reports</h3>
+                      <ContributionReports
+                        contributions={contributions}
+                        chama={chamaData}
+                        balance={balance}
+                      />
+                    </div>
+                  );
+                case 'loan-reports':
+                  return (
+                    <div className="dashboard-card">
+                      <h3>Loan Reports</h3>
+                      <LoanReports
+                        loans={loans}
+                        chama={chamaData}
+                        balance={balance}
+                      />
+                    </div>
+                  );
             case 'rotation':
               return (
                 <div className="dashboard-card">
@@ -627,8 +643,7 @@ const HybridDashboard = () => {
               return (
                 <div className="dashboard-card">
                   <h3>Rotation Details</h3>
-                  <p>Feature under development: Detailed rotation information will be added here.</p>
-                  {/* TODO: Implement RotationDetails component */}
+                  <CreateRotationForm chamaId={chamaData?.id} />
                 </div>
               );
             default:

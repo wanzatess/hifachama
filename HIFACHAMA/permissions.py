@@ -35,6 +35,12 @@ class IsChamaMember(BasePermission):
     """Allows access to active chama members"""
     def has_permission(self, request, view):
         chama_id = view.kwargs.get('chama_id') or request.data.get('chama')
+        if not chama_id and request.data.get('member'):
+            try:
+                member = ChamaMember.objects.get(id=request.data['member'], user=request.user, is_active=True)
+                chama_id = member.chama_id
+            except ChamaMember.DoesNotExist:
+                return False
         if not chama_id:
             return False
         return ChamaMember.objects.filter(

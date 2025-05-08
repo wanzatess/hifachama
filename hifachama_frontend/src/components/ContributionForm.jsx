@@ -78,6 +78,7 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
         transaction_type: formData.transaction_type,
         date: formData.date,
         member: chamaMemberId,
+        chama: chamaId
       };
 
       console.log("Submitting contribution to /api/transactions/", payload);

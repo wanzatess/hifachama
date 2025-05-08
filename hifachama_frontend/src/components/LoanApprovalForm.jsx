@@ -9,7 +9,13 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
   const [status, setStatus] = useState("approved");
   const [loading, setLoading] = useState(false);
 
-  console.log("📋 Rendering LoanApprovalForm for loan:", loan, "userData:", userData);
+  console.log("📋 Rendering LoanApprovalForm with props:", {
+    loan,
+    chamaId,
+    userData,
+    onSuccess: !!onSuccess,
+  });
+  console.log("🔍 Loan Details:", JSON.stringify(loan, null, 2));
 
   if (!userData) {
     console.warn("⚠️ userData is undefined or null");
@@ -24,6 +30,28 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
     return <div className="error-message">Access denied. Only chairpersons can approve loans.</div>;
   }
 
+  if (!loan) {
+    console.warn("⚠️ Loan is undefined or null");
+    return (
+      <div className="dashboard-card">
+        <h3 className="card-title">Approve Loan</h3>
+        <div className="error-message">No loan selected. Please select a loan to approve.</div>
+      </div>
+    );
+  }
+
+  if (loan.status.toLowerCase() !== 'pending') {
+    console.warn("⚠️ Loan is not pending. Status:", loan.status);
+    return (
+      <div className="dashboard-card">
+        <h3 className="card-title">Approve Loan for {loan.member_name}</h3>
+        <div className="error-message">
+          This loan cannot be approved because it is not in pending status. Current status: {loan.status}.
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -34,20 +62,25 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
 
     setLoading(true);
 
-    try {
-      const response = await api.post(`/api/loans/${loan.id}/approve_loan/`, {
-        interest_rate: parseFloat(interestRate),
-        penalty_value: parseFloat(penaltyValue),
-        penalty_type: penaltyType,
-        status,
-        chama_id: chamaId,
-      });
+    const requestPayload = {
+      interest_rate: parseFloat(interestRate),
+      penalty_value: parseFloat(penaltyValue),
+      penalty_type: penaltyType,
+      status,
+      chama_id: chamaId,
+    };
 
+    console.log("📤 Sending API request to /api/loans/", loan.id, "/approve_loan/ with payload:", requestPayload);
+
+    try {
+      const response = await api.post(`/api/loans/${loan.id}/approve_loan/`, requestPayload);
+      console.log("✅ API response:", response.data);
       toast.success(`Loan ${status} successfully!`);
       if (onSuccess) onSuccess(response.data);
     } catch (error) {
-      console.error("Loan approval error:", error.response?.data || error.message);
-      toast.error(error.response?.data?.error || "Failed to process loan approval.");
+      const errorMessage = error.response?.data?.error || "Failed to process loan approval.";
+      console.error("❌ Loan approval error:", error.response?.data || error.message);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -57,9 +90,9 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
     <div className="dashboard-card">
       <h3 className="card-title">Approve Loan for {loan.member_name}</h3>
       <div className="mb-3">
-        <p><strong>Loan Amount:</strong> {loan.amount}</p>
-        <p><strong>Purpose:</strong> {loan.purpose}</p>
-        <p><strong>Repayment Period:</strong> {loan.repayment_period}</p>
+        <p><strong>Loan Amount:</strong> KSh. {parseFloat(loan.amount).toFixed(2)}</p>
+        <p><strong>Purpose:</strong> {loan.purpose || 'N/A'}</p>
+        <p><strong>Repayment Period:</strong> {loan.repayment_period || 'N/A'}</p>
       </div>
       <form onSubmit={handleSubmit} className="schedule-meeting-form">
         <div className="form-group">

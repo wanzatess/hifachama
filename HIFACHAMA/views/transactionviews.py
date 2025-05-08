@@ -9,20 +9,16 @@ from HIFACHAMA.models.chamamember import ChamaMember
 from HIFACHAMA.serializers.transactionserializer import TransactionSerializer, RotationSerializer, BalanceSerializer
 from django.utils import timezone
 from django.db.models import Sum
-from datetime import timedelta
-from dateutil.parser import parse
-from HIFACHAMA.models.chama import Chama
-import logging
 from datetime import datetime, timedelta
+from HIFACHAMA.models.chama import Chama
 from HIFACHAMA.permissions import IsChamaMember, IsChamaTreasurer, IsCurrentRotationMember, IsChairperson
 
+import logging
 logger = logging.getLogger(__name__)
 
+# ---------------------------- Transactions ----------------------------
+
 class TransactionViewSet(viewsets.ModelViewSet):
-    """
-    Handles listing, retrieving, and creating transactions
-    using the unified TransactionSerializer.
-    """
     permission_classes = [IsAuthenticated, IsChamaMember]
     serializer_class = TransactionSerializer
     queryset = Transaction.objects.all()
@@ -36,22 +32,19 @@ class TransactionViewSet(viewsets.ModelViewSet):
         ).distinct().order_by('-date')
 
     def perform_create(self, serializer):
-        try:
-            chama_member = ChamaMember.objects.get(user=self.request.user, is_active=True)
-        except ChamaMember.DoesNotExist:
+        chama_member = ChamaMember.objects.filter(user=self.request.user, is_active=True).first()
+        if not chama_member:
             raise serializers.ValidationError("You are not an active member of any chama.")
         serializer.save(member=chama_member)
 
+# ---------------------------- Contributions ----------------------------
+
 class ContributionView(APIView):
-    """
-    Allows an authenticated chama member to create a contribution.
-    """
     permission_classes = [IsAuthenticated, IsChamaMember]
 
     def post(self, request):
-        try:
-            chama_member = ChamaMember.objects.get(user=request.user, is_active=True)
-        except ChamaMember.DoesNotExist:
+        chama_member = ChamaMember.objects.filter(user=request.user, is_active=True).first()
+        if not chama_member:
             return Response({"error": "You are not part of any active chama."}, status=400)
 
         data = request.data.copy()
@@ -65,29 +58,24 @@ class ContributionView(APIView):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
+# ---------------------------- Withdrawal Request ----------------------------
+
 class WithdrawalRequestView(APIView):
-    """
-    Allows the member whose turn it is to request a withdrawal from the rotational balance.
-    The request is marked as pending until approved by the treasurer.
-    """
     permission_classes = [IsAuthenticated, IsChamaMember, IsCurrentRotationMember]
 
     def post(self, request):
-        try:
-            chama_member = ChamaMember.objects.get(user=request.user, is_active=True)
-        except ChamaMember.DoesNotExist:
+        chama_member = ChamaMember.objects.filter(user=request.user, is_active=True).first()
+        if not chama_member:
             return Response({"error": "You are not an active member of any chama."}, status=400)
 
         data = request.data.copy()
-        chama_id = data.get('chama')
-        amount = data.get('amount')
+        data['chama'] = chama_member.chama.id
         data['category'] = 'withdrawal'
         data['status'] = 'pending'
 
-        # Validate rotational balance
         try:
-            balance = Balance.objects.get(chama_id=chama_id)
-            if float(amount) > balance.rotational_balance:
+            balance = Balance.objects.get(chama_id=chama_member.chama.id)
+            if float(data['amount']) > balance.rotational_balance:
                 return Response({"error": "Withdrawal amount exceeds rotational balance."}, status=403)
         except Balance.DoesNotExist:
             return Response({"error": "No balance found for this chama."}, status=400)
@@ -95,34 +83,27 @@ class WithdrawalRequestView(APIView):
         serializer = TransactionSerializer(data=data, context={'request': request})
         if serializer.is_valid():
             serializer.save(member=chama_member)
-            return Response({
-                "message": "Withdrawal requested successfully",
-                "data": serializer.data
-            }, status=201)
+            return Response({"message": "Withdrawal requested successfully", "data": serializer.data}, status=201)
         return Response(serializer.errors, status=400)
 
+# ---------------------------- Approve Withdrawal ----------------------------
+
 class ApproveWithdrawalView(APIView):
-    """
-    Allows the treasurer to approve a pending withdrawal request.
-    Updates the rotational balance and marks the rotation as completed.
-    """
     permission_classes = [IsAuthenticated, IsChamaTreasurer]
 
     def post(self, request, transaction_id):
         try:
             transaction = Transaction.objects.get(id=transaction_id, category='withdrawal', status='pending')
         except Transaction.DoesNotExist:
-            return Response({"error": "Withdrawal request not found or already processed."}, status=400)
+            return Response({"error": "Withdrawal request not found or already processed."}, status=404)
 
-        # Validate rotational balance
         try:
-            balance = Balance.objects.get(chama_id=transaction.chama)
+            balance = Balance.objects.get(chama_id=transaction.member.chama.id)
             if float(transaction.amount) > balance.rotational_balance:
                 return Response({"error": "Insufficient rotational balance."}, status=403)
         except Balance.DoesNotExist:
             return Response({"error": "No balance found for this chama."}, status=400)
 
-        # Update balance and transaction
         balance.rotational_balance -= transaction.amount
         balance.pending_balance += transaction.amount
         balance.save()
@@ -130,12 +111,12 @@ class ApproveWithdrawalView(APIView):
         transaction.status = 'approved'
         transaction.save()
 
-        # Mark rotation as completed
+        # Update rotation
         rotation = Rotation.objects.filter(
-            chama_id=transaction.chama,
-            member_id=transaction.member.id,
+            chama=transaction.member.chama,
+            member=transaction.member,
             completed=False
-        ).order_by('position').first()
+        ).first()
         if rotation:
             rotation.completed = True
             rotation.status = 'completed'
@@ -144,37 +125,28 @@ class ApproveWithdrawalView(APIView):
 
         return Response({"message": "Withdrawal approved successfully."}, status=200)
 
+# ---------------------------- Data Views ----------------------------
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsChamaMember])
 def contributions_data(request):
-    """
-    Returns a list of contributions made by the authenticated user.
-    """
-    try:
-        contributions = Transaction.objects.filter(
-            member__user=request.user,
-            category='contribution'
-        ).order_by('-date')
-
-        serializer = TransactionSerializer(contributions, many=True)
-        return Response(serializer.data)
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
+    contributions = Transaction.objects.filter(
+        member__user=request.user,
+        category='contribution'
+    ).order_by('-date')
+    serializer = TransactionSerializer(contributions, many=True)
+    return Response(serializer.data)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsChamaMember])
 def transaction_history(request):
-    """
-    Returns a full transaction history for the authenticated user.
-    """
-    try:
-        transactions = Transaction.objects.filter(
-            member__user=request.user
-        ).order_by('-date')
-        serializer = TransactionSerializer(transactions, many=True)
-        return Response(serializer.data)
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
+    transactions = Transaction.objects.filter(
+        member__user=request.user
+    ).order_by('-date')
+    serializer = TransactionSerializer(transactions, many=True)
+    return Response(serializer.data)
+
+# ---------------------------- Chama Balance ----------------------------
 
 class ChamaBalanceView(APIView):
     permission_classes = [IsAuthenticated, IsChamaMember]
@@ -183,7 +155,7 @@ class ChamaBalanceView(APIView):
         try:
             balance = Balance.objects.get(chama_id=chama_id)
             serializer = BalanceSerializer(balance)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=200)
         except Balance.DoesNotExist:
             return Response({
                 'chama_id': chama_id,
@@ -191,12 +163,14 @@ class ChamaBalanceView(APIView):
                 'investment_balance': 0,
                 'pending_balance': 0,
                 'updated_at': None
-            }, status=status.HTTP_200_OK)
+            }, status=200)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=400)
+
+# ---------------------------- Rotation ----------------------------
 
 class NextRotationView(APIView):
-    permission_classes = [IsAuthenticated, IsChamaMember]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, chama_id):
         try:
@@ -211,6 +185,7 @@ class NextRotationView(APIView):
                     {'message': 'No active rotation found'},
                     status=status.HTTP_200_OK
                 )
+            # Calculate payout amount from rotational contributions
             contributions = Transaction.objects.filter(
                 member__chama_id=chama_id,
                 category='contribution',
@@ -224,18 +199,28 @@ class NextRotationView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class CreateRotationView(APIView):
-    permission_classes = [IsAuthenticated, IsChairperson, IsChamaMember]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, chama_id):
         logger.info(f"Creating rotation for user: {request.user.username}, chama_id: {chama_id}")
         try:
+            # Verify user is an active member of the chama
             member = ChamaMember.objects.get(
                 user=request.user,
                 chama_id=chama_id,
                 is_active=True
             )
-            logger.info(f"Member found: {member.user.username}, User Role: {member.user.role}")
+            logger.info(f"Member found: {member.user.username}, ChamaMember Role: {member.role}")
 
+            # Check if user is Chairperson in HIFACHAMA_customuser
+            if request.user.role != 'Chairperson':
+                logger.warning(f"User role check failed: {request.user.role}")
+                return Response(
+                    {"error": "Only chairpersons can create rotations"},
+                    status=403
+                )
+
+            # Validate chama exists
             try:
                 chama = Chama.objects.get(id=chama_id)
             except Chama.DoesNotExist:
@@ -245,6 +230,7 @@ class CreateRotationView(APIView):
                     status=404
                 )
 
+            # Validate request data
             frequency = request.data.get('frequency')
             start_date = request.data.get('start_date')
             if frequency not in ['weekly', 'biweekly', 'monthly']:
@@ -254,6 +240,7 @@ class CreateRotationView(APIView):
                     status=400
                 )
 
+            # Parse start_date or use today
             try:
                 cycle_date = datetime.strptime(start_date, '%Y-%m-%d').date() if start_date else datetime.now().date()
             except ValueError:
@@ -263,6 +250,7 @@ class CreateRotationView(APIView):
                     status=400
                 )
 
+            # Get active members
             members = ChamaMember.objects.filter(chama_id=chama_id, is_active=True).order_by('id')
             if not members:
                 logger.error("No active members found for chama")
@@ -271,6 +259,7 @@ class CreateRotationView(APIView):
                     status=400
                 )
 
+            # Calculate cycle dates based on frequency
             rotations = []
             for position, member in enumerate(members, start=1):
                 if frequency == 'weekly':
@@ -285,7 +274,7 @@ class CreateRotationView(APIView):
                     'member_id': member.id,
                     'position': position,
                     'cycle_date': cycle_date + offset,
-                    'payout_amount': 0.00,
+                    'payout_amount': 0.00,  # Default; updated later via contributions
                     'status': 'scheduled',
                     'completed': False
                 }
@@ -300,6 +289,7 @@ class CreateRotationView(APIView):
                 },
                 status=201
             )
+
         except ChamaMember.DoesNotExist:
             logger.error(f"No active membership for user {request.user.username} in chama {chama_id}")
             return Response(
@@ -314,11 +304,13 @@ class CreateRotationView(APIView):
             )
 
 class UpcomingRotationsView(APIView):
-    permission_classes = [IsAuthenticated, IsChamaMember]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, chama_id):
         try:
             today = timezone.now().date()
+            
+            # Get all future uncompleted rotations
             upcoming = Rotation.objects.filter(
                 chama_id=chama_id,
                 cycle_date__gt=today,
@@ -328,6 +320,7 @@ class UpcomingRotationsView(APIView):
             if not upcoming.exists():
                 return Response({"message": "No upcoming rotations"}, status=200)
 
+            # Identify the next-in-line member
             next_rotation = upcoming.first()
             next_user = next_rotation.member.user.get_full_name() or next_rotation.member.user.username
 
@@ -337,5 +330,6 @@ class UpcomingRotationsView(APIView):
                 "next_in_line": next_user,
                 "upcoming_rotations": serializer.data
             }, status=200)
+
         except Exception as e:
             return Response({"error": str(e)}, status=400)

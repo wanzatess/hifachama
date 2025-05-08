@@ -59,7 +59,7 @@ urlpatterns = [
     path('api/chamas/<int:chama_id>/balance/', ChamaBalanceView.as_view(), name='chama-balance'),
     path('api/chamas/<int:chama_id>/next-rotation/', NextRotationView.as_view(), name='next-rotation'),
     path('api/chamas/<int:chama_id>/create-rotation/', CreateRotationView.as_view(), name='create-rotation'),
-    path('chamas/<int:chama_id>/upcoming-rotations/', UpcomingRotationsView.as_view(), name='upcoming-rotations'),
+    path('api/chamas/<int:chama_id>/upcoming-rotations/', UpcomingRotationsView.as_view(), name='upcoming-rotations'),
     path('api/join-chama/', JoinChamaView.as_view(), name='join-chama'),
 
     # Dashboard
