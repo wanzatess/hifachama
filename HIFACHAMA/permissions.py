@@ -4,19 +4,34 @@ from .models.transactions import Rotation
 from django.utils import timezone
 
 class IsChairperson(BasePermission):
-    """Allows access only to users with Chairperson role"""
+    """Allows access only to users with Chairperson role, with OTP verification for sensitive actions"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "Chairperson"
+        is_authenticated = request.user.is_authenticated and request.user.role == "Chairperson"
+        sensitive_views = ['PaymentDetailsView', 'ApproveLoanView']  # Match class names
+
+        if is_authenticated and view.__class__.__name__ in sensitive_views:
+            return request.session.get('otp_verified', False)
+        return is_authenticated
 
 class IsTreasurer(BasePermission):
-    """Allows access only to users with Treasurer role"""
+    """Allows access only to users with Treasurer role, with OTP verification for sensitive actions"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "Treasurer"
+        is_authenticated = request.user.is_authenticated and request.user.role == "Treasurer"
+        sensitive_views = ['ApproveWithdrawalView']
+
+        if is_authenticated and view.__class__.__name__ in sensitive_views:
+            return request.session.get('otp_verified', False)
+        return is_authenticated
 
 class IsSecretary(BasePermission):
-    """Allows access only to users with Secretary role"""
+    """Allows access only to users with Secretary role, with OTP verification for sensitive actions"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == "Secretary"
+        is_authenticated = request.user.is_authenticated and request.user.role == "Secretary"
+        sensitive_views = ['ScheduleMeetingView']
+
+        if is_authenticated and view.__class__.__name__ in sensitive_views:
+            return request.session.get('otp_verified', False)
+        return is_authenticated
 
 class IsMember(BasePermission):
     """Allows access only to users with Member role"""
@@ -44,8 +59,8 @@ class IsChamaMember(BasePermission):
         if not chama_id:
             return False
         return ChamaMember.objects.filter(
-            chama_id=chama_id, 
-            user=request.user, 
+            chama_id=chama_id,
+            user=request.user,
             is_active=True
         ).exists()
 
@@ -56,8 +71,8 @@ class IsChamaTreasurer(BasePermission):
         if not chama_id:
             return False
         return ChamaMember.objects.filter(
-            chama_id=chama_id, 
-            user=request.user, 
+            chama_id=chama_id,
+            user=request.user,
             user__role='Treasurer',
             is_active=True
         ).exists()

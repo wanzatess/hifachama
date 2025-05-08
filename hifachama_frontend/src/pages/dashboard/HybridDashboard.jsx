@@ -38,6 +38,11 @@ const HybridDashboard = () => {
   const [chamaData, setChamaData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [pendingSection, setPendingSection] = useState(null);
+
+  const sensitiveSections = ['payment-details', 'approve-withdrawal', 'schedule-meeting', 'approve-loan'];
 
   const fetchUserAndPaymentDetails = async () => {
     setIsLoading(true);
@@ -201,7 +206,6 @@ const HybridDashboard = () => {
     const setupRealtime = async () => {
       try {
         console.log("🔍 Fetching initial Supabase data...");
-
         const { data: memberData, error: memberError } = await supabase
           .from('HIFACHAMA_chamamember')
           .select('id, chama_id')
@@ -352,7 +356,6 @@ const HybridDashboard = () => {
 
     activeChannels = channels.map(({ table, setter, filterByChama, filterByMembers, isMembershipTable }) => {
       const channel = supabase.channel(`realtime:${table}`);
-
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, async (payload) => {
         const { eventType, new: newRow, old: oldRow } = payload;
         console.log(`🔁 ${eventType} on ${table}:`, payload);
@@ -408,10 +411,52 @@ const HybridDashboard = () => {
     };
   }, [userData?.id, chamaData?.id]);
 
+  const handleSendOTP = async (section) => {
+    const token = getAuthToken();
+    try {
+      await axios.post(
+        'http://127.0.0.1:8080/api/otp/send/',
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPendingSection(section);
+      setShowOTPModal(true);
+      toast.success("OTP sent to your email.");
+    } catch (err) {
+      toast.error("Failed to send OTP: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    const token = getAuthToken();
+    try {
+      await axios.post(
+        'http://127.0.0.1:8080/api/otp/verify/',
+        { otp },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("OTP verified!");
+      setShowOTPModal(false);
+      setOtp('');
+      setActiveSection(pendingSection);
+      setPendingSection(null);
+    } catch (err) {
+      toast.error("Invalid OTP: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const handleSetActiveSection = (section) => {
+    if (sensitiveSections.includes(section)) {
+      handleSendOTP(section);
+    } else {
+      setActiveSection(section);
+    }
+  };
+
   const handleWithdrawalAction = async (transactionId, action) => {
     try {
       const token = getAuthToken();
-      const response = await axios.post(
+      await axios.post(
         `http://127.0.0.1:8080/api/transactions/${transactionId}/approve/`,
         { action },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -454,19 +499,14 @@ const HybridDashboard = () => {
         {(() => {
           switch (activeSection) {
             case 'overview':
-              console.log('Payment Details:', paymentDetails);
               return (
                 <div className="dashboard-card">
-                  {/* Member List */}
                   <MemberList chamaId={chamaData?.id} members={members} title="Member Directory" />
-            
-                  {/* Payment Details Section */}
                   <div style={{ marginTop: '1.5rem' }}>
                     <PaymentDetailsDisplay details={paymentDetails} />
                   </div>
                 </div>
               );
-            
             case 'payment-details':
               if (userData?.role !== 'Chairperson') {
                 return <p>Access restricted to Chairpersons.</p>;
@@ -562,71 +602,58 @@ const HybridDashboard = () => {
                   </div>
                 </>
               );
-              case 'approve-loan':
-                if (userData?.role !== 'Chairperson') {
-                  return <p>Access restricted to Chairpersons.</p>;
-                }
-                const pendingLoan = loans?.find(loan => loan.status.toLowerCase() === 'pending');
-                return (
-                  <div className="dashboard-card">
-                    <h3>Approve Loan</h3>
-                    {pendingLoan ? (
-                      <LoanApprovalForm
-                        loan={pendingLoan}
-                        userData={userData}
-                        chamaId={chamaData?.id}
-                        onSuccess={refreshLoans}
-                      />
-                    ) : (
-                      <p>No pending loans available to approve.</p>
-                    )}
-                  </div>
-                );
-            case 'reports':
+            case 'approve-loan':
+              if (userData?.role !== 'Chairperson') {
+                return <p>Access restricted to Chairpersons.</p>;
+              }
+              const pendingLoan = loans?.find(loan => loan.status.toLowerCase() === 'pending');
               return (
                 <div className="dashboard-card">
-                  <ReportDisplay
+                  <h3>Approve Loan</h3>
+                  {pendingLoan ? (
+                    <LoanApprovalForm
+                      loan={pendingLoan}
+                      userData={userData}
+                      chamaId={chamaData?.id}
+                      onSuccess={refreshLoans}
+                    />
+                  ) : (
+                    <p>No pending loans available to approve.</p>
+                  )}
+                </div>
+              );
+            case 'meeting-minutes':
+              return (
+                <div className="dashboard-card">
+                  <h3>Meeting Minutes</h3>
+                  <MeetingMinutesUpload
+                    chamaId={chamaData?.id}
+                    canUpload={userData?.role === 'Secretary'}
+                  />
+                </div>
+              );
+            case 'contribution-reports':
+              return (
+                <div className="dashboard-card">
+                  <h3>Contribution Reports</h3>
+                  <ContributionReports
                     contributions={contributions}
-                    withdrawals={withdrawals}
-                    loans={loans}
-                    members={members}
                     chama={chamaData}
                     balance={balance}
                   />
                 </div>
               );
-              case 'meeting-minutes':
-                return (
-                  <div className="dashboard-card">
-                    <h3>Meeting Minutes</h3>
-                    <MeetingMinutesUpload
-                      chamaId={chamaData?.id}
-                      canUpload={userData?.role === 'Secretary'}
-                    />
-                  </div>
-                );
-                case 'contribution-reports':
-                  return (
-                    <div className="dashboard-card">
-                      <h3>Contribution Reports</h3>
-                      <ContributionReports
-                        contributions={contributions}
-                        chama={chamaData}
-                        balance={balance}
-                      />
-                    </div>
-                  );
-                case 'loan-reports':
-                  return (
-                    <div className="dashboard-card">
-                      <h3>Loan Reports</h3>
-                      <LoanReports
-                        loans={loans}
-                        chama={chamaData}
-                        balance={balance}
-                      />
-                    </div>
-                  );
+            case 'loan-reports':
+              return (
+                <div className="dashboard-card">
+                  <h3>Loan Reports</h3>
+                  <LoanReports
+                    loans={loans}
+                    chama={chamaData}
+                    balance={balance}
+                  />
+                </div>
+              );
             case 'rotation':
               return (
                 <div className="dashboard-card">
@@ -654,6 +681,35 @@ const HybridDashboard = () => {
               );
           }
         })()}
+        {showOTPModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded shadow-lg">
+              <h3 className="text-lg font-bold mb-4">Enter OTP</h3>
+              <p className="mb-4">Check your email for the OTP.</p>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter 6-digit OTP"
+                className="border p-2 w-full mb-4"
+              />
+              <div className="flex justify-end">
+                <button
+                  className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+                  onClick={() => setShowOTPModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={handleVerifyOTP}
+                >
+                  Verify
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -661,7 +717,7 @@ const HybridDashboard = () => {
   return (
     <div className="dashboard-layout">
       <Sidebar
-        setActiveSection={setActiveSection}
+        setActiveSection={handleSetActiveSection}
         activeSection={activeSection}
         paymentDetails={paymentDetails}
         role={userData?.role}

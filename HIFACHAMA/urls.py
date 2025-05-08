@@ -4,7 +4,6 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from rest_framework.routers import DefaultRouter
 
 # Import views
-from HIFACHAMA.views.otpviews import verify_otp
 from HIFACHAMA.views.chamaviews import (
     ChamaListCreateView,
     chama_detail,
@@ -18,6 +17,7 @@ from HIFACHAMA.views.reportsview import generate_pdf_report, generate_excel_repo
 from HIFACHAMA.views.transactionviews import TransactionViewSet, transaction_history, contributions_data, ChamaBalanceView, NextRotationView, CreateRotationView, UpcomingRotationsView
 from HIFACHAMA.views.userviews import current_user, UserLoginView, RegisterView
 from HIFACHAMA.views.meetingsview import MeetingViewSet
+from HIFACHAMA.views.otpviews import SendOTPView, VerifyOTPView
 
 # API Home
 def api_home(request):
@@ -45,7 +45,8 @@ urlpatterns = [
     path("api/register/", RegisterView.as_view(), name="register"),
     path("api/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
     path("api/verify/", TokenVerifyView.as_view(), name="token-verify"),
-    path("api/verify-otp/", verify_otp, name="verify-otp"),
+    path('api/otp/send/', SendOTPView.as_view(), name='send-otp'),
+    path('api/otp/verify/', VerifyOTPView.as_view(), name='verify-otp'),
 
     # User
     path("api/users/me/", current_user, name="current-user"),

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db import models
+from django.utils import timezone
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
@@ -33,17 +34,25 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=30, blank=True) 
     last_name = models.CharField(max_length=30, blank=True) 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Member')
-
     phone_number = models.CharField(max_length=15, blank=True, null=True)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)  # Required for admin access
-
+    is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(null=True, blank=True, auto_now_add=True)
+    otp = models.CharField(max_length=6, null=True, blank=True)  # Store OTP
+    otp_expiry = models.DateTimeField(null=True, blank=True)  # Store OTP expiration
+    chama_id = models.IntegerField(null=True, blank=True)
+    chama_name = models.CharField(max_length=255, null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
     objects = CustomUserManager()
+
+    def is_otp_valid(self):
+        """Check if OTP is valid and not expired"""
+        if not self.otp or not self.otp_expiry:
+            return False
+        return timezone.now() <= self.otp_expiry
 
     def __str__(self):
         return self.username
