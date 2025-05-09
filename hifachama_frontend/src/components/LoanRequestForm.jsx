@@ -7,9 +7,11 @@ const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
   const [purpose, setPurpose] = useState("");
   const [repaymentPeriod, setRepaymentPeriod] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccessMessage('');
 
     if (!amount || !repaymentPeriod || !chamaId || !userId) {
       toast.error("All fields and user information are required!");
@@ -33,7 +35,7 @@ const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
         member: memberId,
       });
 
-      toast.success("Loan request submitted successfully!");
+      setSuccessMessage("Loan request submitted successfully!");
       setAmount("");
       setPurpose("");
       setRepaymentPeriod("");
@@ -49,6 +51,26 @@ const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
   return (
     <div className="dashboard-card">
       <h3 className="card-title">Request a Loan</h3>
+      {successMessage && (
+        <div style={{
+          padding: '12px',
+          marginBottom: '20px',
+          borderRadius: '8px',
+          textAlign: 'center',
+          fontSize: '0.95rem',
+          backgroundColor: '#D4EDDA',
+          color: '#155724'
+        }}>
+          <p style={{
+            margin: '0',
+            padding: '8px',
+            borderRadius: '6px',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)'
+          }}>
+            {successMessage}
+          </p>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="schedule-meeting-form">
         <div className="form-group">
           <label className="block">Amount</label>

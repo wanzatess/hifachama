@@ -7,9 +7,11 @@ import { toast } from 'react-toastify';
 const CreateRotationForm = ({ chamaId, onSuccess }) => {
   const [frequency, setFrequency] = useState('weekly');
   const [startDate, setStartDate] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccessMessage('');
     try {
       const token = getAuthToken();
       const response = await axios.post(
@@ -17,7 +19,7 @@ const CreateRotationForm = ({ chamaId, onSuccess }) => {
         { frequency, start_date: startDate || undefined },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(response.data.message);
+      setSuccessMessage(response.data.message || 'Rotation schedule created successfully!');
       onSuccess();
     } catch (err) {
       console.error('Error creating rotation:', err);
@@ -28,6 +30,26 @@ const CreateRotationForm = ({ chamaId, onSuccess }) => {
   return (
     <div className="create-rotation-form">
       <h4>Create Rotation Schedule</h4>
+      {successMessage && (
+        <div style={{
+          padding: '12px',
+          marginBottom: '20px',
+          borderRadius: '8px',
+          textAlign: 'center',
+          fontSize: '0.95rem',
+          backgroundColor: '#D4EDDA',
+          color: '#155724'
+        }}>
+          <p style={{
+            margin: '0',
+            padding: '8px',
+            borderRadius: '6px',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)'
+          }}>
+            {successMessage}
+          </p>
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="frequency">Rotation Frequency</label>

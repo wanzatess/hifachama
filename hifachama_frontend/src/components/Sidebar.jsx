@@ -30,15 +30,8 @@ const Sidebar = ({ role, chamaName, setActiveSection, activeSection }) => {
       icon: <FaMoneyBill />,
       dropdown: [
         { id: 'contributions', label: 'Contributions', icon: <FaMoneyBill /> },
-        {
-          id: 'withdrawals',
-          label: 'Withdrawals',
-          icon: <FaHandHoldingUsd />,
-          subDropdown: [
-            { id: 'withdrawals', label: 'Manage Withdrawals', icon: <FaHandHoldingUsd /> },
-            { id: 'approve-withdrawal', label: 'Approve a Withdrawal', icon: <FaHandHoldingUsd /> },
-          ],
-        },
+        { id: 'withdrawals', label: 'Withdrawals', icon: <FaHandHoldingUsd /> },
+        { id: 'approve-withdrawal', label: 'Approve a Withdrawal', icon: <FaHandHoldingUsd /> }
       ],
     },
     {
@@ -126,26 +119,7 @@ const Sidebar = ({ role, chamaName, setActiveSection, activeSection }) => {
                     >
                       <span className="sidebar-icon">{subLink.icon}</span>
                       <span className="sidebar-label">{subLink.label}</span>
-                      {subLink.subDropdown && (
-                        <span className={`dropdown-icon ${openDropdowns[subLink.id] ? 'open' : ''}`}>
-                          <FaAngleDown />
-                        </span>
-                      )}
                     </button>
-                    {subLink.subDropdown && openDropdowns[subLink.id] && (
-                      <div className={`sidebar-dropdown-menu sub-dropdown ${openDropdowns[subLink.id] ? 'open' : ''}`}>
-                        {subLink.subDropdown.map((subSubLink) => (
-                          <button
-                            key={subSubLink.id}
-                            onClick={() => setActiveSection(subSubLink.id)}
-                            className={`sidebar-link ${activeSection === subSubLink.id ? 'active' : ''}`}
-                          >
-                            <span className="sidebar-icon">{subSubLink.icon}</span>
-                            <span className="sidebar-label">{subSubLink.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

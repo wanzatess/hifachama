@@ -13,8 +13,8 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
   const [chamaMemberId, setChamaMemberId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // Fetch ChamaMember ID for the current user
   useEffect(() => {
     const fetchChamaMember = async () => {
       try {
@@ -51,6 +51,7 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMessage("");
 
     if (!chamaMemberId) {
       toast.error("Member data not loaded. Please try again.");
@@ -96,7 +97,7 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
 
       console.log("Contribution response:", response.data);
 
-      toast.success("Contribution submitted successfully!");
+      setSuccessMessage("Contribution submitted successfully!");
       setFormData({
         amount: "",
         purpose: "",
@@ -104,7 +105,6 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
         date: new Date().toISOString().split("T")[0],
       });
       if (onSuccess) onSuccess();
-
     } catch (error) {
       console.error("Contribution error:", error.response?.data || error.message);
       if (error.response?.data) {
@@ -137,6 +137,26 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
   return (
     <div className="form-container bg-white p-4 rounded shadow mb-6">
       <h2 className="form-title text-xl font-semibold mb-3">Make a Contribution</h2>
+      {successMessage && (
+        <div style={{
+          padding: '12px',
+          marginBottom: '20px',
+          borderRadius: '8px',
+          textAlign: 'center',
+          fontSize: '0.95rem',
+          backgroundColor: '#D4EDDA',
+          color: '#155724'
+        }}>
+          <p style={{
+            margin: '0',
+            padding: '8px',
+            borderRadius: '6px',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)'
+          }}>
+            {successMessage}
+          </p>
+        </div>
+      )}
       {error && <div className="error-message text-red-500 mb-3">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="form-group mb-3">

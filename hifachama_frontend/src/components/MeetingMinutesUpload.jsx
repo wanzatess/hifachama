@@ -7,8 +7,8 @@ const MeetingMinutesUpload = ({ chamaId, canUpload }) => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [minutes, setMinutes] = useState([]);
+  const [successMessage, setSuccessMessage] = useState('');
 
-  // Fetch existing meeting minutes
   useEffect(() => {
     const fetchMinutes = async () => {
       const { data, error } = await supabase.storage
@@ -41,6 +41,7 @@ const MeetingMinutesUpload = ({ chamaId, canUpload }) => {
     }
 
     setUploading(true);
+    setSuccessMessage('');
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${file.name}`;
@@ -64,7 +65,7 @@ const MeetingMinutesUpload = ({ chamaId, canUpload }) => {
 
       setMinutes(updatedFiles);
       setFile(null);
-      toast.success('Meeting minutes uploaded successfully!');
+      setSuccessMessage('Meeting minutes uploaded successfully!');
     } catch (error) {
       console.error('Error uploading file:', error);
       toast.error('Failed to upload meeting minutes.');
@@ -100,11 +101,29 @@ const MeetingMinutesUpload = ({ chamaId, canUpload }) => {
   return (
     <div className="report-card">
       <h3 className="report-title">Meeting Minutes</h3>
-
-      {/* Upload Section */}
       {canUpload && (
         <div className="report-section">
           <h4 className="report-section-title">Upload Meeting Minutes (PDF)</h4>
+          {successMessage && (
+            <div style={{
+              padding: '12px',
+              marginBottom: '20px',
+              borderRadius: '8px',
+              textAlign: 'center',
+              fontSize: '0.95rem',
+              backgroundColor: '#D4EDDA',
+              color: '#155724'
+            }}>
+              <p style={{
+                margin: '0',
+                padding: '8px',
+                borderRadius: '6px',
+                backgroundColor: 'rgba(255, 255, 255, 0.7)'
+              }}>
+                {successMessage}
+              </p>
+            </div>
+          )}
           <div className="form-group">
             <input
               type="file"
@@ -122,8 +141,6 @@ const MeetingMinutesUpload = ({ chamaId, canUpload }) => {
           </button>
         </div>
       )}
-
-      {/* Uploaded Minutes List */}
       <div className="report-section">
         <h4 className="report-section-title">Uploaded Minutes</h4>
         {minutes.length > 0 ? (

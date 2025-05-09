@@ -10,8 +10,8 @@ const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
   const [bankAccount, setBankAccount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
-  // Pre-fill form with initialData
   useEffect(() => {
     if (initialData) {
       setPaybillNumber(initialData.paybill_number || '');
@@ -25,6 +25,7 @@ const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage('');
+    setSuccessMessage('');
 
     if (!paybillNumber && !tillNumber && !phoneNumber && !bankAccount) {
       setErrorMessage('At least one field must be provided.');
@@ -46,7 +47,7 @@ const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
       );
       console.log('💳 Payment details updated:', response.data);
       onSuccess(response.data.data);
-      alert('Payment details updated successfully!');
+      setSuccessMessage('Payment details updated successfully!');
       setIsSubmitting(false);
     } catch (err) {
       console.error('❌ Error updating payment details:', err.response?.data || err.message);
@@ -61,6 +62,26 @@ const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
         <span className="card-icon">💳</span>
         <h3 className="card-title">Payment Details</h3>
       </div>
+      {successMessage && (
+        <div style={{
+          padding: '12px',
+          marginBottom: '20px',
+          borderRadius: '8px',
+          textAlign: 'center',
+          fontSize: '0.95rem',
+          backgroundColor: '#D4EDDA',
+          color: '#155724'
+        }}>
+          <p style={{
+            margin: '0',
+            padding: '8px',
+            borderRadius: '6px',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)'
+          }}>
+            {successMessage}
+          </p>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="payment-details-form">
         <div className="form-group">
           <label htmlFor="paybillNumber">PayBill Number</label>

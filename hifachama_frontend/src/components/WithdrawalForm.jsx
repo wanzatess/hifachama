@@ -1,187 +1,198 @@
-import React, { useState, useEffect } from "react";
-import api from "../api/axiosConfig"; // Adjust the path based on your project structure
-import { toast } from "react-toastify";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { getAuthToken } from '../utils/auth';
+import { toast } from 'react-toastify';
+import '../styles/Form.css';
 
-const WithdrawalForm = () => {
-  const [formData, setFormData] = useState({
-    amount: "",
-    description: "",
-    transaction_type: "withdrawal",
-    chama: "",
-    member: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [rotationalBalance, setRotationalBalance] = useState(0);
-  const [isUserTurn, setIsUserTurn] = useState(false);
-  const [nextInLine, setNextInLine] = useState(null);
+const WithdrawalForm = ({ chamaId, userId, balance, memberId }) => {
+  const [amount, setAmount] = useState('');
+  const [isEligible, setIsEligible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const fetchBalance = async () => {
-    if (!formData.chama) return;
-
+  const checkRotationEligibility = async () => {
     try {
-      const response = await api.get(
-        `/api/chamas/${formData.chama}/balance/`
-      );
-      setRotationalBalance(response.data.rotational_balance);
-    } catch (error) {
-      toast.error("Failed to fetch rotational balance.");
-    }
-  };
-
-  const checkUserTurn = async () => {
-    if (!formData.chama || !formData.member) return;
-
-    try {
-      const response = await api.get(
-        `/api/chamas/${formData.chama}/next-rotation/`
-      );
-      if (response.data.message === "No active rotation found") {
-        setIsUserTurn(false);
-        setNextInLine(null);
-      } else {
-        const currentMemberId = response.data.member_id;
-        setIsUserTurn(currentMemberId === parseInt(formData.member));
-        setNextInLine(response.data.next_in_line);
+      setLoading(true);
+      setError(null);
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('No authentication token found.');
       }
-    } catch (error) {
-      toast.error("Failed to verify rotation turn.");
-      setIsUserTurn(false);
-    }
-  };
 
-  useEffect(() => {
-    fetchBalance();
-    checkUserTurn();
-  }, [formData.chama, formData.member]);
+      console.log('🔍 Checking rotation eligibility for chama:', chamaId, 'user:', userId);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+      const rotationResponse = await axios.get(
+        `http://127.0.0.1:8080/api/chamas/${chamaId}/upcoming-rotations/`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log('📡 Rotation response:', rotationResponse.data);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+      if (rotationResponse.data.message === 'No upcoming rotations') {
+        setIsEligible(false);
+        setError('No upcoming rotations found.');
+        return;
+      }
 
-    if (!formData.chama || !formData.member) {
-      toast.error("Chama ID and Member ID are required.");
-      return;
-    }
-
-    if (!isUserTurn) {
-      toast.error("It is not your turn to withdraw.");
-      return;
-    }
-
-    if (formData.amount <= 0) {
-      toast.error("Amount must be greater than zero.");
-      return;
-    }
-
-    if (parseFloat(formData.amount) > rotationalBalance) {
-      toast.error("Withdrawal amount exceeds the rotational balance.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await api.post("/api/transactions/withdrawal/", formData);
-      toast.success("Withdrawal request submitted successfully!");
-      setFormData({
-        amount: "",
-        description: "",
-        transaction_type: "withdrawal",
-        chama: formData.chama,
-        member: formData.member,
-      });
-    } catch (error) {
-      if (error.response) {
-        if (error.response.status === 400) {
-          toast.error(error.response.data.error || "Invalid withdrawal details.");
-        } else if (error.response.status === 403) {
-          toast.error("Not your turn or insufficient balance.");
-        } else {
-          toast.error("Failed to submit withdrawal request.");
+      let nextMemberId;
+      if (rotationResponse.data.upcoming_rotations && Array.isArray(rotationResponse.data.upcoming_rotations) && rotationResponse.data.upcoming_rotations.length > 0) {
+        const firstRotation = rotationResponse.data.upcoming_rotations[0];
+        nextMemberId = firstRotation.member_id || firstRotation.member;
+        if (!nextMemberId) {
+          throw new Error('No member ID found in upcoming rotations.');
         }
+      } else if (rotationResponse.data.member) {
+        nextMemberId = rotationResponse.data.member;
+      } else if (rotationResponse.data.member_id) {
+        nextMemberId = rotationResponse.data.member_id;
       } else {
-        toast.error("Network error. Please try again.");
+        throw new Error('Rotation response missing member ID or invalid structure.');
       }
+
+      console.log('🔄 Next rotation member ID:', nextMemberId);
+
+      let currentMemberId = memberId;
+      if (!currentMemberId) {
+        console.log('🔍 Fetching member data for user:', userId, 'chama:', chamaId);
+        const memberResponse = await axios.get(
+          `http://127.0.0.1:8080/api/chama-members/?user=${userId}&chama=${chamaId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        console.log('📡 Member response:', memberResponse.data);
+
+        if (!memberResponse.data.members || !Array.isArray(memberResponse.data.members)) {
+          throw new Error('Invalid member data structure.');
+        }
+
+        const currentMember = memberResponse.data.members.find(m => m.user === userId);
+        if (!currentMember) {
+          throw new Error('No member found for this user in the chama.');
+        }
+        currentMemberId = currentMember.id;
+        console.log('👤 Current member ID:', currentMemberId);
+      }
+
+      const eligible = currentMemberId === nextMemberId;
+      setIsEligible(eligible);
+      if (!eligible) {
+        setError('You are not the next member in the rotation.');
+      }
+    } catch (err) {
+      console.error('❌ Error checking rotation eligibility:', err);
+      const errorMessage =
+        err.response?.data?.error ||
+        err.message ||
+        'Unable to verify rotation eligibility. Please try again.';
+      setError(errorMessage);
+      setIsEligible(false);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (chamaId && userId) {
+      checkRotationEligibility();
+    } else {
+      setError('Missing chama or user information.');
+      setLoading(false);
+    }
+  }, [chamaId, userId]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSuccessMessage('');
+    if (!isEligible) {
+      toast.error('You are not eligible to request a withdrawal.');
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error('Please enter a valid amount.');
+      return;
+    }
+    if (balance && parseFloat(amount) > balance.rotational_balance) {
+      toast.error('Withdrawal amount exceeds rotational balance.');
+      return;
+    }
+    if (!balance) {
+      toast.error('No balance data available. Please contact the chama administrator.');
+      return;
+    }
+
+    try {
+      const token = getAuthToken();
+      const response = await axios.post(
+        'http://127.0.0.1:8080/api/transactions/withdrawal-request/',
+        {
+          amount: parseFloat(amount),
+          chama: chamaId,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setSuccessMessage('Withdrawal requested successfully!');
+      setAmount('');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to request withdrawal.');
+    }
+  };
+
   return (
     <div className="form-container">
-      <h2 className="form-title">Request Withdrawal</h2>
-      {formData.chama && (
-        <p className="balance-info">Rotational Balance: {rotationalBalance}</p>
+      <h2>Request Withdrawal</h2>
+      {successMessage && (
+        <div style={{
+          padding: '12px',
+          marginBottom: '20px',
+          borderRadius: '8px',
+          textAlign: 'center',
+          fontSize: '0.95rem',
+          backgroundColor: '#D4EDDA',
+          color: '#155724'
+        }}>
+          <p style={{
+            margin: '0',
+            padding: '8px',
+            borderRadius: '6px',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)'
+          }}>
+            {successMessage}
+          </p>
+        </div>
       )}
-      {nextInLine && (
-        <p className="turn-info">
-          {isUserTurn
-            ? "It is your turn to withdraw."
-            : `Next in line: ${nextInLine}`}
-        </p>
+      {loading ? (
+        <p>Loading eligibility status...</p>
+      ) : error ? (
+        <p className="error">{error}</p>
+      ) : !isEligible ? (
+        <p className="error">You are not the next member in the rotation.</p>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="amount">Amount (KES):</label>
+            <input
+              type="number"
+              id="amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter amount"
+              min="0"
+              step="0.01"
+              required
+              disabled={!isEligible}
+            />
+          </div>
+          {balance ? (
+            <p>Available Rotational Balance: KES {balance.rotational_balance}</p>
+          ) : (
+            <p>No balance data available.</p>
+          )}
+          <button type="submit" className="submit-button" disabled={!isEligible}>
+            Submit Withdrawal Request
+          </button>
+        </form>
       )}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label className="form-label">Chama ID</label>
-          <input
-            type="text"
-            name="chama"
-            value={formData.chama}
-            onChange={handleChange}
-            className="form-input"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Member ID</label>
-          <input
-            type="text"
-            name="member"
-            value={formData.member}
-            onChange={handleChange}
-            className="form-input"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Amount</label>
-          <input
-            type="number"
-            name="amount"
-            value={formData.amount}
-            onChange={handleChange}
-            className="form-input"
-            required
-            min="0.01"
-            step="0.01"
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Reason/Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="form-textarea"
-            rows="3"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          className="form-button"
-          disabled={loading || !isUserTurn}
-        >
-          {loading ? "Processing..." : "Submit Withdrawal Request"}
-        </button>
-      </form>
     </div>
   );
 };

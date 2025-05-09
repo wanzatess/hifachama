@@ -8,6 +8,7 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
   const [penaltyType, setPenaltyType] = useState("amount");
   const [status, setStatus] = useState("approved");
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   console.log("📋 Rendering LoanApprovalForm with props:", {
     loan,
@@ -54,6 +55,7 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccessMessage('');
 
     if (!interestRate || !penaltyValue || !penaltyType || !status) {
       toast.error("All fields are required!");
@@ -75,7 +77,7 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
     try {
       const response = await api.post(`/api/loans/${loan.id}/approve_loan/`, requestPayload);
       console.log("✅ API response:", response.data);
-      toast.success(`Loan ${status} successfully!`);
+      setSuccessMessage(`Loan ${status} successfully!`);
       if (onSuccess) onSuccess(response.data);
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Failed to process loan approval.";
@@ -89,6 +91,26 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
   return (
     <div className="dashboard-card">
       <h3 className="card-title">Approve Loan for {loan.member_name}</h3>
+      {successMessage && (
+        <div style={{
+          padding: '12px',
+          marginBottom: '20px',
+          borderRadius: '8px',
+          textAlign: 'center',
+          fontSize: '0.95rem',
+          backgroundColor: '#D4EDDA',
+          color: '#155724'
+        }}>
+          <p style={{
+            margin: '0',
+            padding: '8px',
+            borderRadius: '6px',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)'
+          }}>
+            {successMessage}
+          </p>
+        </div>
+      )}
       <div className="mb-3">
         <p><strong>Loan Amount:</strong> KSh. {parseFloat(loan.amount).toFixed(2)}</p>
         <p><strong>Purpose:</strong> {loan.purpose || 'N/A'}</p>

@@ -41,8 +41,14 @@ const HybridDashboard = () => {
   const [showOTPModal, setShowOTPModal] = useState(false);
   const [otp, setOtp] = useState('');
   const [pendingSection, setPendingSection] = useState(null);
+  const [memberId, setMemberId] = useState(null);
 
-  const sensitiveSections = ['payment-details', 'approve-withdrawal', 'schedule-meeting', 'approve-loan'];
+  const sensitiveSections = {
+    'payment-details': 'Chairperson',
+    'approve-withdrawal': 'Treasurer',
+    'schedule-meeting': 'Secretary',
+    'approve-loan': 'Chairperson'
+  };
 
   const fetchUserAndPaymentDetails = async () => {
     setIsLoading(true);
@@ -61,6 +67,7 @@ const HybridDashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log("👤 User data fetched:", user);
+      console.log("🔎 User role:", user.role);
       setUserData(user);
 
       console.log("🔎 Inspecting chama_id and chama_name:", {
@@ -98,6 +105,88 @@ const HybridDashboard = () => {
       setError("Failed to load dashboard data. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const refreshWithdrawals = async () => {
+    if (!chamaData?.id || !userData?.id) {
+      console.log("⏳ Skipping withdrawal refresh: chamaData or userData missing");
+      return;
+    }
+
+    try {
+      console.log("🔍 Refreshing withdrawals for chama:", chamaData.id);
+      const { data: memberData } = await supabase
+        .from('HIFACHAMA_chamamember')
+        .select('id, chama_id')
+        .eq('user_id', userData.id)
+        .single();
+      if (!memberData) {
+        console.error("❌ No member data found");
+        setMemberId(null);
+        return;
+      }
+      setMemberId(memberData.id);
+      const chamaId = memberData.chama_id;
+
+      const { data: chamaMembers } = await supabase
+        .from('HIFACHAMA_chamamember')
+        .select('id')
+        .eq('chama_id', chamaId);
+      const memberIds = chamaMembers ? chamaMembers.map(m => m.id) : [];
+
+      const { data: transactions } = await supabase
+        .from('HIFACHAMA_transaction')
+        .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
+        .in('member_id', memberIds)
+        .eq('category', 'withdrawal');
+
+      const formattedWithdrawals = transactions.map(t => ({
+        ...t,
+        username: t.HIFACHAMA_chamamember?.HIFACHAMA_customuser?.username || 'Unknown'
+      }));
+
+      console.log("💸 Refreshed withdrawals:", formattedWithdrawals);
+      setWithdrawals(formattedWithdrawals || []);
+    } catch (err) {
+      console.error("❌ Error refreshing withdrawals:", err);
+      toast.error("Failed to refresh withdrawals.");
+    }
+  };
+
+  const refreshBalance = async () => {
+    if (!chamaData?.id) {
+      console.log("⏳ Skipping balance refresh: chamaData missing");
+      return;
+    }
+    try {
+      console.log("🔍 Fetching balance for chama:", chamaData.id);
+      const { data: balanceData, error } = await supabase
+        .from('HIFACHAMA_balance')
+        .select('*')
+        .eq('chama_id', chamaData.id);
+      
+      if (error) {
+        throw new Error(`Supabase error: ${error.message}`);
+      }
+
+      if (!balanceData || balanceData.length === 0) {
+        console.warn("⚠️ No balance data found for chama:", chamaData.id);
+        setBalance(null);
+        return;
+      }
+
+      if (balanceData.length > 1) {
+        console.warn("⚠️ Multiple balance records found for chama:", chamaData.id, balanceData);
+        // Use the first record, but this indicates a data issue
+      }
+
+      const balance = balanceData[0];
+      console.log("💰 Refreshed balance:", balance);
+      setBalance(balance);
+    } catch (err) {
+      console.error("❌ Error refreshing balance:", err.message);
+      setBalance(null);
     }
   };
 
@@ -216,6 +305,7 @@ const HybridDashboard = () => {
           setError("Failed to load member data.");
           return;
         }
+        setMemberId(memberData.id);
         const chamaId = memberData.chama_id;
 
         const { data: chamaMembers, error: membersError } = await supabase
@@ -252,7 +342,7 @@ const HybridDashboard = () => {
             .select('*, HIFACHAMA_chamamember!inner(user_id, HIFACHAMA_customuser!inner(username))')
             .in('member_id', memberIds),
           supabase.from('HIFACHAMA_paymentdetails').select('*').eq('chama_id', chamaId).single(),
-          supabase.from('HIFACHAMA_balance').select('*').eq('chama_id', chamaId).single(),
+          supabase.from('HIFACHAMA_balance').select('*').eq('chama_id', chamaId),
           supabase.from('HIFACHAMA_rotation').select('*').eq('chama_id', chamaId),
         ]);
 
@@ -287,7 +377,7 @@ const HybridDashboard = () => {
         setWithdrawals(formattedWithdrawals || []);
         setMeetings(meetings || []);
         setLoans(formattedLoans || []);
-        setBalance(balanceData || null);
+        setBalance(balanceData?.[0] || null);
         setPaymentDetails(paymentDetails || null);
         setRotations(rotationData || []);
       } catch (err) {
@@ -350,7 +440,7 @@ const HybridDashboard = () => {
         filterByMembers: true
       },
       { table: 'HIFACHAMA_paymentdetails', setter: setPaymentDetails, filterByChama: true },
-      { table: 'HIFACHAMA_balance', setter: setBalance, filterByChama: true },
+      { table: 'HIFACHAMA_balance', setter: (data) => setBalance(data.eventType === 'DELETE' ? null : data), filterByChama: true },
       { table: 'HIFACHAMA_rotation', setter: setRotations, filterByChama: true },
     ];
 
@@ -446,8 +536,13 @@ const HybridDashboard = () => {
   };
 
   const handleSetActiveSection = (section) => {
-    if (sensitiveSections.includes(section)) {
-      handleSendOTP(section);
+    if (sensitiveSections[section]) {
+      const requiredRole = sensitiveSections[section];
+      if (userData?.role === requiredRole) {
+        handleSendOTP(section);
+      } else {
+        setActiveSection(section);
+      }
     } else {
       setActiveSection(section);
     }
@@ -461,7 +556,8 @@ const HybridDashboard = () => {
         { action },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Withdrawal ${action}d successfully!`);
+      toast.success(`Withdrawal ${action}ed successfully!`);
+      await Promise.all([refreshWithdrawals(), refreshBalance()]);
     } catch (error) {
       toast.error(error.response?.data?.error || `Failed to ${action} withdrawal.`);
     }
@@ -502,7 +598,7 @@ const HybridDashboard = () => {
               return (
                 <div className="dashboard-card">
                   <MemberList chamaId={chamaData?.id} members={members} title="Member Directory" />
-                  <div style={{ marginTop: '1.5rem' }}>
+                  <div style={{ marginurbi: '1.5rem' }}>
                     <PaymentDetailsDisplay details={paymentDetails} />
                   </div>
                 </div>
@@ -543,11 +639,17 @@ const HybridDashboard = () => {
                     <WithdrawalForm
                       chamaId={chamaData?.id}
                       userId={userData?.id}
+                      balance={balance}
+                      memberId={memberId}
                     />
                   </div>
                   <div className="dashboard-card">
                     <h3>Pending Withdrawals</h3>
-                    <WithdrawalTable />
+                    <WithdrawalTable
+                      withdrawals={withdrawals.filter(w => w.member_id === userData?.id)}
+                      balance={balance}
+                      role={userData?.role}
+                    />
                   </div>
                 </>
               );
@@ -558,11 +660,7 @@ const HybridDashboard = () => {
               return (
                 <div className="dashboard-card">
                   <h3>Approve Withdrawals</h3>
-                  <WithdrawalTable
-                    withdrawals={withdrawals}
-                    onAction={handleWithdrawalAction}
-                    showActions={true}
-                  />
+                  <handleWithdrawalAction chamaId={chamaData?.id} />
                 </div>
               );
             case 'meetings':
@@ -682,26 +780,26 @@ const HybridDashboard = () => {
           }
         })()}
         {showOTPModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded shadow-lg">
-              <h3 className="text-lg font-bold mb-4">Enter OTP</h3>
-              <p className="mb-4">Check your email for the OTP.</p>
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+              <h3 className="text-xl font-semibold mb-4 text-gray-800">Enter OTP</h3>
+              <p className="mb-6 text-gray-600">Please check your email for the 6-digit OTP.</p>
               <input
                 type="text"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 placeholder="Enter 6-digit OTP"
-                className="border p-2 w-full mb-4"
+                className="border border-gray-300 p-3 w-full mb-6 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <div className="flex justify-end">
+              <div className="flex justify-end space-x-3">
                 <button
-                  className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+                  className="bg-gray-300 text-gray-800 px-5 py-2 rounded hover:bg-gray-400 transition"
                   onClick={() => setShowOTPModal(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  className="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition"
                   onClick={handleVerifyOTP}
                 >
                   Verify
@@ -723,7 +821,6 @@ const HybridDashboard = () => {
         role={userData?.role}
         chamaType={chamaData?.type}
         chamaName={chamaData?.name}
-        balance={balance ? { rotational: balance.rotational_balance, investment: balance.investment_balance } : { rotational: 0, investment: 0 }}
       />
       <main className="dashboard-main-container">
         {renderContent()}
