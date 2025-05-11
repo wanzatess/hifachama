@@ -1,7 +1,6 @@
-from django.urls import path, include
+from django.urls import path
 from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
-from rest_framework.routers import DefaultRouter
 
 # Import views
 from HIFACHAMA.views.chamaviews import (
@@ -13,28 +12,17 @@ from HIFACHAMA.views.chamaviews import (
     get_chama_member_id
 )
 from HIFACHAMA.views.paymentdetailsview import PaymentDetailsView
-from HIFACHAMA.views.reportsview import generate_pdf_report, generate_excel_report
-from HIFACHAMA.views.transactionviews import TransactionViewSet, transaction_history, contributions_data, ChamaBalanceView, NextRotationView, CreateRotationView, UpcomingRotationsView
+from HIFACHAMA.views.transactionviews import TransactionViewSet, ChamaBalanceView
 from HIFACHAMA.views.userviews import current_user, UserLoginView, RegisterView
 from HIFACHAMA.views.meetingsview import MeetingViewSet
 from HIFACHAMA.views.otpviews import SendOTPView, VerifyOTPView
+from HIFACHAMA.views.rotationviews import NextRotationView, CreateRotationView, UpcomingRotationsView
 
 # API Home
 def api_home(request):
     return JsonResponse({
-        "message": "Welcome to HIFACHAMA API",
-        "documentation": "/docs/",
-        "authentication": {
-            "login": "/api/login/",
-            "refresh": "/api/refresh/",
-            "verify": "/api/verify/"
-        }
+        "Welcome to the HIFACHAMA API!"
     }, status=200)
-
-# DRF Router
-router = DefaultRouter()
-router.register(r'transactions', TransactionViewSet, basename='transaction')
-router.register(r'meetings', MeetingViewSet, basename='meeting')
 
 urlpatterns = [
     # Core
@@ -65,13 +53,4 @@ urlpatterns = [
 
     # Dashboard
     path("api/dashboard/", dashboard_data, name="dashboard"),
-    path("api/dashboard/contributions/", contributions_data, name="contributions"),
-    path("api/dashboard/stats/", dashboard_data, name="stats"),
-
-    # Reports
-    path("api/reports/pdf/", generate_pdf_report, name="pdf-report"),
-    path("api/reports/excel/", generate_excel_report, name="excel-report"),
-
-    # ViewSets via Router
-    path("api/", include(router.urls)),
 ]

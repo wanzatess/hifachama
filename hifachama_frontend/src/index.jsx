@@ -3,10 +3,10 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from 'react-router-dom';  // Correct for v6+
 import { AuthProvider } from "./context/AuthContext";
 import AppRoutes from "./routes/AppRoutes";
-import "./styles/Home.css";
-import "./styles/Login.css";
-import "./styles/Register.css";
-import "./styles/Dashboard.css";
+import './pages/HomePage/Home.css';
+import "./pages/Login/Login.css";
+import "./pages/Registration/Register.css";
+import "./pages/Dashboards/Dashboard.css";
 
 // Error boundary wrapper component
 class AuthErrorBoundary extends React.Component {

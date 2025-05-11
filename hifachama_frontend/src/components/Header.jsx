@@ -1,6 +1,7 @@
 import React from 'react';
 import logo from '../static/images/logo.png'; // Ensure the logo path matches your project structure
-import '../styles/Dashboard.css';
+import '../../pages/Dashboards/Dashboard.css
+';
 
 const Header = ({ userName, chamaName }) => {
   return (
