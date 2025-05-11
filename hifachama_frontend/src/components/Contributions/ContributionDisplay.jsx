@@ -1,9 +1,11 @@
 import React from 'react';
+import { useContributions } from '../../hooks/useContributions'; // Adjust path
 import '../../pages/Dashboards/Dashboard.css';
 import '../Membership/MemberList.css';
 
-const ContributionDisplay = ({ contributions }) => {
-  // Handle loading or empty states
+const ContributionDisplay = () => {
+  const { contributions } = useContributions();
+
   if (!contributions || contributions.length === 0) {
     return (
       <div className="contribution-display-card">
@@ -16,7 +18,6 @@ const ContributionDisplay = ({ contributions }) => {
     );
   }
 
-  // Helper function to format date
   const formatDate = (dateString) => {
     if (!dateString) return 'Not Available';
     try {

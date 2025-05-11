@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import './PaymentDetails.css';
 import axios from 'axios';
 import { getAuthToken } from '../../utils/auth';
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
+import { usePaymentDetails } from '../../hooks/usePaymentDetails'; // Adjust path
 
-const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
+const AddPaymentDetailsForm = ({ onSuccess }) => {
+  const { chamaData } = useContext(ChamaContext);
+  const { paymentDetails, setPaymentDetails } = usePaymentDetails();
   const [paybillNumber, setPaybillNumber] = useState('');
   const [tillNumber, setTillNumber] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -13,13 +17,13 @@ const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    if (initialData) {
-      setPaybillNumber(initialData.paybill_number || '');
-      setTillNumber(initialData.till_number || '');
-      setPhoneNumber(initialData.phone_number || '');
-      setBankAccount(initialData.bank_account || '');
+    if (paymentDetails) {
+      setPaybillNumber(paymentDetails.paybill_number || '');
+      setTillNumber(paymentDetails.till_number || '');
+      setPhoneNumber(paymentDetails.phone_number || '');
+      setBankAccount(paymentDetails.bank_account || '');
     }
-  }, [initialData]);
+  }, [paymentDetails]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +40,7 @@ const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
     try {
       const token = getAuthToken();
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/add-payment-details/`,
+        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaData.id}/add-payment-details/`,
         {
           paybill_number: paybillNumber,
           till_number: tillNumber,
@@ -45,13 +49,12 @@ const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log('💳 Payment details updated:', response.data);
-      onSuccess(response.data.data);
+      setPaymentDetails(response.data.data);
       setSuccessMessage('Payment details updated successfully!');
-      setIsSubmitting(false);
+      if (onSuccess) onSuccess(response.data.data);
     } catch (err) {
-      console.error('❌ Error updating payment details:', err.response?.data || err.message);
       setErrorMessage(err.response?.data?.error || 'Failed to update payment details.');
+    } finally {
       setIsSubmitting(false);
     }
   };

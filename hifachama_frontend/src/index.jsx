@@ -1,7 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from 'react-router-dom';  // Correct for v6+
+import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from "./context/AuthContext";
+import { ChamaProvider } from "./context/ChamaContext"; // Import ChamaProvider
 import AppRoutes from "./routes/AppRoutes";
 import './pages/HomePage/Home.css';
 import "./pages/Login/Login.css";
@@ -38,16 +39,15 @@ class AuthErrorBoundary extends React.Component {
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
-  <React.StrictMode>
+
     <BrowserRouter>
       <AuthErrorBoundary>
         <AuthProvider>
-          <AppRoutes />
+          <ChamaProvider>
+            <AppRoutes />
+          </ChamaProvider>
         </AuthProvider>
       </AuthErrorBoundary>
     </BrowserRouter>
-  </React.StrictMode>
-);
 
-// Optional performance monitoring
-// reportWebVitals(console.log);
+);

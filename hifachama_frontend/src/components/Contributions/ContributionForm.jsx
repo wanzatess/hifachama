@@ -1,44 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useContext } from "react";
 import axios from "axios";
 import { getAuthToken } from "../../utils/auth";
 import { toast } from "react-toastify";
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
+import { useMembers } from '../../hooks/useMembers'; // Adjust path
 
-const ContributionForm = ({ onSuccess, chamaId }) => {
+const ContributionForm = ({ onSuccess }) => {
+  const { chamaData } = useContext(ChamaContext);
+  const { memberId } = useMembers();
   const [formData, setFormData] = useState({
     amount: "",
     purpose: "",
     transaction_type: "rotational",
     date: new Date().toISOString().split("T")[0],
   });
-  const [chamaMemberId, setChamaMemberId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-
-  useEffect(() => {
-    const fetchChamaMember = async () => {
-      try {
-        const token = getAuthToken();
-        if (!token) {
-          setError("Please log in to make a contribution.");
-          return;
-        }
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/my-membership/`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!response.data.chama_member_id) {
-          setError("You are not an active member of this chama.");
-          return;
-        }
-        setChamaMemberId(response.data.chama_member_id);
-      } catch (err) {
-        console.error("Error fetching chama member:", err.response?.data || err.message);
-        setError(err.response?.data?.error || "Failed to load member data.");
-      }
-    };
-    if (chamaId) fetchChamaMember();
-  }, [chamaId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,7 +31,7 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
     setError("");
     setSuccessMessage("");
 
-    if (!chamaMemberId) {
+    if (!memberId) {
       toast.error("Member data not loaded. Please try again.");
       return;
     }
@@ -78,14 +56,12 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
         category: "contribution",
         transaction_type: formData.transaction_type,
         date: formData.date,
-        member: chamaMemberId,
-        chama: chamaId
+        member: memberId,
+        chama: chamaData.id
       };
 
-      console.log("Submitting contribution to /api/transactions/", payload);
-
       const response = await axios.post(
-        "${import.meta.env.VITE_API_URL}/api/transactions/",
+        `${import.meta.env.VITE_API_URL}/api/transactions/`,
         payload,
         {
           headers: {
@@ -94,8 +70,6 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
           },
         }
       );
-
-      console.log("Contribution response:", response.data);
 
       setSuccessMessage("Contribution submitted successfully!");
       setFormData({
@@ -106,29 +80,23 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
       });
       if (onSuccess) onSuccess();
     } catch (error) {
-      console.error("Contribution error:", error.response?.data || error.message);
-      if (error.response?.data) {
-        const errors = error.response.data;
-        let errorMessage = errors.error || "Failed to submit contribution.";
-        if (errors.category) {
-          errorMessage = `Category error: ${errors.category.join(", ")}`;
-        } else if (errors.amount) {
-          errorMessage = `Amount error: ${errors.amount.join(", ")}`;
-        } else if (errors.transaction_type) {
-          errorMessage = `Transaction type error: ${errors.transaction_type.join(", ")}`;
-        } else if (errors.purpose) {
-          errorMessage = `Purpose error: ${errors.purpose.join(", ")}`;
-        } else if (errors.member) {
-          errorMessage = `Member error: ${errors.member.join(", ")}`;
-        } else if (errors.non_field_errors) {
-          errorMessage = errors.non_field_errors.join(", ");
-        }
-        setError(errorMessage);
-        toast.error(errorMessage);
-      } else {
-        setError("An error occurred while submitting the contribution.");
-        toast.error("An error occurred while submitting the contribution.");
+      const errors = error.response?.data;
+      let errorMessage = errors?.error || "Failed to submit contribution.";
+      if (errors?.category) {
+        errorMessage = `Category error: ${errors.category.join(", ")}`;
+      } else if (errors?.amount) {
+        errorMessage = `Amount error: ${errors.amount.join(", ")}`;
+      } else if (errors?.transaction_type) {
+        errorMessage = `Transaction type error: ${errors.transaction_type.join(", ")}`;
+      } else if (errors?.purpose) {
+        errorMessage = `Purpose error: ${errors.purpose.join(", ")}`;
+      } else if (errors?.member) {
+        errorMessage = `Member error: ${errors.member.join(", ")}`;
+      } else if (errors?.non_field_errors) {
+        errorMessage = errors.non_field_errors.join(", ");
       }
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -209,7 +177,7 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
         <button
           type="submit"
           className="form-button bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          disabled={loading || !chamaMemberId}
+          disabled={loading || !memberId}
         >
           {loading ? "Processing..." : "Submit Contribution"}
         </button>

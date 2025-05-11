@@ -1,34 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import api from '../../api/axiosConfig';
+import React, { useContext } from 'react';
+import { useMeetings } from '../../hooks/useMeetings'; // Adjust path
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
 import '../../pages/Dashboards/Dashboard.css';
 
 const MeetingDisplay = () => {
-  const [meetings, setMeetings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { isLoading, error } = useContext(ChamaContext);
+  const { meetings } = useMeetings();
 
-  // Fetch meeting data and filter future meetings
-  const fetchMeetingData = async () => {
-    try {
-      const response = await api.get('/api/meetings/');
-      const currentDate = new Date('2025-05-07'); // Current date as per context
-      const futureMeetings = (response.data || []).filter((meeting) => {
-        const meetingDate = new Date(meeting.date);
-        return meetingDate >= currentDate;
-      });
-      setMeetings(futureMeetings);
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to fetch meeting details');
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMeetingData();
-  }, []);
-
-  // Helper function to format date
   const formatDate = (dateString) => {
     if (!dateString) return 'Not Available';
     try {
@@ -46,8 +24,7 @@ const MeetingDisplay = () => {
     }
   };
 
-  // Handle loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="dashboard-card">
         <div className="card-header">
@@ -59,7 +36,6 @@ const MeetingDisplay = () => {
     );
   }
 
-  // Handle error state
   if (error) {
     return (
       <div className="dashboard-card">
@@ -72,7 +48,6 @@ const MeetingDisplay = () => {
     );
   }
 
-  // Handle empty state
   if (!meetings || meetings.length === 0) {
     return (
       <div className="dashboard-card">

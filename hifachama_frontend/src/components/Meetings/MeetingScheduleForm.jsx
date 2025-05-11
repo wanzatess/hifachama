@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import api from '../../api/axiosConfig';
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
 import '../../pages/Dashboards/Dashboard.css';
 
-const MeetingScheduleForm = ({ chamaId }) => {
+const MeetingScheduleForm = () => {
+  const { chamaData } = useContext(ChamaContext);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
@@ -21,7 +23,7 @@ const MeetingScheduleForm = ({ chamaId }) => {
         date,
         location,
         agenda,
-        chama: chamaId
+        chama: chamaData.id
       });
 
       setTitle('');
@@ -87,7 +89,7 @@ const MeetingScheduleForm = ({ chamaId }) => {
           <input
             type="text"
             value={location}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => setLocation(e.target.value)}
             required
             className="form-input"
           />

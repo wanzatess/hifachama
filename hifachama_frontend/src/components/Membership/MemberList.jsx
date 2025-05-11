@@ -1,91 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../utils/supabaseClient'; // Adjust path as needed
+import React from 'react';
+import { useMembers } from '../../hooks/useMembers'; // Adjust path
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
 import './MemberList.css';
 
-const MemberList = ({ chamaId, title }) => {
-  const [members, setMembers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+const MemberList = ({ title }) => {
+  const { chamaData, isLoading: contextLoading, error: contextError } = React.useContext(ChamaContext);
+  const { members } = useMembers();
 
-  // Fetch initial members data
-  const fetchMembers = async () => {
-    if (!chamaId) {
-      setError('Chama ID is required.');
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const { data: users, error } = await supabase
-        .from('HIFACHAMA_customuser')
-        .select('*, HIFACHAMA_chamamember!inner(chama_id)')
-        .eq('HIFACHAMA_chamamember.chama_id', chamaId);
-
-      if (error) throw error;
-
-      setMembers(users || []);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load members: ' + err.message);
-      setMembers([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Set up real-time subscription
-  useEffect(() => {
-    if (!chamaId) return;
-
-    fetchMembers(); // Fetch initial data
-
-    const channel = supabase.channel(`realtime:HIFACHAMA_customuser`);
-    channel.on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'HIFACHAMA_customuser' },
-      async () => {
-        await fetchMembers(); // Re-fetch members on any change
-      }
-    );
-
-    channel.subscribe((status) => {
-      console.log(`📡 Subscribed to HIFACHAMA_customuser: ${status}`);
-    });
-
-    // Cleanup subscription on unmount
-    return () => {
-      supabase.removeChannel(channel);
-      console.log('📴 Unsubscribed from HIFACHAMA_customuser');
-    };
-  }, [chamaId]);
-
-  // Handle subscription for HIFACHAMA_chamamember changes
-  useEffect(() => {
-    if (!chamaId) return;
-
-    const channel = supabase.channel(`realtime:HIFACHAMA_chamamember`);
-    channel.on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'HIFACHAMA_chamamember' },
-      async () => {
-        await fetchMembers(); // Re-fetch members on membership changes
-      }
-    );
-
-    channel.subscribe((status) => {
-      console.log(`📡 Subscribed to HIFACHAMA_chamamember: ${status}`);
-    });
-
-    return () => {
-      supabase.removeChannel(channel);
-      console.log('📴 Unsubscribed from HIFACHAMA_chamamember');
-    };
-  }, [chamaId]);
-
-  if (isLoading) return <p className="loading-text">Loading members...</p>;
-  if (error) return <p className="error-text">{error}</p>;
-  if (!chamaId) return <p className="error-text">Chama ID is required.</p>;
+  if (contextLoading) return <p className="loading-text">Loading members...</p>;
+  if (contextError) return <p className="error-text">{contextError}</p>;
+  if (!chamaData?.id) return <p className="error-text">Chama ID is required.</p>;
 
   return (
     <div className="dashboard-card member-directory-card">

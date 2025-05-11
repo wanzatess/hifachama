@@ -1,15 +1,21 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { toast } from 'react-toastify';
+import { useContributions } from '../../hooks/useContributions'; // Adjust path
+import { useBalance } from '../../hooks/useBalance'; // Adjust path
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
 import '../../pages/Dashboards/Dashboard.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const ContributionReports = ({ contributions = [], chama, balance }) => {
-  // Process chart data for the Pie chart
+const ContributionReports = () => {
+  const { chamaData } = useContext(ChamaContext);
+  const { contributions } = useContributions();
+  const { balance } = useBalance();
+
   const processChartData = () => {
     const rotational = contributions.filter(c => c.transaction_type === 'rotational');
     const investment = contributions.filter(c => c.transaction_type === 'investment');
@@ -31,10 +37,8 @@ const ContributionReports = ({ contributions = [], chama, balance }) => {
     };
   };
 
-  // Generate Excel using predefined template
   const downloadContributionExcel = () => {
     try {
-      // Define Excel template structure
       const template = {
         headers: ['Type', 'Username', 'Amount', 'Date'],
         data: contributions.map(t => ({
@@ -45,35 +49,29 @@ const ContributionReports = ({ contributions = [], chama, balance }) => {
         })),
       };
 
-      // Create worksheet from data
       const worksheet = XLSX.utils.json_to_sheet(template.data, {
         header: template.headers,
       });
 
-      // Add a title row above headers
-      const title = `${chama?.name || 'Chama'} Contribution Report`;
+      const title = `${chamaData?.name || 'Chama'} Contribution Report`;
       XLSX.utils.sheet_add_aoa(worksheet, [[title]], { origin: 'A1' });
       XLSX.utils.sheet_add_aoa(worksheet, [template.headers], { origin: 'A2' });
 
-      // Set column widths
       worksheet['!cols'] = [
-        { wch: 20 }, // Type
-        { wch: 20 }, // Username
-        { wch: 15 }, // Amount
-        { wch: 15 }, // Date
+        { wch: 20 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 15 },
       ];
 
-      // Create workbook and append worksheet
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Contributions');
 
-      // Write and download Excel file
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
       const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-      saveAs(data, `${chama?.name || 'Chama'}_Contributions_${new Date().toISOString().split('T')[0]}.xlsx`);
+      saveAs(data, `${chamaData?.name || 'Chama'}_Contributions_${new Date().toISOString().split('T')[0]}.xlsx`);
       toast.success('Contribution report downloaded successfully!');
     } catch (error) {
-      console.error('Error generating contribution Excel:', error);
       toast.error('Failed to download contribution report.');
     }
   };
@@ -82,7 +80,6 @@ const ContributionReports = ({ contributions = [], chama, balance }) => {
     <div className="report-card">
       <h3 className="report-title">Contribution Reports</h3>
 
-      {/* Balance Display */}
       <div className="report-section">
         <h4 className="report-section-title">Balance Summary</h4>
         <div className="balance-summary">
@@ -97,7 +94,6 @@ const ContributionReports = ({ contributions = [], chama, balance }) => {
         </div>
       </div>
 
-      {/* Download Button */}
       <div className="report-section">
         <h4 className="report-section-title">Download Report</h4>
         <button
@@ -108,7 +104,6 @@ const ContributionReports = ({ contributions = [], chama, balance }) => {
         </button>
       </div>
 
-      {/* Pie Chart */}
       <div className="report-section">
         <h4 className="report-section-title">Contributions by Transaction Type</h4>
         <div className="chart-container">

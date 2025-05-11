@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { toast } from "react-toastify";
 import api from "../../api/axiosConfig";
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
 
-const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
+const LoanApprovalForm = ({ loan, onSuccess }) => {
+  const { userData, chamaData } = useContext(ChamaContext);
   const [interestRate, setInterestRate] = useState("");
   const [penaltyValue, setPenaltyValue] = useState("");
   const [penaltyType, setPenaltyType] = useState("amount");
@@ -10,29 +12,17 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  console.log("📋 Rendering LoanApprovalForm with props:", {
-    loan,
-    chamaId,
-    userData,
-    onSuccess: !!onSuccess,
-  });
-  console.log("🔍 Loan Details:", JSON.stringify(loan, null, 2));
-
   if (!userData) {
-    console.warn("⚠️ userData is undefined or null");
     return <div className="error-message">Error: User data is missing.</div>;
   }
 
-  const isChairperson = userData?.role && 
-    userData.role.toLowerCase().trim() === 'chairperson';
+  const isChairperson = userData?.role?.toLowerCase().trim() === 'chairperson';
 
   if (!isChairperson) {
-    console.warn("⚠️ Role check failed. Expected 'Chairperson', got:", userData?.role);
     return <div className="error-message">Access denied. Only chairpersons can approve loans.</div>;
   }
 
   if (!loan) {
-    console.warn("⚠️ Loan is undefined or null");
     return (
       <div className="dashboard-card">
         <h3 className="card-title">Approve Loan</h3>
@@ -42,7 +32,6 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
   }
 
   if (loan.status.toLowerCase() !== 'pending') {
-    console.warn("⚠️ Loan is not pending. Status:", loan.status);
     return (
       <div className="dashboard-card">
         <h3 className="card-title">Approve Loan for {loan.member_name}</h3>
@@ -69,19 +58,15 @@ const LoanApprovalForm = ({ loan, onSuccess, chamaId, userData }) => {
       penalty_value: parseFloat(penaltyValue),
       penalty_type: penaltyType,
       status,
-      chama_id: chamaId,
+      chama_id: chamaData.id,
     };
-
-    console.log("📤 Sending API request to /api/loans/", loan.id, "/approve_loan/ with payload:", requestPayload);
 
     try {
       const response = await api.post(`/api/loans/${loan.id}/approve_loan/`, requestPayload);
-      console.log("✅ API response:", response.data);
       setSuccessMessage(`Loan ${status} successfully!`);
       if (onSuccess) onSuccess(response.data);
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Failed to process loan approval.";
-      console.error("❌ Loan approval error:", error.response?.data || error.message);
       toast.error(errorMessage);
     } finally {
       setLoading(false);

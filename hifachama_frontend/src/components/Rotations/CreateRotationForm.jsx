@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { getAuthToken } from '../../utils/auth';
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
 import '../../pages/Dashboards/Dashboard.css';
 import { toast } from 'react-toastify';
 
-const CreateRotationForm = ({ chamaId, onSuccess }) => {
+const CreateRotationForm = ({ onSuccess }) => {
+  const { chamaData } = useContext(ChamaContext);
   const [frequency, setFrequency] = useState('weekly');
   const [startDate, setStartDate] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -15,14 +17,13 @@ const CreateRotationForm = ({ chamaId, onSuccess }) => {
     try {
       const token = getAuthToken();
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/create-rotation/`,
+        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaData.id}/create-rotation/`,
         { frequency, start_date: startDate || undefined },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setSuccessMessage(response.data.message || 'Rotation schedule created successfully!');
       onSuccess();
     } catch (err) {
-      console.error('Error creating rotation:', err);
       toast.error(err.response?.data?.error || 'Failed to create rotation.');
     }
   };

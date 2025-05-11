@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { toast } from "react-toastify";
 import api from "../../api/axiosConfig";
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
 
-const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
+const LoanRequestForm = ({ onSuccess }) => {
+  const { userData, chamaData } = useContext(ChamaContext);
   const [amount, setAmount] = useState("");
   const [purpose, setPurpose] = useState("");
   const [repaymentPeriod, setRepaymentPeriod] = useState("");
@@ -13,7 +15,7 @@ const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
     e.preventDefault();
     setSuccessMessage('');
 
-    if (!amount || !repaymentPeriod || !chamaId || !userId) {
+    if (!amount || !repaymentPeriod || !chamaData?.id || !userData?.id) {
       toast.error("All fields and user information are required!");
       return;
     }
@@ -21,7 +23,7 @@ const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
     setLoading(true);
 
     try {
-      const { data: memberData } = await api.get(`/api/chama-members/?user=${userId}&chama=${chamaId}`);
+      const { data: memberData } = await api.get(`/api/chama-members/?user=${userData.id}&chama=${chamaData.id}`);
       if (!memberData || memberData.length === 0) {
         throw new Error("Chama member not found.");
       }
@@ -31,7 +33,7 @@ const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
         amount: parseFloat(amount),
         purpose,
         repayment_period: repaymentPeriod,
-        chama_id: chamaId,
+        chama_id: chamaData.id,
         member: memberId,
       });
 
@@ -41,7 +43,6 @@ const LoanRequestForm = ({ chamaId, userId, onSuccess }) => {
       setRepaymentPeriod("");
       if (onSuccess) onSuccess(response.data);
     } catch (error) {
-      console.error("Loan request error:", error.response?.data || error.message);
       toast.error(error.response?.data?.error || "Failed to submit loan request.");
     } finally {
       setLoading(false);

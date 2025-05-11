@@ -1,103 +1,61 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { getAuthToken } from '../../utils/auth';
 import { toast } from 'react-toastify';
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
+import { useBalance } from '../../hooks/useBalance'; // Adjust path
+import { useMembers } from '../../hooks/useMembers'; // Adjust path
+import { useRotations } from '../../hooks/useRotations'; // Adjust path
 import '../../styles/Form.css';
 
-const WithdrawalForm = ({ chamaId, userId, balance, memberId }) => {
+const WithdrawalForm = () => {
+  const { chamaData, userData } = useContext(ChamaContext);
+  const { balance } = useBalance();
+  const { memberId } = useMembers();
+  const { upcomingRotations } = useRotations();
   const [amount, setAmount] = useState('');
   const [isEligible, setIsEligible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
-  const checkRotationEligibility = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('No authentication token found.');
-      }
-
-      console.log('🔍 Checking rotation eligibility for chama:', chamaId, 'user:', userId);
-
-      const rotationResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/upcoming-rotations/`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      console.log('📡 Rotation response:', rotationResponse.data);
-
-      if (rotationResponse.data.message === 'No upcoming rotations') {
-        setIsEligible(false);
-        setError('No upcoming rotations found.');
+  useEffect(() => {
+    const checkRotationEligibility = () => {
+      if (!chamaData?.id || !userData?.id || !memberId || !upcomingRotations) {
+        setError('Missing required data.');
+        setLoading(false);
         return;
       }
 
-      let nextMemberId;
-      if (rotationResponse.data.upcoming_rotations && Array.isArray(rotationResponse.data.upcoming_rotations) && rotationResponse.data.upcoming_rotations.length > 0) {
-        const firstRotation = rotationResponse.data.upcoming_rotations[0];
-        nextMemberId = firstRotation.member_id || firstRotation.member;
+      try {
+        if (upcomingRotations.length === 0) {
+          setIsEligible(false);
+          setError('No upcoming rotations found.');
+          return;
+        }
+
+        const firstRotation = upcomingRotations[0];
+        const nextMemberId = firstRotation.member_id || firstRotation.member;
         if (!nextMemberId) {
-          throw new Error('No member ID found in upcoming rotations.');
-        }
-      } else if (rotationResponse.data.member) {
-        nextMemberId = rotationResponse.data.member;
-      } else if (rotationResponse.data.member_id) {
-        nextMemberId = rotationResponse.data.member_id;
-      } else {
-        throw new Error('Rotation response missing member ID or invalid structure.');
-      }
-
-      console.log('🔄 Next rotation member ID:', nextMemberId);
-
-      let currentMemberId = memberId;
-      if (!currentMemberId) {
-        console.log('🔍 Fetching member data for user:', userId, 'chama:', chamaId);
-        const memberResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/chama-members/?user=${userId}&chama=${chamaId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        console.log('📡 Member response:', memberResponse.data);
-
-        if (!memberResponse.data.members || !Array.isArray(memberResponse.data.members)) {
-          throw new Error('Invalid member data structure.');
+          setError('No member ID found in upcoming rotations.');
+          return;
         }
 
-        const currentMember = memberResponse.data.members.find(m => m.user === userId);
-        if (!currentMember) {
-          throw new Error('No member found for this user in the chama.');
+        const eligible = memberId === nextMemberId;
+        setIsEligible(eligible);
+        if (!eligible) {
+          setError('You are not the next member in the rotation.');
         }
-        currentMemberId = currentMember.id;
-        console.log('👤 Current member ID:', currentMemberId);
+      } catch (err) {
+        setError(err.message || 'Unable to verify rotation eligibility.');
+        setIsEligible(false);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const eligible = currentMemberId === nextMemberId;
-      setIsEligible(eligible);
-      if (!eligible) {
-        setError('You are not the next member in the rotation.');
-      }
-    } catch (err) {
-      console.error('❌ Error checking rotation eligibility:', err);
-      const errorMessage =
-        err.response?.data?.error ||
-        err.message ||
-        'Unable to verify rotation eligibility. Please try again.';
-      setError(errorMessage);
-      setIsEligible(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (chamaId && userId) {
-      checkRotationEligibility();
-    } else {
-      setError('Missing chama or user information.');
-      setLoading(false);
-    }
-  }, [chamaId, userId]);
+    checkRotationEligibility();
+  }, [chamaData, userData, memberId, upcomingRotations]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,10 +80,10 @@ const WithdrawalForm = ({ chamaId, userId, balance, memberId }) => {
     try {
       const token = getAuthToken();
       const response = await axios.post(
-        '${import.meta.env.VITE_API_URL}/api/transactions/withdrawal-request/',
+        `${import.meta.env.VITE_API_URL}/api/transactions/withdrawal-request/`,
         {
           amount: parseFloat(amount),
-          chama: chamaId,
+          chama: chamaData.id,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
