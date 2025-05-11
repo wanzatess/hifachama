@@ -60,12 +60,26 @@ const HybridDashboard = () => {
       setIsLoading(false);
       return;
     }
-    try {
-      console.log("🔍 Fetching user data with token:", token.slice(0, 10) + "...");
-      const { data: user } = await axios.get(
-        '${import.meta.env.VITE_API_URL}/api/users/me/',
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+try {
+    const apiUrl = `${import.meta.env.VITE_API_URL}/api/users/me/`;
+    console.log("🔍 Fetching user data from:", apiUrl);
+    console.log("🔑 Auth Token:", token);
+    const response = await axios.get(apiUrl, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const user = response.data;
+
+    // Check for HTML response
+    if (typeof user === 'string' && user.includes('<!doctype html>')) {
+      console.error("❌ Received HTML instead of JSON:", user.slice(0, 100));
+      throw new Error("Invalid response from API. Expected JSON, received HTML. Check backend URL or endpoint.");
+    }
+
+    // Validate user data
+    if (!user || typeof user !== 'object' || !user.id) {
+      console.error("❌ Invalid user data:", user);
+      throw new Error("Invalid user data received from API");
+    }
       console.log("👤 User data fetched:", user);
       console.log("🔎 User role:", user.role);
       setUserData(user);
