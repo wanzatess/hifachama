@@ -24,7 +24,7 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
           return;
         }
         const response = await axios.get(
-          `http://127.0.0.1:8080/api/chamas/${chamaId}/my-membership/`,
+          `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/my-membership/`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!response.data.chama_member_id) {
@@ -85,7 +85,7 @@ const ContributionForm = ({ onSuccess, chamaId }) => {
       console.log("Submitting contribution to /api/transactions/", payload);
 
       const response = await axios.post(
-        "http://127.0.0.1:8080/api/transactions/",
+        "${import.meta.env.VITE_API_URL}/api/transactions/",
         payload,
         {
           headers: {

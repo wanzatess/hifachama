@@ -15,7 +15,7 @@ const CreateRotationForm = ({ chamaId, onSuccess }) => {
     try {
       const token = getAuthToken();
       const response = await axios.post(
-        `http://127.0.0.1:8080/api/chamas/${chamaId}/create-rotation/`,
+        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/create-rotation/`,
         { frequency, start_date: startDate || undefined },
         { headers: { Authorization: `Bearer ${token}` } }
       );

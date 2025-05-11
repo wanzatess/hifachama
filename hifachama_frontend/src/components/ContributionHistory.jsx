@@ -10,7 +10,7 @@ const ContributionHistory = ({ refreshFlag }) => {
     try {
       const token = localStorage.getItem("accessToken");
       const response = await axios.get(
-        "http://127.0.0.1:8080/api/contributions/",
+        "${import.meta.env.VITE_API_URL}/api/contributions/",
         {
           headers: { Authorization: `Bearer ${token}` }
         }

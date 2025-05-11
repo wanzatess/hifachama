@@ -25,7 +25,7 @@ const RotationSchedule = ({ members, contributions, chamaId }) => {
     try {
       const token = getAuthToken();
       const response = await axios.get(
-        `http://127.0.0.1:8080/api/chamas/${chamaId}/next-rotation/`,
+        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/next-rotation/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log('🔍 Next rotation response:', response.data);
@@ -49,7 +49,7 @@ const RotationSchedule = ({ members, contributions, chamaId }) => {
     try {
       const token = getAuthToken();
       const response = await axios.get(
-        `http://127.0.0.1:8080/api/chamas/${chamaId}/upcoming-rotations/`,
+        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/upcoming-rotations/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log('🔍 Upcoming rotations response:', response.data);

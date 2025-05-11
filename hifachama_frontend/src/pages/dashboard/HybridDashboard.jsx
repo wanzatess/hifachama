@@ -63,7 +63,7 @@ const HybridDashboard = () => {
     try {
       console.log("🔍 Fetching user data with token:", token.slice(0, 10) + "...");
       const { data: user } = await axios.get(
-        'http://127.0.0.1:8080/api/users/me/',
+        '${import.meta.env.VITE_API_URL}/api/users/me/',
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log("👤 User data fetched:", user);
@@ -91,7 +91,7 @@ const HybridDashboard = () => {
       console.log("🔍 Fetching payment details for chama:", chama.id);
       try {
         const { data: paymentData } = await axios.get(
-          `http://127.0.0.1:8080/api/chamas/${chama.id}/add-payment-details/`,
+          `${import.meta.env.VITE_API_URL}/api/chamas/${chama.id}/add-payment-details/`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         console.log("💳 Payment details fetched:", paymentData);
@@ -505,7 +505,7 @@ const HybridDashboard = () => {
     const token = getAuthToken();
     try {
       await axios.post(
-        'http://127.0.0.1:8080/api/otp/send/',
+        '${import.meta.env.VITE_API_URL}/api/otp/send/',
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -521,7 +521,7 @@ const HybridDashboard = () => {
     const token = getAuthToken();
     try {
       await axios.post(
-        'http://127.0.0.1:8080/api/otp/verify/',
+        '${import.meta.env.VITE_API_URL}/api/otp/verify/',
         { otp },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -552,7 +552,7 @@ const HybridDashboard = () => {
     try {
       const token = getAuthToken();
       await axios.post(
-        `http://127.0.0.1:8080/api/transactions/${transactionId}/approve/`,
+        `${import.meta.env.VITE_API_URL}/api/transactions/${transactionId}/approve/`,
         { action },
         { headers: { Authorization: `Bearer ${token}` } }
       );

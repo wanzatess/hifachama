@@ -36,7 +36,7 @@ const AddPaymentDetailsForm = ({ chamaId, initialData, onSuccess }) => {
     try {
       const token = getAuthToken();
       const response = await axios.post(
-        `http://127.0.0.1:8080/api/chamas/${chamaId}/add-payment-details/`,
+        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/add-payment-details/`,
         {
           paybill_number: paybillNumber,
           till_number: tillNumber,

@@ -23,7 +23,7 @@ const WithdrawalForm = ({ chamaId, userId, balance, memberId }) => {
       console.log('🔍 Checking rotation eligibility for chama:', chamaId, 'user:', userId);
 
       const rotationResponse = await axios.get(
-        `http://127.0.0.1:8080/api/chamas/${chamaId}/upcoming-rotations/`,
+        `${import.meta.env.VITE_API_URL}/api/chamas/${chamaId}/upcoming-rotations/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       console.log('📡 Rotation response:', rotationResponse.data);
@@ -55,7 +55,7 @@ const WithdrawalForm = ({ chamaId, userId, balance, memberId }) => {
       if (!currentMemberId) {
         console.log('🔍 Fetching member data for user:', userId, 'chama:', chamaId);
         const memberResponse = await axios.get(
-          `http://127.0.0.1:8080/api/chama-members/?user=${userId}&chama=${chamaId}`,
+          `${import.meta.env.VITE_API_URL}/api/chama-members/?user=${userId}&chama=${chamaId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         console.log('📡 Member response:', memberResponse.data);
@@ -122,7 +122,7 @@ const WithdrawalForm = ({ chamaId, userId, balance, memberId }) => {
     try {
       const token = getAuthToken();
       const response = await axios.post(
-        'http://127.0.0.1:8080/api/transactions/withdrawal-request/',
+        '${import.meta.env.VITE_API_URL}/api/transactions/withdrawal-request/',
         {
           amount: parseFloat(amount),
           chama: chamaId,

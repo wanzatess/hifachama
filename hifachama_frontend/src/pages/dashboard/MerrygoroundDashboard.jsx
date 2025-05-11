@@ -39,7 +39,7 @@ const MerryGoRoundDashboard = () => {
     }
     try {
       const { data: user } = await axios.get(
-        'http://127.0.0.1:8080/api/users/me/',
+        '${import.meta.env.VITE_API_URL}/api/users/me/',
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUserData(user);
@@ -51,7 +51,7 @@ const MerryGoRoundDashboard = () => {
       }
 
       const { data: chama } = await axios.get(
-        `http://127.0.0.1:8080/api/chamas/${id}/`,
+        `${import.meta.env.VITE_API_URL}/api/chamas/${id}/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setChamaData(chama);
@@ -249,7 +249,7 @@ const MerryGoRoundDashboard = () => {
     try {
       const token = getAuthToken();
       await axios.post(
-        `http://127.0.0.1:8080/api/transactions/${transactionId}/approve/`,
+        `${import.meta.env.VITE_API_URL}/api/transactions/${transactionId}/approve/`,
         { action },
         { headers: { Authorization: `Bearer ${token}` } }
       );

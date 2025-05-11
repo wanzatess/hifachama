@@ -5,7 +5,7 @@ const Members = () => {
   const [members, setMembers] = useState([]);
 
   useEffect(() => {
-    api.get("http://127.0.0.1:8080/api/members/")
+    api.get("${import.meta.env.VITE_API_URL}/api/members/")
       .then(response => setMembers(response.data))
       .then((data) => console.log(data))
       .catch(error => console.error("Error fetching members:", error));

@@ -21,7 +21,7 @@ const WithdrawalTable = ({ withdrawals: propWithdrawals, onAction, showActions =
     try {
       setLoading(true);
       const token = getAuthToken();
-      const response = await axios.get('http://127.0.0.1:8080/api/transactions/?type=withdrawal', {
+      const response = await axios.get('${import.meta.env.VITE_API_URL}/api/transactions/?type=withdrawal', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
