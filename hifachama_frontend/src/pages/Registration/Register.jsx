@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "./Register.css";
@@ -41,10 +41,8 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 1. Hardcoded API URL - change this to your actual backend URL
-    const BACKEND_URL = "${import.meta.env.VITE_API_URL}/"; // ← CHANGE THIS IF NEEDED
+    const BACKEND_URL = `${import.meta.env.VITE_API_URL}/`;
     
-    // 2. Validate form
     if (!validateForm()) {
       console.log("Validation failed", errors);
       return;
@@ -56,7 +54,6 @@ const Register = () => {
     try {
       console.log("Attempting to register at:", `${BACKEND_URL}api/register/`);
       
-      // 3. Make the API call with hardcoded URL
       const response = await axios.post(
         `${BACKEND_URL}api/register/`, 
         {
@@ -74,7 +71,6 @@ const Register = () => {
         }
       );
   
-      // 4. Success handling
       setMessage({ 
         text: `Welcome ${formData.first_name}! Registration successful.`, 
         type: "success" 
@@ -82,7 +78,6 @@ const Register = () => {
       setTimeout(() => navigate("/login"), 1500);
   
     } catch (err) {
-      // 5. Error handling
       let errorMessage = "Registration failed. Please try again.";
       
       if (err.response) {
@@ -122,7 +117,6 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="spaced-form">
-          {/* Username */}
           <div className="inputGroup">
             <label>Username</label>
             <input
@@ -134,7 +128,6 @@ const Register = () => {
             {errors.username && <span className="error-text">{errors.username}</span>}
           </div>
 
-          {/* Email */}
           <div className="inputGroup">
             <label>Email</label>
             <input
@@ -147,7 +140,6 @@ const Register = () => {
             {errors.email && <span className="error-text">{errors.email}</span>}
           </div>
 
-          {/* Name Fields */}
           <div className="name-fields">
             <div className="inputGroup half">
               <label>First Name</label>
@@ -171,7 +163,6 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Phone Number */}
           <div className="inputGroup">
             <label>Phone Number</label>
             <input
@@ -179,12 +170,11 @@ const Register = () => {
               value={formData.phone_number}
               onChange={handleChange}
               className={`input-field ${errors.phone_number ? "error" : ""}`}
-              placeholder="+254700123456"
+              placeholder="+2547...."
             />
             {errors.phone_number && <span className="error-text">{errors.phone_number}</span>}
           </div>
 
-          {/* Role */}
           <div className="inputGroup">
             <label>Role</label>
             <select
@@ -193,7 +183,7 @@ const Register = () => {
               onChange={handleChange}
               className="input-field"
             >
-              <option value="" disabled selected>-- Pick a Role --</option>
+              <option value="" disabled>-- Pick a Role --</option>
               <option value="Chairperson">Chairperson</option>
               <option value="Treasurer">Treasurer</option>
               <option value="Secretary">Secretary</option>
@@ -201,7 +191,6 @@ const Register = () => {
             </select>
           </div>
 
-          {/* Password */}
           <div className="inputGroup">
             <label>Password</label>
             <input
@@ -214,7 +203,6 @@ const Register = () => {
             {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
 
-          {/* Confirm Password */}
           <div className="inputGroup">
             <label>Confirm Password</label>
             <input

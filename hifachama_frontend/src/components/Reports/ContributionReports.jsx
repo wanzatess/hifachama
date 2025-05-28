@@ -4,9 +4,9 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { toast } from 'react-toastify';
-import { useContributions } from '../../hooks/useContributions'; // Adjust path
-import { useBalance } from '../../hooks/useBalance'; // Adjust path
-import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
+import { useContributions } from '../../hooks/useContributions'; 
+import { useBalance } from '../../hooks/useBalance'; 
+import { ChamaContext } from '../../context/ChamaContext'; 
 import '../../pages/Dashboards/Dashboard.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -85,8 +85,8 @@ const ContributionReports = () => {
         <div className="balance-summary">
           {balance ? (
             <>
-              <p>Rotational Balance: <span>{balance.rotational_balance || 0}</span></p>
-              <p>Investment Balance: <span>{balance.investment_balance || 0}</span></p>
+              <p>Rotational Balance: <span>Ksh {balance.rotational_balance || 0}</span></p>
+              <p>Investment Balance: <span>Ksh {balance.investment_balance || 0}</span></p>
             </>
           ) : (
             <p>No balance data available.</p>

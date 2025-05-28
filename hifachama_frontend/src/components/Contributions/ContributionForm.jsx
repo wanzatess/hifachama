@@ -7,7 +7,7 @@ import { useMembers } from '../../hooks/useMembers'; // Adjust path
 
 const ContributionForm = ({ onSuccess }) => {
   const { chamaData } = useContext(ChamaContext);
-  const { memberId } = useMembers();
+  const { memberId } = useMembers(); // Custom hook for logged-in member
   const [formData, setFormData] = useState({
     amount: "",
     purpose: "",
@@ -52,7 +52,6 @@ const ContributionForm = ({ onSuccess }) => {
 
       const payload = {
         amount: parseFloat(formData.amount),
-        purpose: formData.purpose,
         category: "contribution",
         transaction_type: formData.transaction_type,
         date: formData.date,
@@ -60,7 +59,7 @@ const ContributionForm = ({ onSuccess }) => {
         chama: chamaData.id
       };
 
-      const response = await axios.post(
+      await axios.post(
         `${import.meta.env.VITE_API_URL}/api/transactions/`,
         payload,
         {
@@ -74,27 +73,27 @@ const ContributionForm = ({ onSuccess }) => {
       setSuccessMessage("Contribution submitted successfully!");
       setFormData({
         amount: "",
-        purpose: "",
         transaction_type: "rotational",
         date: new Date().toISOString().split("T")[0],
       });
+
       if (onSuccess) onSuccess();
     } catch (error) {
       const errors = error.response?.data;
       let errorMessage = errors?.error || "Failed to submit contribution.";
+
       if (errors?.category) {
         errorMessage = `Category error: ${errors.category.join(", ")}`;
       } else if (errors?.amount) {
         errorMessage = `Amount error: ${errors.amount.join(", ")}`;
       } else if (errors?.transaction_type) {
         errorMessage = `Transaction type error: ${errors.transaction_type.join(", ")}`;
-      } else if (errors?.purpose) {
-        errorMessage = `Purpose error: ${errors.purpose.join(", ")}`;
       } else if (errors?.member) {
         errorMessage = `Member error: ${errors.member.join(", ")}`;
       } else if (errors?.non_field_errors) {
         errorMessage = errors.non_field_errors.join(", ");
       }
+
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -105,6 +104,7 @@ const ContributionForm = ({ onSuccess }) => {
   return (
     <div className="form-container bg-white p-4 rounded shadow mb-6">
       <h2 className="form-title text-xl font-semibold mb-3">Make a Contribution</h2>
+
       {successMessage && (
         <div style={{
           padding: '12px',
@@ -125,7 +125,9 @@ const ContributionForm = ({ onSuccess }) => {
           </p>
         </div>
       )}
+
       {error && <div className="error-message text-red-500 mb-3">{error}</div>}
+
       <form onSubmit={handleSubmit}>
         <div className="form-group mb-3">
           <label className="form-label block">Amount</label>
@@ -140,16 +142,7 @@ const ContributionForm = ({ onSuccess }) => {
             step="0.01"
           />
         </div>
-        <div className="form-group mb-3">
-          <label className="form-label block">Purpose</label>
-          <textarea
-            name="purpose"
-            value={formData.purpose}
-            onChange={handleChange}
-            className="form-textarea w-full border p-2 rounded"
-            rows="3"
-          />
-        </div>
+
         <div className="form-group mb-3">
           <label className="form-label block">Transaction Type</label>
           <select
@@ -163,6 +156,7 @@ const ContributionForm = ({ onSuccess }) => {
             <option value="investment">Investment</option>
           </select>
         </div>
+
         <div className="form-group mb-3">
           <label className="form-label block">Date</label>
           <input

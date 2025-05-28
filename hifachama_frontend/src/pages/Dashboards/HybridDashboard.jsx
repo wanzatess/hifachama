@@ -50,6 +50,7 @@ const HybridDashboard = () => {
     'approve-withdrawal': 'Treasurer',
     'schedule-meeting': 'Secretary',
     'approve-loan': 'Chairperson',
+    'rotation-details': 'Chairperson', // Added rotation-details to sensitive sections
   };
 
   const handleSetActiveSection = (section) => {
@@ -229,7 +230,7 @@ const HybridDashboard = () => {
                       onSuccess={refreshLoans}
                     />
                   ) : (
-                    <p>No pending loans available to approve BaseContext.jsx:96 
+                    <p>No pending loans available to approve 
                     </p>
                   )}
                 </div>
@@ -274,7 +275,7 @@ const HybridDashboard = () => {
               return (
                 <div className="dashboard-card">
                   <h3>Rotation Details</h3>
-                  <CreateRotationForm chamaId={chamaData?.id} />
+                  <CreateRotationForm chamaId={chamaData?.id} userData={userData} />
                 </div>
               );
             default:
@@ -291,7 +292,7 @@ const HybridDashboard = () => {
 
   return (
     <div className="dashboard-layout">
-      <Header userName={userData?.username || userData?.email} chamaName={chamaData?.name} />
+      <Header userName={userData?.username || userData?.email} chamaName={chamaData?.name} chamaId={chamaData?.id} />
       <Sidebar
         setActiveSection={handleSetActiveSection}
         activeSection={activeSection}

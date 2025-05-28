@@ -17,7 +17,7 @@ class Notification(models.Model):
         send_mail(
             self.subject,
             self.message,
-            'noreply@yourdomain.com',
+            'hifachama@gmail.com',
             [self.recipient_email],
             fail_silently=False,
         )

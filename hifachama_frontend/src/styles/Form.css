@@ -22,7 +22,7 @@
     font-size: 1rem;
   }
   
-  .form-group button {
+  .form-group button:not(.password-toggle){
     width: 100%;
     padding: 0.75rem;
     background-color: var(--gold-accent);
@@ -42,4 +42,21 @@
     color: red;
     font-size: 0.9rem;
     margin-top: 0.5rem;
+  }
+  .message {
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.95rem;
+  }
+
+  .message.success {
+    background-color: #D4EDDA;
+    color: #0B3E1D;
+  }
+
+  .message.error {
+    background-color: #F8D7DA;
+    color: #5A0C15;
   }

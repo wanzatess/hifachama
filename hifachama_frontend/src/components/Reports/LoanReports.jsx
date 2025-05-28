@@ -64,13 +64,7 @@ const LoanReports = () => {
       <div className="report-section">
         <h4 className="report-section-title">Balance Summary</h4>
         <div className="balance-summary">
-          <p>Total Outstanding Loans: <span>{totalOutstandingLoans || 0}</span></p>
-          {balance && (
-            <>
-              <p>Rotational Balance: <span>{balance.rotational_balance || 0}</span></p>
-              <p>Investment Balance: <span>{balance.investment_balance || 0}</span></p>
-            </>
-          )}
+          <p>Total Outstanding Loans: <span>Ksh {totalOutstandingLoans || 0}</span></p>
         </div>
       </div>
 

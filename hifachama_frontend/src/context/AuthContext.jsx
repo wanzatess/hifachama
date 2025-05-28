@@ -138,10 +138,14 @@ export const AuthProvider = ({ children }) => {
       {authState.loading ? (
         <div className="loading-overlay">
           <div className="loading-spinner" />
+          <p className="loading-text">Loading as we wait for redirect...</p>
         </div>
-      ) : children}
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
+
 };
 
 export const useAuth = () => {

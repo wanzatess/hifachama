@@ -5,7 +5,7 @@ const ChamaList = () => {
     const [chamas, setChamas] = useState([]);
 
     useEffect(() => {
-        api.get('/chamas/')  // Assuming your Django API has a `/api/chamas/` endpoint
+        api.get('/chamas/')
             .then((response) => setChamas(response.data))
             .catch((error) => console.error('Error fetching chamas:', error));
     }, []);

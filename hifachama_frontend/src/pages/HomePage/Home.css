@@ -16,7 +16,6 @@ body {
   color: #F0EAD6;
 }
 
-/* Overlay */
 .homepage-full::before {
   content: '';
   position: absolute;
@@ -24,11 +23,10 @@ body {
   left: 0;
   height: 100%;
   width: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* dark overlay */
+  background-color: rgba(0, 0, 0, 0.5); 
   z-index: 0;
 }
 
-/* Ensure content layers above overlay */
 .homepage-header,
 .homepage-content,
 .homepage-footer {
@@ -36,7 +34,6 @@ body {
   z-index: 1;
 }
 
-/* Header */
 .homepage-header {
   background-color: #a89863;
   padding: 10px 24px;
@@ -74,7 +71,6 @@ body {
   color: #CDBE96;
 }
 
-/* Main content */
 .homepage-content {
   flex: 1;
   display: flex;
@@ -100,7 +96,6 @@ body {
   max-width: 600px;
 }
 
-/* Call-to-action button */
 .cta-button {
   background-color: #9C8F5F;
   color: #F0EAD6;
@@ -116,10 +111,9 @@ body {
   background-color: #8A7B50;
 }
 
-/* Footer */
 .homepage-footer {
   background-color: #a89863;
-  padding: 10px;
+  padding: 30px;
   text-align: center;
   font-size: 13px;
 }

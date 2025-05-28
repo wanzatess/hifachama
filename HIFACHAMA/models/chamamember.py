@@ -12,12 +12,17 @@ class ChamaMember(models.Model):
         ('Member', 'Member'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chama_memberships')
+    user = models.ForeignKey(
+    'HIFACHAMA.CustomUser',  
+    on_delete=models.CASCADE,
+    related_name='chama_memberships',
+    db_constraint=True  
+    )
+
     chama = models.ForeignKey(Chama, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Member')
     join_date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
     is_active = models.BooleanField(default=True)
-
 
     class Meta:
         unique_together = ('user', 'chama')

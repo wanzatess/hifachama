@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
-import { useWithdrawals } from '../../hooks/useWithdrawals'; // Adjust path
-import { useBalance } from '../../hooks/useBalance'; // Adjust path
-import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
+import { useWithdrawals } from '../../hooks/useWithdrawals'; 
+import { useBalance } from '../../hooks/useBalance'; 
+import { ChamaContext } from '../../context/ChamaContext'; 
 import handleWithdrawalAction from './ApproveWithdrawals';
 import { toast } from 'react-toastify';
 

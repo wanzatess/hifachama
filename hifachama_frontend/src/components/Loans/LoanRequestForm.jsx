@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { toast } from "react-toastify";
 import api from "../../api/axiosConfig";
-import { ChamaContext } from '../../context/ChamaContext'; // Adjust path
+import { ChamaContext } from '../../context/ChamaContext'; // Adjust path if needed
 
 const LoanRequestForm = ({ onSuccess }) => {
   const { userData, chamaData } = useContext(ChamaContext);
@@ -85,6 +85,7 @@ const LoanRequestForm = ({ onSuccess }) => {
             step={0.01}
           />
         </div>
+
         <div className="form-group">
           <label className="block">Purpose</label>
           <textarea
@@ -94,16 +95,22 @@ const LoanRequestForm = ({ onSuccess }) => {
             rows={4}
           />
         </div>
+
         <div className="form-group">
-          <label className="block">Repayment Period</label>
-          <input
-            type="text"
+          <label className="block">Repayment Period (months)</label>
+          <select
             value={repaymentPeriod}
             onChange={(e) => setRepaymentPeriod(e.target.value)}
             className="form-input"
             required
-          />
+          >
+            <option value="">Select period</option>
+            <option value="3">3 months</option>
+            <option value="6">6 months</option>
+            <option value="12">12 months</option>
+          </select>
         </div>
+
         <button
           type="submit"
           className="form-button"

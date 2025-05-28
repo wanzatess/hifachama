@@ -1,0 +1,120 @@
+/* Root layout */
+.form-card {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* Left image section */
+.form-image {
+  flex: 0.4;
+  width: 40%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Right form section */
+.form-content {
+  flex: 0.6;
+  background-color: #a89863; 
+  color: #F0EAD6;             
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+/* Headings */
+.form-content h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #F0EAD6;
+}
+
+/* Form styling */
+.chama-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #F0EAD6;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #CDBE96;
+  border-radius: 8px;
+  background-color: #F0EAD6;
+  color: #4E4528;
+  font-size: 1rem;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.submit-btn,
+.action-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #4E4528;
+  color: #F0EAD6;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover,
+.action-btn:hover {
+  background-color: #8A7B50;
+}
+
+/* Help section */
+.chama-help {
+  margin-top: 2rem;
+  font-size: 0.95rem;
+  color: #F0EAD6;
+}
+
+.chama-help ol {
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.auth-warning {
+  color: #ffcccc;
+  margin-top: 1rem;
+  font-weight: bold;
+}
+
+/* Responsive design */
+@media (max-width: 900px) {
+  .form-card {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .form-image {
+    height: 250px;
+  }
+
+  .form-content {
+    padding: 2rem;
+  }
+}

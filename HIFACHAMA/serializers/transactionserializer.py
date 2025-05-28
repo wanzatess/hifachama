@@ -6,7 +6,7 @@ from HIFACHAMA.models.chamamember import ChamaMember
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
-        fields = ['id', 'amount', 'date', 'member', 'category', 'purpose', 'transaction_type']
+        fields = ['id', 'amount', 'date', 'member', 'category', 'transaction_type']
         read_only_fields = ['id', 'date']
 
     def validate(self, data):
@@ -24,4 +24,9 @@ class BalanceSerializer(serializers.ModelSerializer):
 class RotationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rotation
-        fields = ['id', 'chama_id', 'member_id', 'position', 'cycle_date', 'payout_amount', 'status', 'completed']
+        fields = ['id', 'chama_id', 'cycle_date', 'frequency', 'payout_amount', 'status', 'completed', 'member']
+    
+    def validate(self, data):
+        if not data.get('member'):
+            raise serializers.ValidationError({"member": "Member is required for rotation creation."})
+        return data

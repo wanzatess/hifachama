@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../../api/axiosConfig";
 import "./Login.css";
 import logo from '../../static/images/logo.png';
@@ -9,25 +9,29 @@ import { clearAuthTokens } from '../../utils/auth';
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState({ text: "", type: "" });
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
+    setMessage({ text: "", type: "" });
     setIsLoading(true);
 
     try {
       const response = await login(email, password);
-      console.log("Login.jsx: Response from login:", response); // Debug
+      console.log("Login.jsx: Response from login:", response);
 
       if (!response.success) {
         throw new Error(response.error || "Login failed");
       }
 
-      console.log("Login.jsx: Login successful, expecting redirect by AuthContext");
+      setMessage({
+        text: "Login successful! Redirecting...",
+        type: "success"
+      });
 
     } catch (err) {
       console.error("Login error:", {
@@ -37,16 +41,23 @@ const Login = () => {
         config: err.config
       });
 
+      let errorMessage = "Login failed. Please try again.";
+      
       if (err.message.includes('404') || err.response?.status === 404) {
-        setError("Login service unavailable. Please try later.");
+        errorMessage = "Login service unavailable. Please try later.";
       } else if (err.message.includes('Network Error')) {
-        setError("Network error. Please check your connection.");
+        errorMessage = "Network error. Please check your connection.";
       } else {
-        setError(err.response?.data?.detail || 
-                 err.response?.data?.error || 
-                 err.message || 
-                 "Login failed. Please try again.");
+        errorMessage = err.response?.data?.detail || 
+                      err.response?.data?.error || 
+                      err.message || 
+                      "Login failed. Please try again.";
       }
+
+      setMessage({
+        text: errorMessage,
+        type: "error"
+      });
 
       clearAuthTokens();
     } finally {
@@ -62,13 +73,13 @@ const Login = () => {
           <h2>Welcome Back</h2>
         </div>
 
-        {error && (
-          <div className="error-message">
-            {error}
+        {message.text && (
+          <div className={`message ${message.type}`}>
+            <p className="rounded-box">{message.text}</p>
             <button 
-              onClick={() => setError("")} 
+              onClick={() => setMessage({ text: "", type: "" })} 
               className="error-close"
-              aria-label="Close error"
+              aria-label="Close message"
             >
               ×
             </button>
@@ -121,18 +132,11 @@ const Login = () => {
             className={`login-button ${isLoading ? "loading" : ""}`}
             disabled={isLoading}
           >
-            {isLoading ? (
-              <Spinner message="Logging In..." />
-            ) : (
-              "Log In"
-            )}
+            {isLoading ? "Logging In..." : "Log In"}
           </button>
         </form>
 
         <div className="login-footer">
-          <Link to="/forgot-password" className="footer-link">
-            Forgot Password?
-          </Link>
           <p className="signup-text">
             Don't have an account?{" "}
             <Link to="/register" className="footer-link">

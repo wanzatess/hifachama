@@ -8,7 +8,9 @@ const MeetingMinutesUpload = () => {
   const { chamaData, userData } = useContext(ChamaContext);
   const { minutes, uploading, handleUpload, handleDownload } = useMeetingMinutes(chamaData?.id);
   const [file, setFile] = useState(null);
-  const canUpload = userData?.role?.toLowerCase().trim() === 'chairperson';
+  
+  const role = userData?.role?.toLowerCase().trim();
+  const canUpload = role === 'secretary';
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -23,6 +25,7 @@ const MeetingMinutesUpload = () => {
   return (
     <div className="report-card">
       <h3 className="report-title">Meeting Minutes</h3>
+
       {canUpload && (
         <div className="report-section">
           <h4 className="report-section-title">Upload Meeting Minutes (PDF)</h4>
@@ -43,6 +46,7 @@ const MeetingMinutesUpload = () => {
           </button>
         </div>
       )}
+
       <div className="report-section">
         <h4 className="report-section-title">Uploaded Minutes</h4>
         {minutes.length > 0 ? (

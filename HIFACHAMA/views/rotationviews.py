@@ -9,6 +9,7 @@ from rest_framework import status
 from HIFACHAMA.models.transactions import Rotation, Transaction
 from HIFACHAMA.models import ChamaMember, Chama
 from HIFACHAMA.serializers.transactionserializer import RotationSerializer
+from HIFACHAMA.permissions import IsChairperson
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class NextRotationView(APIView):
                 chama_id=chama_id,
                 cycle_date__lte=current_date,
                 completed=False
-            ).order_by('position').first()
+            ).order_by('cycle_date').first()
             if not rotation:
                 return Response(
                     {'message': 'No active rotation found'},
@@ -42,27 +43,11 @@ class NextRotationView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class CreateRotationView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsChairperson]
 
     def post(self, request, chama_id):
         logger.info(f"Creating rotation for user: {request.user.username}, chama_id: {chama_id}")
         try:
-            # Verify user is an active member of the chama
-            member = ChamaMember.objects.get(
-                user=request.user,
-                chama_id=chama_id,
-                is_active=True
-            )
-            logger.info(f"Member found: {member.user.username}, ChamaMember Role: {member.role}")
-
-            # Check if user is Chairperson in HIFACHAMA_customuser
-            if request.user.role != 'Chairperson':
-                logger.warning(f"User role check failed: {request.user.role}")
-                return Response(
-                    {"error": "Only chairpersons can create rotations"},
-                    status=403
-                )
-
             # Validate chama exists
             try:
                 chama = Chama.objects.get(id=chama_id)
@@ -70,17 +55,32 @@ class CreateRotationView(APIView):
                 logger.error(f"Chama {chama_id} does not exist")
                 return Response(
                     {"error": "Chama does not exist"},
-                    status=404
+                    status=status.HTTP_404_NOT_FOUND
                 )
 
             # Validate request data
             frequency = request.data.get('frequency')
             start_date = request.data.get('start_date')
+            member_id = request.data.get('member_id')
             if frequency not in ['weekly', 'biweekly', 'monthly']:
                 logger.error(f"Invalid frequency: {frequency}")
                 return Response(
                     {"error": "Invalid frequency. Must be weekly, biweekly, or monthly"},
-                    status=400
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not member_id:
+                logger.error("Member ID is required")
+                return Response(
+                    {"error": "Member ID is required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                member = ChamaMember.objects.get(id=member_id, chama_id=chama_id, is_active=True)
+            except ChamaMember.DoesNotExist:
+                logger.error(f"Invalid member_id: {member_id}")
+                return Response(
+                    {"error": "Invalid member ID"},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
             # Parse start_date or use today
@@ -90,34 +90,27 @@ class CreateRotationView(APIView):
                 logger.error(f"Invalid start_date format: {start_date}")
                 return Response(
                     {"error": "Invalid start_date format. Use YYYY-MM-DD"},
-                    status=400
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-        except ChamaMember.DoesNotExist:
-            logger.error(f"User {request.user.username} is not an active member of chama {chama_id}")
-            return Response(
-                {"error": "You are not an active member of this chama"},
-                status=403
-            )
 
-        # Create rotation logic (simplified)
-        try:
-            # Example: Create a rotation
+            # Create rotation
             rotation_data = {
-                'chama': chama_id,
-                'member': member.id,
+                'chama_id': chama_id,
                 'cycle_date': cycle_date,
                 'frequency': frequency,
-                'status': 'pending'
+                'status': 'scheduled',
+                'member': member_id
             }
             serializer = RotationSerializer(data=rotation_data)
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data, status=201)
-            return Response(serializer.errors, status=400)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             logger.error(f"Error creating rotation: {str(e)}")
-            return Response({'error': str(e)}, status=400)
-        
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class UpcomingRotationsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -133,7 +126,7 @@ class UpcomingRotationsView(APIView):
             ).order_by('cycle_date')
 
             if not upcoming.exists():
-                return Response({"message": "No upcoming rotations"}, status=200)
+                return Response({"message": "No upcoming rotations"}, status=status.HTTP_200_OK)
 
             # Identify the next-in-line member
             next_rotation = upcoming.first()
@@ -144,7 +137,7 @@ class UpcomingRotationsView(APIView):
             return Response({
                 "next_in_line": next_user,
                 "upcoming_rotations": serializer.data
-            }, status=200)
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"error": str(e)}, status=400)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -10,12 +10,32 @@ export const useBalance = () => {
     if (!chamaData?.id) return;
 
     try {
-      const { data: balanceData, error } = await supabase
-        .from('HIFACHAMA_balance')
-        .select('*')
-        .eq('chama_id', chamaData.id);
-      if (error) throw new Error(`Supabase error: ${error.message}`);
-      setBalance(balanceData?.[0] || null);
+      // Fetch transactions joined with members filtered by chama_id
+      const { data, error } = await supabase
+        .from('HIFACHAMA_transaction')
+        .select(`
+          transaction_type,
+          amount,
+          member_id,
+          HIFACHAMA_chamamember!inner(chama_id)
+        `)
+        .eq('HIFACHAMA_chamamember.chama_id', chamaData.id);
+
+      if (error) throw new Error(error.message);
+
+      // Calculate rotational and investment totals
+      const rotational_total = data
+        .filter(t => t.transaction_type === 'rotational')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      const investment_total = data
+        .filter(t => t.transaction_type === 'investment')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      setBalance({
+        rotational_balance: rotational_total,
+        investment_balance: investment_total,
+      });
     } catch (err) {
       console.error('Error refreshing balance:', err.message);
       setBalance(null);
@@ -24,17 +44,9 @@ export const useBalance = () => {
 
   useEffect(() => {
     if (!chamaData?.id) return;
-
     refreshBalance();
 
-    const channel = supabase.channel('realtime:HIFACHAMA_balance');
-    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'HIFACHAMA_balance' }, (payload) => {
-      if (payload.new?.chama_id !== chamaData.id) return;
-      setBalance(payload.eventType === 'DELETE' ? null : payload.new);
-    });
-
-    channel.subscribe();
-    return () => supabase.removeChannel(channel);
+    // Optional: add real-time updates here if you want
   }, [chamaData?.id]);
 
   return { balance, refreshBalance };

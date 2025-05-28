@@ -11,7 +11,7 @@ class Chama(models.Model):
             ('merry_go_round', 'Merry-Go-Round'),
             ('hybrid', 'Hybrid'),
         ],
-        default='hybrid',  # <-- Add this line
+        default='hybrid',
     )
 
     created_at = models.DateTimeField(null=True, blank=True, auto_now_add=True)

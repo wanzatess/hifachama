@@ -1,6 +1,15 @@
+:root {
+  --color-background: #a89863;
+  --color-text-light: #F0EAD6;
+  --color-text-dark: #000000;
+  --color-hover: #9C8F5F;
+}
+
 body {
-  background-color: #a89863;
-  color: #F0EAD6;
+  background-color: var(--color-background);
+  color: var(--color-text-light);
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
 }
 
 .container {
@@ -9,105 +18,72 @@ body {
   padding: 20px;
 }
 
+h2,
+h3,
+.features-section h3,
+.left-column h3,
+.right-column h3 {
+  color: var(--color-text-dark);
+  margin-bottom: 8px;
+}
+
 h2 {
   font-size: 32px;
   margin-bottom: 20px;
-  color: #000000;
 }
 
 h3 {
-  font-size: 20px;
   font-weight: bold;
-  color: #000000;
+  font-size: 20px;
 }
 
-p {
+p,
+.features-section p,
+.left-column p,
+.right-column p {
+  color: var(--color-text-light);
   font-size: 14px;
-  color: #F0EAD6;
   line-height: 1.4;
+  margin: 0;
 }
 
 .features-section {
-  background-color: #a89863;
+  background-color: var(--color-background);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
   max-width: 300px;
   text-align: center;
-}
-
-.features-section h3 {
-  color: #000000;
-  margin-bottom: 8px;
-  font-size: 18px;
-}
-
-.features-section p {
-  color: #F0EAD6;
-  margin: 0;
-}
-
-.features-section:hover {
-  background-color: #9C8F5F;
   transition: background-color 0.3s ease;
 }
 
-.features-section:hover h3 {
-  color: #000000;
+.features-section:hover {
+  background-color: var(--color-hover);
 }
 
-.features-section:hover p {
-  color: #F0EAD6;
-}
-
-/* Stack items vertically in the row */
-.row {
+.row,
+.left-column,
+.right-column {
   display: flex;
   flex-direction: column;
   gap: 15px;
   align-items: center;
 }
 
-/* Remove left and right column distinctions */
-.left-column,
-.right-column {
-  display: flex;
-  flex-direction: column;
-}
-
-.left-column h3,
-.right-column h3 {
-  color: #000000;
-  font-size: 18px;
-}
-
-.left-column p,
-.right-column p {
-  color: #F0EAD6;
-}
-
-/* Adjust for laptops (between 1024px and 1440px) */
 @media (min-width: 1024px) and (max-width: 1440px) {
-  .row {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
-  }
-
+  .row,
   .left-column,
   .right-column {
-    display: flex;
     flex-direction: column;
   }
 
   .features-section {
-    margin-bottom: 20px;
     max-width: 300px;
+    margin-bottom: 20px;
   }
 
-  .features-section h3 {
-    color: #000000;
+  h3 {
+    color: var(--color-text-dark);
   }
 }

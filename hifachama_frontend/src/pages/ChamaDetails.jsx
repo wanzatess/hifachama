@@ -1,4 +1,3 @@
-// src/pages/ChamaDetails.jsx
 import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -32,7 +31,6 @@ const ChamaDetails = () => {
       <h1>{chama.name}</h1>
       <p>Type: {chama.chama_type}</p>
       <p>{chama.description}</p>
-      {/* Add more details and functionality here */}
     </div>
   );
 };

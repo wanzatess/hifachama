@@ -1,137 +1,80 @@
-import React, { useEffect, useContext, useState } from 'react';
-import { useMembers } from '../../hooks/useMembers';
-import { useContributions } from '../../hooks/useContributions';
+import React, { useContext } from 'react';
 import { useRotations } from '../../hooks/useRotations';
 import { ChamaContext } from '../../context/ChamaContext';
 import '../../pages/Dashboards/Dashboard.css';
-import { toast } from 'react-toastify';
 
 const RotationSchedule = () => {
-  const { chamaData } = useContext(ChamaContext);
-  const { members } = useMembers();
-  const { contributions } = useContributions();
-  const { rotation, upcomingRotations, nextInLineUser, noRotationMessage } = useRotations();
-  const [countdown, setCountdown] = useState('');
+  const { chamaData, isLoading: chamaLoading, error: chamaError } = useContext(ChamaContext);
+  const { rotations, currentRotation, loading, error } = useRotations();
 
-  const calculateRotationalTotal = () => {
-    return contributions
-      .filter(c => c.transaction_type === 'rotational')
-      .reduce((sum, c) => sum + (Number(c.amount) || 0), 0)
-      .toFixed(2);
-  };
+  console.log('RotationSchedule - Rotations:', rotations, 'Current:', currentRotation);
 
-  useEffect(() => {
-    const calculateCountdown = () => {
-      if (!rotation?.cycle_date) {
-        setCountdown('');
-        return;
-      }
-      const now = new Date();
-      const cycleDate = new Date(
-        new Date(rotation.cycle_date).toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })
-      );
-      const diff = cycleDate - now;
-      if (diff <= 0) {
-        setCountdown('Payout due!');
-        return;
-      }
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      setCountdown(`${days}d ${hours}h remaining`);
-    };
-    calculateCountdown();
-    const interval = setInterval(calculateCountdown, 3600000);
-    return () => clearInterval(interval);
-  }, [rotation]);
+  if (chamaLoading || loading) {
+    return <p className="loading-text">Loading rotation schedule...</p>;
+  }
 
-  const currentMember = members.find(m => m.id === rotation?.member_id);
+  if (chamaError || error) {
+    return <p className="error-text">{chamaError || error}</p>;
+  }
 
-  const formatPayoutAmount = (amount) => {
-    try {
-      return Number(amount).toFixed(2);
-    } catch {
-      return '0.00';
-    }
-  };
-
-  const formatDate = (date) => {
-    try {
-      return new Date(date).toLocaleString('en-KE', {
-        timeZone: 'Africa/Nairobi',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return 'Invalid date';
-    }
-  };
+  if (!chamaData?.id) {
+    return <p className="error-text">Chama ID is required.</p>;
+  }
 
   return (
-    <div className="dashboard-card">
-      <h3 className="card-title">Rotation Schedule</h3>
-      <div className="meeting-blocks">
-        <div className="meeting-block">
-          <h4 className="meeting-title">Current Rotation</h4>
-          <p><strong>Current Pool:</strong> KES {calculateRotationalTotal()}</p>
-          {noRotationMessage ? (
-            <p>{noRotationMessage}</p>
-          ) : rotation ? (
-            <>
-              <p><strong>Member:</strong> {currentMember?.username || 'Unknown'}</p>
-              <p><strong>Amount:</strong> KES {formatPayoutAmount(rotation.payout_amount)}</p>
-              <p><strong>Date:</strong> {formatDate(rotation.cycle_date)}</p>
-              <p><strong>Countdown:</strong> {countdown || 'N/A'}</p>
-              <p className="payout-instruction">
-                Note: Request your payout in the "Withdrawals" section when due.
-              </p>
-            </>
-          ) : (
-            <p>Loading rotation data...</p>
-          )}
-        </div>
+    <div className="dashboard-card rotation-schedule-card">
+      <div className="card-header">
+        <span className="card-icon">🔄</span>
+        <h3 className="card-title">Rotation Schedule</h3>
+      </div>
 
-        <div className="meeting-block">
-          <h4 className="meeting-title">Rotation Order</h4>
-          {members.length > 0 ? (
-            <ol className="member-list">
-              {members.map((member) => (
-                <li
-                  key={member.id}
-                  className={member.id === rotation?.member_id ? 'highlight' : ''}
-                >
-                  {member.username}
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p>No members available.</p>
-          )}
-        </div>
+      <div className="rotation-details">
+        <h4 className="section-title">Current Rotation</h4>
+        {currentRotation ? (
+          <div className="current-rotation">
+            <p><strong>Member:</strong> {currentRotation.username}</p>
+            <p><strong>Date:</strong> {new Date(currentRotation.cycle_date).toLocaleDateString()}</p>
+            <p><strong>Frequency:</strong> {currentRotation.frequency.charAt(0).toUpperCase() + currentRotation.frequency.slice(1)}</p>
+            <p><strong>Payout Amount:</strong> KSh {parseFloat(currentRotation.payout_amount || 0).toFixed(2)}</p>
+            <p><strong>Status:</strong> {currentRotation.status.charAt(0).toUpperCase() + currentRotation.status.slice(1)}</p>
+          </div>
+        ) : (
+          <p className="no-data">No current rotation available.</p>
+        )}
+      </div>
 
-        <div className="meeting-block">
-          <h4 className="meeting-title">Upcoming Rotations</h4>
-          {Array.isArray(upcomingRotations) && upcomingRotations.length > 0 ? (
-            <>
-              <p><strong>Next in Line:</strong> {nextInLineUser || 'Unknown'}</p>
-              <ol className="member-list">
-                {upcomingRotations.map((rot, index) => {
-                  const member =  member = members.find(m => m.id === rot.member_id);
-                  return (
-                    <li key={rot.id}>
-                      {index + 1}. {member?.username || 'Unknown'} –{' '}
-                      {new Date(rot.cycle_date).toLocaleDateString('en-KE')}
-                    </li>
-                  );
-                })}
-              </ol>
-            </>
-          ) : (
-            <p>No upcoming rotations.</p>
-          )}
-        </div>
+      <div className="upcoming-rotations">
+        <h4 className="section-title">Upcoming Rotations</h4>
+        {rotations.length === 0 ? (
+          <p className="no-data">No upcoming rotations scheduled.</p>
+        ) : (
+          <div className="table-container">
+            <table className="rotation-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Member</th>
+                  <th>Date</th>
+                  <th>Frequency</th>
+                  <th>Payout Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rotations.map((rotation, index) => (
+                  <tr key={rotation.id}>
+                    <td>{index + 1}</td>
+                    <td>{rotation.username}</td>
+                    <td>{new Date(rotation.cycle_date).toLocaleDateString()}</td>
+                    <td>{rotation.frequency.charAt(0).toUpperCase() + rotation.frequency.slice(1)}</td>
+                    <td>KSh {parseFloat(rotation.payout_amount || 0).toFixed(2)}</td>
+                    <td>{rotation.status.charAt(0).toUpperCase() + rotation.status.slice(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

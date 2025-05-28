@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import "./Home.css";
 import logo from '../../static/images/logo1.png';

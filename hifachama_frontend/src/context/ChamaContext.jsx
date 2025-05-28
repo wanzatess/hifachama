@@ -25,6 +25,7 @@ export const ChamaProvider = ({ children }) => {
     }
 
     try {
+      // 1. Get user info
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/me/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -43,19 +44,31 @@ export const ChamaProvider = ({ children }) => {
         return;
       }
 
+      // 2. Fetch chama details separately by chama_id to get chama_type
+      const chamaResponse = await axios.get(`${import.meta.env.VITE_API_URL}/api/chamas/${user.chama_id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const chamaData = chamaResponse.data;
+
+      // 3. Set chama data including chama_type
       const chama = {
-        id: user.chama_id,
-        name: user.chama_name || 'Unnamed Chama',
+        id: chamaData.id,
+        name: chamaData.name || 'Unnamed Chama',
+        chama_type: chamaData.chama_type || 'unknown',
       };
+
       setChamaData(chama);
+
     } catch (err) {
       setError('Failed to load dashboard data. Please try again.');
-      console.error('Error fetching user data:', err);
+      console.error('Error fetching user or chama data:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Add this useEffect to call fetchUserAndChamaData automatically on mount
   useEffect(() => {
     fetchUserAndChamaData();
   }, []);

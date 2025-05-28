@@ -162,7 +162,7 @@ class JoinChamaView(APIView):
     def post(self, request):
         data = request.data.copy()
         data['user'] = request.user.id
-        data['role'] = 'Member'  # Set default role
+        data['role'] = 'Member'  
 
         serializer = JoinChamaSerializer(data=data)
         if serializer.is_valid():

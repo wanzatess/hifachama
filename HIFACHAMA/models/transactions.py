@@ -24,7 +24,6 @@ class Transaction(models.Model):
     date = models.DateTimeField(null=True, blank=True, auto_now_add=True)
     member = models.ForeignKey(ChamaMember, on_delete=models.CASCADE, default=get_default_member)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-    purpose = models.CharField(max_length=255, blank=True, null=True)
     transaction_type = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
@@ -53,13 +52,23 @@ class Rotation(models.Model):
     ]
     
     chama_id = models.IntegerField()
-    member_id = models.IntegerField()
-    position = models.IntegerField()  # Order in rotation
-    cycle_date = models.DateField()  # Date of rotation payout
-    payout_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Amount to pay out
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')  # Rotation status
+    cycle_date = models.DateField()  
+    frequency = models.CharField(max_length=20, choices=[
+        ('weekly', 'Weekly'),
+        ('biweekly', 'Biweekly'),
+        ('monthly', 'Monthly'),
+    ])
+    payout_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')  
     completed = models.BooleanField(default=False)
+    member = models.ForeignKey(
+        ChamaMember,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=False,
+        related_name='rotations'
+    )
 
     class Meta:
         db_table = 'HIFACHAMA_rotation'
-        unique_together = ('chama_id', 'position', 'cycle_date')
+        unique_together = ('chama_id', 'cycle_date')

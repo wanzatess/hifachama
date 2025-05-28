@@ -52,7 +52,25 @@ const AppRoutes = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/features" element={<Features />} />
 
-        {/* Dashboard Routes */}
+        {/* Protected Routes without DashboardLayout */}
+        <Route
+          path="/dashboard/join-chama"
+          element={
+            <PrivateRoute>
+              <JoinChama />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/dashboard/create-chama"
+          element={
+            <PrivateRoute>
+              <CreateChama />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Dashboard Routes with Sidebar */}
         <Route
           path="/dashboard"
           element={
@@ -63,8 +81,6 @@ const AppRoutes = () => {
         >
           <Route index element={<DashboardHome />} />
           <Route path="home" element={<DashboardHome />} />
-          <Route path="join-chama" element={<JoinChama />} />
-          <Route path="create-chama" element={<CreateChama />} />
           <Route path="hybrid/:id" element={<HybridDashboard />} />
           <Route path="merry_go_round/:id" element={<MerrygoroundDashboard />} />
           <Route path="investment/:id" element={<InvestmentDashboard />} />
