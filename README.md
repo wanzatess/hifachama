@@ -1,12 +1,57 @@
-# React + Vite
+# HiFaChama 💰
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack financial management platform designed for Kenyan investment groups (chamas).
 
-Currently, two official plugins are available:
+## Features
+- User registration & authentication
+- Chama group creation and management
+- Contribution tracking and transaction history
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack
+| Layer | Technology |
+|---|---|
+| Frontend | React, Vite, JavaScript, CSS |
+| Backend | Django, Python |
+| Database | PostgreSql |
+| Auth | Django Authentication |
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+- Python 3.x
+- Node.js & npm
+
+### Backend
+```bash
+# Clone the repo
+git clone https://github.com/wanzatess/hifachama.git
+cd hifachama
+
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env  # then fill in your values
+
+# Run migrations
+python manage.py migrate
+
+# Start the backend server
+python manage.py runserver
+```
+
+### Frontend
+```bash
+cd hifachama_frontend
+npm install
+npm run dev
+```
+
+The backend runs on http://localhost:8000 and the frontend on http://localhost:5173.
+
+## About
+Built to digitize the management of chamas — a cornerstone of savings culture in Kenya.
